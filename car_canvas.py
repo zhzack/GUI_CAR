@@ -1,0 +1,360 @@
+from PyQt5.QtWidgets import QGraphicsView, QLabel, QVBoxLayout
+from PyQt5.QtGui import QPen, QBrush, QColor, QPainter
+from PyQt5.QtCore import Qt, QPointF, QPoint
+
+from PyQt5.QtWidgets import QGraphicsPolygonItem, QGraphicsEllipseItem, QGraphicsLineItem
+from PyQt5.QtGui import QPolygonF, QPen, QBrush, QColor
+from PyQt5.QtCore import Qt, QPointF
+
+
+class CarCanvas(QGraphicsView):
+    def __init__(self, scene, parent=None):
+        super(CarCanvas, self).__init__(scene, parent)
+        self.setScene(scene)
+        self.setRenderHint(QPainter.Antialiasing)
+        self.setDragMode(QGraphicsView.ScrollHandDrag)
+        self.setTransformationAnchor(QGraphicsView.AnchorUnderMouse)
+        self.setResizeAnchor(QGraphicsView.AnchorUnderMouse)
+
+        self.color_0=QColor(255, 255, 0, 50)
+        self.color_1=QColor(255, 255, 0, 100)
+        
+
+
+
+        self.key_item = None  # 钥匙的图形项
+        self.last_position = None  # 钥匙的上一位置
+        self.zoom_factor = 1  # 缩放系数
+        self.coord_label = QLabel()  # 显示钥匙坐标的标签
+
+        # 允许显示超出场景范围的内容
+        self.setViewportUpdateMode(QGraphicsView.FullViewportUpdate)
+        self.setSceneRect(-2000, -2000, 4000, 4000)  # 调整场景边界大小
+
+        # 设置初始标签内容
+        self.coord_label.setStyleSheet(
+            "QLabel { background-color : white; padding: 5px; }")
+        self.coord_label.setText("X: 0, Y: 0")
+        self.coord_label.setFixedSize(150, 30)
+
+        # 布局设置
+        self.layout = QVBoxLayout()
+        self.layout.addWidget(self.coord_label)
+        self.setLayout(self.layout)
+
+        # 存储多个多边形和圆形区域
+        self.polygon_fences = []
+        self.circle_fences = []
+        self.concentric_circles = []
+        self.key_item = None
+        self.last_position = None
+
+        # 添加多个多边形和圆形区域
+        self.add_polygons()
+        self.add_circles()
+        # self.add_concentric_circles()
+        # 添加一个绿色圆环，宽度为20
+        # self.add_thick_circle(QPointF(0, 0), outer_radius=100, inner_radius=10, color=Qt.red)
+        # 添加一个宽度为20的圆环，内圈填充为红色
+        # self.add_thick_circle(QPointF(0, 0), outer_radius=1000, inner_radius=100, outer_color=Qt.green, inner_color=Qt.red)
+
+    def add_polygons(self):
+        """添加多个多边形区域"""
+        polygons = [
+            [QPointF(-100, 100), QPointF(-100, 0),
+             QPointF(0, 0), QPointF(0, 100)],
+# y+100
+            [QPointF(-100, 100+100), QPointF(-100, 0+100),
+             QPointF(0, 0+100), QPointF(0, 100+100)],
+# x-100
+             [QPointF(-100+100, 100), QPointF(-100+100, 0),
+             QPointF(0+100, 0), QPointF(0+100, 100)],
+# x-100  y+100
+             [QPointF(-100+100, 100+100), QPointF(-100+100, 0+100),
+             QPointF(0+100, 0+100), QPointF(0+100, 100+100)],
+
+        ]
+
+        for points in polygons:
+            polygon = QPolygonF(points)
+            polygon_item = QGraphicsPolygonItem(polygon)
+            polygon_item.setPen(QPen(Qt.blue, 2))
+            polygon_item.setBrush(QBrush(Qt.transparent))
+            self.scene().addItem(polygon_item)
+            self.polygon_fences.append(polygon_item)
+
+            # 画多边形顶点
+            for point in points:
+                self.add_fence_point(point)
+
+    def add_fence_point(self, point):
+        """在给定位置添加围栏的顶点"""
+        ellipse = QGraphicsEllipseItem(point.x() - 5, point.y() - 5, 10, 10)
+        ellipse.setPen(QPen(Qt.red))
+        ellipse.setBrush(QBrush(Qt.red))
+        self.scene().addItem(ellipse)
+
+    def add_concentric_circles(self):
+        """添加同心圆区域"""
+        center = QPointF(0, 0)
+        radii = [500, 300, 200]  # 定义同心圆的半径，按照半径从大到小排列
+        real_r = [600, 400, 200]
+
+        # 根据不同的半径创建同心圆
+        for index, radius in enumerate(radii):
+            # 创建圆
+            circle_item = QGraphicsEllipseItem(
+                center.x() - radius, center.y() - radius, 2 * radius, 2 * radius)
+
+            if index != len(radii)-1:
+                circle_item.setPen(QPen(Qt.transparent, 200))
+                circle_item.setBrush(QBrush(Qt.transparent))
+            else:
+                circle_item.setPen(QPen(Qt.transparent, 1))
+                circle_item.setBrush(QBrush(Qt.transparent))
+                # circle_item.setBrush(QBrush(Qt.green))
+            # 将圆加入到场景中
+            self.scene().addItem(circle_item)
+            self.concentric_circles.append((circle_item, center, radius))
+
+    def add_thick_circle(self, center, outer_radius, inner_radius, outer_color=Qt.green, inner_color=Qt.transparent):
+        """添加具有特定宽度和颜色的圆环"""
+        # 绘制外圆
+        outer_circle_item = QGraphicsEllipseItem(center.x(
+        ) - outer_radius, center.y() - outer_radius, 2 * outer_radius, 2 * outer_radius)
+        outer_circle_item.setPen(QPen(outer_color, 2))  # 设置边框颜色和宽度
+        outer_circle_item.setBrush(QBrush(inner_color))  # 设置内圈填充颜色
+        self.scene().addItem(outer_circle_item)
+
+        # 绘制内圆
+        inner_circle_item = QGraphicsEllipseItem(center.x(
+        ) - inner_radius, center.y() - inner_radius, 2 * inner_radius, 2 * inner_radius)
+        inner_circle_item.setPen(QPen(Qt.transparent))  # 透明背景
+        inner_circle_item.setBrush(QBrush(Qt.transparent))  # 透明背景
+        self.scene().addItem(inner_circle_item)
+
+        # 将圆环信息存储
+        self.concentric_circles.append(
+            (outer_circle_item, center, outer_radius))
+
+    def add_circles(self):
+        """添加多个圆形区域"""
+        circles = [
+            [300, 200, 400],  # 圆心坐标和半径
+            [500, 400, 600],
+            [700, 600, 800],
+            [900, 800, 1000]
+        ]
+
+        # for i in range(0, len(circles)):
+        center = QPointF(0, 0)
+
+        #  [200, 0, 200]
+        radius = 200
+        circle_item = QGraphicsEllipseItem(
+            center.x() - radius, center.y() - radius, 2 * radius, 2 * radius)
+        circle_item.setPen(QPen(Qt.transparent))
+        circle_item.setBrush(QBrush(Qt.transparent))
+        self.scene().addItem(circle_item)
+        self.circle_fences.append((circle_item, center, 0, 200))
+
+        for circle in circles:
+            radius = circle[0]
+            circle_item = QGraphicsEllipseItem(
+                center.x() - radius, center.y() - radius, 2 * radius, 2 * radius)
+            circle_item.setPen(QPen(self.color_1, 200))
+            circle_item.setBrush(QBrush(Qt.transparent))
+
+            self.scene().addItem(circle_item)
+            self.circle_fences.append(
+                (circle_item, center, circle[1], circle[2]))
+
+    def set_key_position(self, x, y):
+        """更新钥匙位置并检查是否进入多边形或圆形区域"""
+        new_position = QPointF(x, y)
+
+
+        if self.last_position:
+            pen = QPen(Qt.red, 2)
+            self.scene().addLine(self.last_position.x(), self.last_position.y(), new_position.x(), new_position.y(), pen)
+
+        # 移动钥匙
+        if self.key_item is None:
+            self.key_item = self.scene().addEllipse(
+                x - 5, y - 5, 10, 10, QPen(Qt.green), QBrush(Qt.green))
+        else:
+            self.key_item.setRect(x - 5, y - 5, 10, 10)
+
+        # 检查钥匙是否进入多边形区域
+        for polygon_item in self.polygon_fences:
+            if polygon_item.polygon().containsPoint(new_position, Qt.OddEvenFill):
+                self.highlight_fence(polygon_item, True)  # 高亮多边形
+            else:
+                self.highlight_fence(polygon_item, False)  # 恢复透明
+
+        # # # 检查钥匙是否进入圆形区域
+        # for circle_item, center, radius in self.circle_fences:
+        #     if (new_position - center).manhattanLength() <= radius:
+        #         self.highlight_fence(circle_item, True)  # 高亮圆形
+        #     else:
+        #         self.highlight_fence(circle_item, False)  # 恢复透明
+
+        # 检查钥匙是否进入同心圆的圆环区域
+        self.check_concentric_circles(new_position)
+        self.last_position = new_position
+
+        # 更新钥匙的实时坐标显示
+        self.coord_label.setText(f"X: {x:.2f}, Y: {-y:.2f}")
+
+        # 确保钥匙在可见范围内
+        self.ensureVisible(self.key_item, 50, 50)
+
+    def check_concentric_circles(self, position):
+        """检查钥匙是否在同心圆的圆环或范围之外"""
+        # 计算钥匙到圆心的距离
+        center = QPoint(0, 0)  # 所有同心圆的中心相同
+        distance_to_center = ((position.x() - center.x())
+                              ** 2 + (position.y() - center.y())**2)**0.5
+        self.coord_label.setText(f"距离: {distance_to_center:.2f}")
+
+        # 初始化一个标志来追踪是否已高亮圆环
+        # highlighted = False
+        for circle_item, _, min, max in self.circle_fences:
+            if min < distance_to_center < max:
+                # highlighted = True
+                if min==0:
+                    # print(1)
+                    circle_item.setBrush(QBrush(self.color_1)) # 高亮为黄色
+                    # circle_item.setPen(QPen(Qt.green,200))
+                    pass
+                else:
+                    circle_item.setPen(QPen(self.color_1,200))
+                    pass
+            else:
+                if min==0:
+                    circle_item.setBrush(QBrush(Qt.transparent))
+                    pass
+                else:
+                    circle_item.setPen(QPen(Qt.transparent))
+                    pass
+                pass
+            
+
+    def highlight_fence(self, fence_item, highlight):
+        """高亮或取消高亮围栏区域"""
+        if highlight:
+            fence_item.setBrush(QBrush(QColor(255, 100, 255, 200)))  # 高亮为黄色
+        else:
+            fence_item.setBrush(QBrush(Qt.transparent))  # 恢复透明
+
+    def highlight_ring(self, inner_circle_item, outer_circle_item, highlight):
+        """
+        高亮两个同心圆之间的圆环区域，或单独高亮最小圆或最大圆外区域
+        inner_circle_item: 内圈圆 (如果高亮最小圆的内部，该值为 None)
+        outer_circle_item: 外圈圆 (如果高亮最大圆外区域，该值为 None)
+        highlight: 是否高亮
+        """
+        if inner_circle_item is None and outer_circle_item is None:
+            return  # 如果两个都为空，没有可高亮的内容
+
+        if inner_circle_item is None:  # 最小圆的内部区域
+            if highlight:
+                outer_circle_item.setBrush(
+                    QBrush(QColor(255, 255, 0, 100)))  # 黄色半透明高亮
+            else:
+                outer_circle_item.setBrush(QBrush(Qt.NoBrush))  # 移除高亮
+        elif outer_circle_item is None:  # 最大圆外的区域
+            if highlight:
+                inner_circle_item.setBrush(
+                    QBrush(QColor(255, 0, 0, 100)))  # 红色半透明高亮
+            else:
+                inner_circle_item.setBrush(QBrush(Qt.NoBrush))  # 移除高亮
+        else:  # 两个圆之间的圆环区域
+            if highlight:
+                max_circle_item, _, _ = self.concentric_circles[-1]
+                max_circle_item.setBrush(QBrush(Qt.NoBrush))
+                # 高亮两个圆之间的区域
+                outer_circle_item.setBrush(
+                    QBrush(QColor(0, 255, 0, 100)))  # 绿色半透明高亮
+                inner_circle_item.setBrush(
+                    QBrush(QColor(255, 0, 0, 100)))  # 移除高亮
+                # inner_circle_item.setBrush(QBrush(QColor(0, 255, 0, 100)))  # 绿色半透明高亮
+            else:
+                pass
+                inner_circle_item.setBrush(QBrush(Qt.NoBrush))  # 移除内圈高亮
+                # outer_circle_item.setBrush(QBrush(Qt.NoBrush))  # 移除外圈高亮
+                outer_circle_item.setBrush(QBrush(QColor(0, 255, 0, 100)))
+
+    def drawForeground(self, painter, rect):
+        """绘制无限延伸的X和Y坐标轴及刻度"""
+        painter.save()
+        pen = QPen(Qt.black, 2)
+        painter.setPen(pen)
+        # painter.scale(1, -1)  # 仅翻转 Y 轴
+
+        # 获取当前场景的可见区域
+        view_rect = self.mapToScene(self.viewport().rect()).boundingRect()
+
+        # 获取当前缩放因子
+        scale_x = self.transform().m11()  # x轴缩放因子
+        scale_y = self.transform().m22()  # y轴缩放因子
+
+        # 设置刻度间隔
+        tick_interval = 100 * max(abs(scale_x), abs(scale_y))  # 根据缩放因子调整刻度间隔
+
+        # 绘制X轴和刻度
+        x_start = int(view_rect.left())
+        x_end = int(view_rect.right())
+        painter.drawLine(QPoint(x_start, 0), QPoint(x_end, 0))
+        x = x_start - (x_start % tick_interval)
+        while x < x_end:
+            x_int = int(x)
+            painter.drawLine(QPoint(x_int, -5), QPoint(x_int, 5))
+            painter.drawText(x_int + 5, 15, str(x_int))
+            x += tick_interval
+
+        # 绘制Y轴和刻度
+        y_start = int(view_rect.top())
+        y_end = int(view_rect.bottom())
+        painter.drawLine(QPoint(0, y_start), QPoint(0, y_end))
+        y = y_start - (y_start % tick_interval)
+        while y < y_end:
+            y_int = int(y)
+            painter.drawLine(QPoint(-5, y_int), QPoint(5, y_int))
+            painter.drawText(15, y_int + 15, str(-y_int))
+            y += tick_interval
+
+        painter.restore()
+
+    def wheelEvent(self, event):
+        """鼠标滚轮缩放"""
+        zoom_in_factor = 1.15
+        zoom_out_factor = 1 / zoom_in_factor
+
+        if event.angleDelta().y() > 0:
+            self.scale(zoom_in_factor, zoom_in_factor)
+            self.zoom_factor *= zoom_in_factor
+        else:
+            self.scale(zoom_out_factor, zoom_out_factor)
+            self.zoom_factor *= zoom_out_factor
+
+    # def set_key_position(self, x, y):
+        # """更新钥匙的位置并绘制轨迹"""
+        # new_position = QPointF(x, y)
+
+        # if self.last_position:
+        #     pen = QPen(Qt.red, 2)
+        #     self.scene().addLine(self.last_position.x(), self.last_position.y(), new_position.x(), new_position.y(), pen)
+
+        # if self.key_item is None:
+        #     self.key_item = self.scene().addEllipse(x - 5, y - 5, 10, 10, QPen(Qt.red), QBrush(Qt.red))
+        # else:
+        #     self.key_item.setRect(x - 5, y - 5, 10, 10)
+
+        # self.last_position = new_position
+
+        # # 更新钥匙的实时坐标显示
+        # self.coord_label.setText(f"X: {x:.2f}, Y: {-y:.2f}")
+
+        # # 确保钥匙在可见范围内
+        # self.ensureVisible(self.key_item, 50, 50)
