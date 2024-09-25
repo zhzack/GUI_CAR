@@ -7,25 +7,26 @@ from PyQt5.QtWidgets import QGraphicsView, QGraphicsScene, QGraphicsEllipseItem,
 from PyQt5.QtGui import QPen, QBrush, QColor, QPainter
 from PyQt5.QtCore import Qt, QPointF
 from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QAction, QGraphicsSceneMouseEvent
+from fence_tool import FenceTool
+from PyQt5.QtWidgets import QPushButton
 
 from car_canvas import CarCanvas
+
 
 class MainWindow(QMainWindow):
     def __init__(self, queue):
         super(MainWindow, self).__init__()
-        self.setWindowTitle("Car and Key Position")
+        self.setWindowTitle("汽车和钥匙位置")
         self.queue = queue  # 获取共享队列
+        
 
         # 创建场景和画布
         self.scene = QGraphicsScene(self)
+        # 初始化电子围栏工具
+        self.fence_tool = FenceTool(self.scene)
         self.canvas = CarCanvas(self.scene, self)
 
-        # # 加载汽车图像
-        # car_pixmap = QPixmap('car_image.png')
-        # car_item = QGraphicsPixmapItem(car_pixmap)
-        # self.scene.addItem(car_item)
-        
-        
         # 加载汽车图像
         car_pixmap = QPixmap('car_image.png')
         car_item = QGraphicsPixmapItem(car_pixmap)
@@ -43,8 +44,6 @@ class MainWindow(QMainWindow):
         car_item.setZValue(-1000)  # 将 car_item 设置为最下层
         # 将图像添加到场景中
         self.scene.addItem(car_item)
-        
-        
 
         # 使用布局
         layout = QVBoxLayout()
@@ -57,9 +56,58 @@ class MainWindow(QMainWindow):
         self.resize(1920, 1080)
 
         # 使用定时器定期检查队列是否有新位置
-        self.timer = QTimer(self)
-        self.timer.timeout.connect(self.update_key_position)
-        self.timer.start(50)  # 每50毫秒检查一次队列
+        # self.timer = QTimer(self)
+        # self.timer.timeout.connect(self.update_key_position)
+        # self.timer.start(50)  # 每50毫秒检查一次队列
+
+        # 添加电子围栏的菜单选项
+        self.init_menu()
+       
+
+        self.canvas.setMouseTracking(True)
+
+    def init_menu(self):
+        """创建菜单选项，选择电子围栏模式"""
+        menu_bar = self.menuBar()
+        fence_menu = menu_bar.addMenu('电子围栏')
+
+        add_fence_action = QAction('手动输入', self)
+        add_fence_action.triggered.connect(self.manual_input_fence)
+
+        add_fence_by_mouse_action = QAction('通过鼠标添加', self)
+        add_fence_by_mouse_action.triggered.connect(self.start_fence_by_mouse)
+
+        fence_menu.addAction(add_fence_action)
+        fence_menu.addAction(add_fence_by_mouse_action)
+
+        
+
+    def manual_input_fence(self):
+        """手动输入围栏的顶点"""
+        # 这里可以添加手动输入围栏顶点的代码
+
+    def start_fence_by_mouse(self):
+        """通过鼠标点击添加围栏"""
+        self.canvas.set_fence_mode(True)
+        self.fence_tool.start()
+
+    # def mousePressEvent(self, event):
+    #     """处理鼠标点击事件，添加围栏顶点"""
+    #     if self.canvas.fence_mode_active:
+    #         if event.button() == Qt.RightButton:
+    #             pos = self.canvas.mapToScene(event.pos())
+    #             self.fence_tool.add_point(pos)
+    #         elif event.button() == Qt.LeftButton and len(self.fence_tool.points) > 0:
+    #             # 结束添加围栏
+    #             self.canvas.set_fence_mode(False)
+
+    # def mouseMoveEvent(self, event):
+    #     print(self.mapToScene(event.pos()))
+    #     if self.canvas.fence_mode_active:
+    #         pos = self.canvas.mapToScene(event.pos())
+    #         self.fence_tool.update_temp_line(pos)
+    #         self.fence_tool.show_coordinates(pos)
+    #         print(pos)
 
     def update_key_position(self):
         """更新钥匙位置"""

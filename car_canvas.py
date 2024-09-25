@@ -7,20 +7,26 @@ from PyQt5.QtGui import QPolygonF, QPen, QBrush, QColor
 from PyQt5.QtCore import Qt, QPointF
 
 
+from fence_tool import FenceTool
+
+
 class CarCanvas(QGraphicsView):
     def __init__(self, scene, parent=None):
         super(CarCanvas, self).__init__(scene, parent)
+        # print(f"父类类型: {type(parent)}")  # 打印父类的类型
+        self.parent=parent
         self.setScene(scene)
         self.setRenderHint(QPainter.Antialiasing)
         self.setDragMode(QGraphicsView.ScrollHandDrag)
         self.setTransformationAnchor(QGraphicsView.AnchorUnderMouse)
         self.setResizeAnchor(QGraphicsView.AnchorUnderMouse)
 
+        self.fence_mode_active = True
+
+        self.fence_tool = FenceTool(scene)
+
         self.color_0=QColor(255, 255, 0, 50)
         self.color_1=QColor(255, 255, 0, 100)
-        
-
-
 
         self.key_item = None  # 钥匙的图形项
         self.last_position = None  # 钥匙的上一位置
@@ -57,6 +63,43 @@ class CarCanvas(QGraphicsView):
         # self.add_thick_circle(QPointF(0, 0), outer_radius=100, inner_radius=10, color=Qt.red)
         # 添加一个宽度为20的圆环，内圈填充为红色
         # self.add_thick_circle(QPointF(0, 0), outer_radius=1000, inner_radius=100, outer_color=Qt.green, inner_color=Qt.red)
+
+    def set_fence_mode(self, active):
+        """启用或禁用电子围栏添加模式"""
+        self.fence_mode_active = active
+    
+
+
+    def mousePressEvent(self, event):
+        """处理鼠标点击事件"""
+        if self.fence_mode_active:
+            # 判断是否是右键点击
+            if event.button() == Qt.RightButton:
+                # 获取鼠标点击的位置并映射到场景坐标系
+                pos = self.mapToScene(event.pos())
+                # 发射鼠标点击信号
+                self.fence_tool.add_point(pos)
+        
+
+    
+    def keyPressEvent(self, event):
+        """处理键盘按键事件"""
+        if self.fence_mode_active:
+            if event.key() == Qt.Key_Return and event.modifiers() == Qt.ControlModifier:  # 检查是否按下 Ctrl + 回车
+                if self.fence_mode_active:
+                    # 完成围栏的操作
+                    self.fence_tool.finish_fence(self.parent)
+                    self.fence_tool.draw_fences()
+
+    def mouseMoveEvent(self, event):
+        """处理鼠标移动事件"""
+        if self.fence_mode_active:
+            # 获取鼠标当前位置并映射到场景坐标系
+            pos = self.mapToScene(event.pos())
+            # print(self.mapToScene(event.pos()))
+            
+            self.fence_tool.update_temp_line(pos)  # 更新临时线
+            self.fence_tool.show_coordinates(pos)  # 显示坐标
 
     def add_polygons(self):
         """添加多个多边形区域"""
