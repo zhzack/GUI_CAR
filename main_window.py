@@ -10,7 +10,7 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QAction, QGraphicsSceneMouseEvent
 from fence_tool import FenceTool
 from PyQt5.QtWidgets import QPushButton
-
+from PyQt5.QtCore import Qt, QRect
 from car_canvas import CarCanvas
 
 
@@ -19,7 +19,6 @@ class MainWindow(QMainWindow):
         super(MainWindow, self).__init__()
         self.setWindowTitle("汽车和钥匙位置")
         self.queue = queue  # 获取共享队列
-        
 
         # 创建场景和画布
         self.scene = QGraphicsScene(self)
@@ -44,6 +43,7 @@ class MainWindow(QMainWindow):
         car_item.setZValue(-1000)  # 将 car_item 设置为最下层
         # 将图像添加到场景中
         self.scene.addItem(car_item)
+        self.lastpos = (1, 2, 3, 4)
 
         # 使用布局
         layout = QVBoxLayout()
@@ -53,18 +53,21 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(container)
 
         # 设置默认窗口大小
-        self.resize(1920, 1080)
+        self.resize(2560, 1440)
 
         # 使用定时器定期检查队列是否有新位置
-        # self.timer = QTimer(self)
-        # self.timer.timeout.connect(self.update_key_position)
-        # self.timer.start(50)  # 每50毫秒检查一次队列
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self.update_key_position)
+        self.timer.start(5)  # 每50毫秒检查一次队列
 
         # 添加电子围栏的菜单选项
         self.init_menu()
-       
 
         self.canvas.setMouseTracking(True)
+        # 主布局
+        self.layout = QVBoxLayout(self)
+
+
 
     def init_menu(self):
         """创建菜单选项，选择电子围栏模式"""
@@ -79,8 +82,6 @@ class MainWindow(QMainWindow):
 
         fence_menu.addAction(add_fence_action)
         fence_menu.addAction(add_fence_by_mouse_action)
-
-        
 
     def manual_input_fence(self):
         """手动输入围栏的顶点"""
@@ -112,5 +113,9 @@ class MainWindow(QMainWindow):
     def update_key_position(self):
         """更新钥匙位置"""
         if not self.queue.empty():
-            x, y = self.queue.get()
-            self.canvas.set_key_position(x, y)
+            x, y, x1, y1 = self.queue.get()
+            self.lastpos = (x, y, x1, y1)
+            self.canvas.set_key_position(x, y, x1, y1)
+        else:
+            x, y, x1, y1 = self.lastpos
+            self.canvas.set_key_position(x, y, x1, y1)

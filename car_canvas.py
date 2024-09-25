@@ -5,7 +5,8 @@ from PyQt5.QtCore import Qt, QPointF, QPoint
 from PyQt5.QtWidgets import QGraphicsPolygonItem, QGraphicsEllipseItem, QGraphicsLineItem
 from PyQt5.QtGui import QPolygonF, QPen, QBrush, QColor
 from PyQt5.QtCore import Qt, QPointF
-
+from PyQt5.QtCore import Qt, QRect
+from PyQt5.QtWidgets import QVBoxLayout, QWidget
 
 from fence_tool import FenceTool
 
@@ -14,46 +15,41 @@ class CarCanvas(QGraphicsView):
     def __init__(self, scene, parent=None):
         super(CarCanvas, self).__init__(scene, parent)
         # print(f"父类类型: {type(parent)}")  # 打印父类的类型
-        self.parent=parent
+        self.parent = parent
         self.setScene(scene)
         self.setRenderHint(QPainter.Antialiasing)
         self.setDragMode(QGraphicsView.ScrollHandDrag)
         self.setTransformationAnchor(QGraphicsView.AnchorUnderMouse)
         self.setResizeAnchor(QGraphicsView.AnchorUnderMouse)
 
-        self.fence_mode_active = True
+        self.fence_mode_active = False
+        self.highlighted = True
 
         self.fence_tool = FenceTool(scene)
 
-        self.color_0=QColor(255, 255, 0, 50)
-        self.color_1=QColor(255, 255, 0, 100)
+        self.color_0 = QColor(255, 255, 0, 50)
+        self.color_1 = QColor(255, 255, 0, 100)
 
         self.key_item = None  # 钥匙的图形项
         self.last_position = None  # 钥匙的上一位置
+        self.last_position1 = None  # 钥匙的上一位置
+        self.last_fence = None  # 钥匙上一个所在的区域
+        self.fence_cont = 0
         self.zoom_factor = 1  # 缩放系数
-        self.coord_label = QLabel()  # 显示钥匙坐标的标签
 
         # 允许显示超出场景范围的内容
         self.setViewportUpdateMode(QGraphicsView.FullViewportUpdate)
         self.setSceneRect(-2000, -2000, 4000, 4000)  # 调整场景边界大小
 
-        # 设置初始标签内容
-        self.coord_label.setStyleSheet(
-            "QLabel { background-color : white; padding: 5px; }")
-        self.coord_label.setText("X: 0, Y: 0")
-        self.coord_label.setFixedSize(150, 30)
-
-        # 布局设置
-        self.layout = QVBoxLayout()
-        self.layout.addWidget(self.coord_label)
-        self.setLayout(self.layout)
+        self.lines = []  # 存储线段对象
+        self.lines1 = []  # 存储线段对象
 
         # 存储多个多边形和圆形区域
         self.polygon_fences = []
         self.circle_fences = []
         self.concentric_circles = []
         self.key_item = None
-        self.last_position = None
+        self.key_item1 = None
 
         # 添加多个多边形和圆形区域
         self.add_polygons()
@@ -63,14 +59,35 @@ class CarCanvas(QGraphicsView):
         # self.add_thick_circle(QPointF(0, 0), outer_radius=100, inner_radius=10, color=Qt.red)
         # 添加一个宽度为20的圆环，内圈填充为红色
         # self.add_thick_circle(QPointF(0, 0), outer_radius=1000, inner_radius=100, outer_color=Qt.green, inner_color=Qt.red)
+        # 创建浮动展示台
+        self.float_widget = QLabel("", self)
+
+        self.float_widget.setStyleSheet(
+            "QLabel { background-color : rgba(255, 0, 255, 38); padding: 10px; font-size: 18px; }")
+        self.float_widget.setFixedSize(500, 150)  # 设置固定大小，确保有高度
+
+        self.coord_label = self.float_widget
+
+        # 更新浮动展示台的位置
+        self.update_float_position()
+
+    def resizeEvent(self, event):
+        self.update_float_position()
+
+    def update_float_position(self):
+        # 计算浮动展示台的位置，固定在右上角
+        x = self.width() - self.float_widget.width() - 15  # 右边距10
+        y = 0  # 上边距10
+        self.float_widget.setGeometry(
+            QRect(x, y, self.float_widget.width(), self.float_widget.height()))
 
     def set_fence_mode(self, active):
         """启用或禁用电子围栏添加模式"""
         self.fence_mode_active = active
-    
-
 
     def mousePressEvent(self, event):
+        super().mousePressEvent(event)
+
         """处理鼠标点击事件"""
         if self.fence_mode_active:
             # 判断是否是右键点击
@@ -79,9 +96,7 @@ class CarCanvas(QGraphicsView):
                 pos = self.mapToScene(event.pos())
                 # 发射鼠标点击信号
                 self.fence_tool.add_point(pos)
-        
 
-    
     def keyPressEvent(self, event):
         """处理键盘按键事件"""
         if self.fence_mode_active:
@@ -92,43 +107,55 @@ class CarCanvas(QGraphicsView):
                     self.fence_tool.draw_fences()
 
     def mouseMoveEvent(self, event):
+        super().mouseMoveEvent(event)
         """处理鼠标移动事件"""
         if self.fence_mode_active:
             # 获取鼠标当前位置并映射到场景坐标系
             pos = self.mapToScene(event.pos())
             # print(self.mapToScene(event.pos()))
-            
+
             self.fence_tool.update_temp_line(pos)  # 更新临时线
             self.fence_tool.show_coordinates(pos)  # 显示坐标
 
     def add_polygons(self):
         """添加多个多边形区域"""
         polygons = [
-            [QPointF(-100, 100), QPointF(-100, 0),
-             QPointF(0, 0), QPointF(0, 100)],
-# y+100
-            [QPointF(-100, 100+100), QPointF(-100, 0+100),
-             QPointF(0, 0+100), QPointF(0, 100+100)],
-# x-100
-             [QPointF(-100+100, 100), QPointF(-100+100, 0),
-             QPointF(0+100, 0), QPointF(0+100, 100)],
-# x-100  y+100
-             [QPointF(-100+100, 100+100), QPointF(-100+100, 0+100),
-             QPointF(0+100, 0+100), QPointF(0+100, 100+100)],
+            #             [QPointF(-100, 100), QPointF(-100, 0),
+            #              QPointF(0, 0), QPointF(0, 100)],
+            # # y+100
+            #             [QPointF(-100, 100+100), QPointF(-100, 0+100),
+            #              QPointF(0, 0+100), QPointF(0, 100+100)],
+            # # x-100
+            #              [QPointF(-100+100, 100), QPointF(-100+100, 0),
+            #              QPointF(0+100, 0), QPointF(0+100, 100)],
+            # # x-100  y+100
+            #              [QPointF(-100+100, 100+100), QPointF(-100+100, 0+100),
+            #              QPointF(0+100, 0+100), QPointF(0+100, 100+100)],
+            [QPointF(-100, 220), QPointF(-100, -60),
+             QPointF(100, -60), QPointF(100, 220)],
+
+            [QPointF(-100, 340), QPointF(-100, -230),
+             QPointF(-500, -230), QPointF(-500, 340)],
+
+            [QPointF(100, 340), QPointF(100, -230),
+             QPointF(500, -230), QPointF(500, 340)],
+
+            [QPointF(300, 340), QPointF(300, 530),
+             QPointF(-300, 530), QPointF(-300, 340)],
 
         ]
 
         for points in polygons:
             polygon = QPolygonF(points)
             polygon_item = QGraphicsPolygonItem(polygon)
-            polygon_item.setPen(QPen(Qt.blue, 2))
+            polygon_item.setPen(QPen(Qt.transparent, 2))
             polygon_item.setBrush(QBrush(Qt.transparent))
             self.scene().addItem(polygon_item)
             self.polygon_fences.append(polygon_item)
 
-            # 画多边形顶点
-            for point in points:
-                self.add_fence_point(point)
+            # # 画多边形顶点
+            # for point in points:
+            #     self.add_fence_point(point)
 
     def add_fence_point(self, point):
         """在给定位置添加围栏的顶点"""
@@ -182,58 +209,110 @@ class CarCanvas(QGraphicsView):
 
     def add_circles(self):
         """添加多个圆形区域"""
+        # circles = [
+        #     [300, 200, 400],  # 圆心坐标和半径
+        #     [500, 400, 600],
+        #     [700, 600, 800],
+        #     [900, 800, 1000]
+        # ]
         circles = [
-            [300, 200, 400],  # 圆心坐标和半径
-            [500, 400, 600],
-            [700, 600, 800],
-            [900, 800, 1000]
+            # 圆心坐标和半径
+            [650, 500, 800],
+            [1500, 800, 1500]
         ]
 
         # for i in range(0, len(circles)):
         center = QPointF(0, 0)
 
         #  [200, 0, 200]
-        radius = 200
-        circle_item = QGraphicsEllipseItem(
-            center.x() - radius, center.y() - radius, 2 * radius, 2 * radius)
-        circle_item.setPen(QPen(Qt.transparent))
-        circle_item.setBrush(QBrush(Qt.transparent))
-        self.scene().addItem(circle_item)
-        self.circle_fences.append((circle_item, center, 0, 200))
+
+        # radius = 500
+        # circle_item = QGraphicsEllipseItem(
+        #     center.x() - radius, center.y() - radius, 2 * radius, 2 * radius)
+        # circle_item.setPen(QPen(Qt.transparent))
+        # circle_item.setBrush(QBrush(Qt.transparent))
+        # self.scene().addItem(circle_item)
+        # self.circle_fences.append((circle_item, center, 0, 500))
 
         for circle in circles:
-            radius = circle[0]
+            radius = (circle[2]+circle[1])/2
             circle_item = QGraphicsEllipseItem(
                 center.x() - radius, center.y() - radius, 2 * radius, 2 * radius)
-            circle_item.setPen(QPen(self.color_1, 200))
+            circle_item.setPen(QPen(self.color_1, (circle[2]-circle[1])))
             circle_item.setBrush(QBrush(Qt.transparent))
 
             self.scene().addItem(circle_item)
             self.circle_fences.append(
                 (circle_item, center, circle[1], circle[2]))
 
-    def set_key_position(self, x, y):
+    def set_key_position(self, x, y, x1, y1):
         """更新钥匙位置并检查是否进入多边形或圆形区域"""
         new_position = QPointF(x, y)
-
-
+        new_position1 = QPointF(x1, y1)
+        self.coord_label.setText(
+            f"""
+            <div style='font-size: 28px;'>
+        <span style='color: green;'>真实坐标点: ({x1}, {-y1})</span><br>
+        <span style='color: red;'>UWB钥匙坐标点: ({x:.2f}, {-y:.2f})</span><br>
+        <span style='color: purple;'>蓝牙定位区域</span><br>
+    </div>
+            """
+        )
         if self.last_position:
-            pen = QPen(Qt.red, 2)
-            self.scene().addLine(self.last_position.x(), self.last_position.y(), new_position.x(), new_position.y(), pen)
+            line_item = QGraphicsLineItem(self.last_position.x(), self.last_position.y(),
+                                          new_position.x(), new_position.y())
+            line_item.setPen(QPen(Qt.red, 2))  # 设置线段颜色和宽度
+            self.scene().addItem(line_item)
+            self.lines.append(line_item)
+
+            line_item = QGraphicsLineItem(self.last_position1.x(), self.last_position1.y(),
+                                          new_position1.x(), new_position1.y())
+            line_item.setPen(QPen(Qt.green, 2))  # 设置线段颜色和宽度
+            self.scene().addItem(line_item)
+            self.lines1.append(line_item)
+
+            # 检查列表长度，超过50时删除第一个
+            if len(self.lines) > 50:
+                first_line = self.lines.pop(0)
+                self.scene().removeItem(first_line)
+                first_line = self.lines1.pop(0)
+                self.scene().removeItem(first_line)
+
+        # 移动钥匙1
+        if self.key_item1 is None:
+            self.key_item1 = self.scene().addRect(
+                x - 15, y - 15, 30, 30, QPen(Qt.red), QBrush(Qt.red))
+        else:
+            self.key_item1.setRect(x - 25, y - 25, 50, 50)
 
         # 移动钥匙
         if self.key_item is None:
-            self.key_item = self.scene().addEllipse(
-                x - 5, y - 5, 10, 10, QPen(Qt.green), QBrush(Qt.green))
+            self.key_item = self.scene().addRect(
+                x1 - 15, y1 - 15, 30, 30, QPen(Qt.green), QBrush(Qt.green))
         else:
-            self.key_item.setRect(x - 5, y - 5, 10, 10)
+            self.key_item.setRect(x1 - 15, y1 - 15, 30, 30)
 
         # 检查钥匙是否进入多边形区域
         for polygon_item in self.polygon_fences:
             if polygon_item.polygon().containsPoint(new_position, Qt.OddEvenFill):
-                self.highlight_fence(polygon_item, True)  # 高亮多边形
+                if self.last_fence == polygon_item:
+                    self.fence_cont += 1
+                else:
+                    self.last_fence = polygon_item
+
+                if self.fence_cont >= 25:
+                    self.fence_cont = 0
+                    self.highlight_fence(polygon_item, True)  # 高亮多边形
+                    for circle_item, _, min, max in self.circle_fences:
+
+                        self.highlighted = True
+                        if min == 0:
+                            circle_item.setBrush(QBrush(Qt.transparent))
+                        else:
+                            circle_item.setPen(QPen(Qt.transparent))
             else:
                 self.highlight_fence(polygon_item, False)  # 恢复透明
+                self.highlighted = False
 
         # # # 检查钥匙是否进入圆形区域
         # for circle_item, center, radius in self.circle_fences:
@@ -245,43 +324,44 @@ class CarCanvas(QGraphicsView):
         # 检查钥匙是否进入同心圆的圆环区域
         self.check_concentric_circles(new_position)
         self.last_position = new_position
+        self.last_position1 = new_position1
 
-        # 更新钥匙的实时坐标显示
-        self.coord_label.setText(f"X: {x:.2f}, Y: {-y:.2f}")
-
+        # print(int(self.width()/2),int(self.height()/2))
         # 确保钥匙在可见范围内
-        self.ensureVisible(self.key_item, 50, 50)
+        self.ensureVisible(self.key_item, int(
+            self.width()/2)-40, int(self.height()/2)-40)
 
     def check_concentric_circles(self, position):
+        if self.highlighted:
+            return
         """检查钥匙是否在同心圆的圆环或范围之外"""
         # 计算钥匙到圆心的距离
         center = QPoint(0, 0)  # 所有同心圆的中心相同
         distance_to_center = ((position.x() - center.x())
                               ** 2 + (position.y() - center.y())**2)**0.5
-        self.coord_label.setText(f"距离: {distance_to_center:.2f}")
 
         # 初始化一个标志来追踪是否已高亮圆环
         # highlighted = False
         for circle_item, _, min, max in self.circle_fences:
+
             if min < distance_to_center < max:
                 # highlighted = True
-                if min==0:
+                if min == 0:
                     # print(1)
-                    circle_item.setBrush(QBrush(self.color_1)) # 高亮为黄色
+                    circle_item.setBrush(QBrush(self.color_1))  # 高亮为黄色
                     # circle_item.setPen(QPen(Qt.green,200))
                     pass
                 else:
-                    circle_item.setPen(QPen(self.color_1,200))
+                    circle_item.setPen(QPen(self.color_1, (max-min)))
                     pass
             else:
-                if min==0:
+                if min == 0:
                     circle_item.setBrush(QBrush(Qt.transparent))
                     pass
                 else:
                     circle_item.setPen(QPen(Qt.transparent))
                     pass
                 pass
-            
 
     def highlight_fence(self, fence_item, highlight):
         """高亮或取消高亮围栏区域"""
