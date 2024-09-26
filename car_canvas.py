@@ -153,9 +153,9 @@ class CarCanvas(QGraphicsView):
             self.scene().addItem(polygon_item)
             self.polygon_fences.append(polygon_item)
 
-            # # 画多边形顶点
-            # for point in points:
-            #     self.add_fence_point(point)
+            # 画多边形顶点
+            for point in points:
+                self.add_fence_point(point)
 
     def add_fence_point(self, point):
         """在给定位置添加围栏的顶点"""

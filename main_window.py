@@ -58,7 +58,7 @@ class MainWindow(QMainWindow):
         # 使用定时器定期检查队列是否有新位置
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.update_key_position)
-        self.timer.start(5)  # 每50毫秒检查一次队列
+        self.timer.start(50)  # 每50毫秒检查一次队列
 
         # 添加电子围栏的菜单选项
         self.init_menu()
@@ -111,6 +111,7 @@ class MainWindow(QMainWindow):
     #         print(pos)
 
     def update_key_position(self):
+        
         """更新钥匙位置"""
         if not self.queue.empty():
             x, y, x1, y1 = self.queue.get()
@@ -119,3 +120,6 @@ class MainWindow(QMainWindow):
         else:
             x, y, x1, y1 = self.lastpos
             self.canvas.set_key_position(x, y, x1, y1)
+
+
+        

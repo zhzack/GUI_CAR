@@ -1,7 +1,13 @@
 import random
 import time
 from multiprocessing import Queue
-
+import json
+import math
+points = []
+# def generate_key_trajectory(data, process_function):
+#     """通用处理函数"""
+#     result = process_function(data)
+#     return result
 
 # def generate_key_trajectory(queue):
 #     """生成连续的钥匙轨迹并将其放入队列中"""
@@ -26,53 +32,82 @@ from multiprocessing import Queue
 #         # 将新的坐标发送到队列
 #         queue.put((x, -y))
 #         time.sleep(0.2)  # 更小的间隔时间，使轨迹更加平滑
-import math
+
+
+def read_task_file(file_path, task_queue):
+    """读取任务文件并将每个任务放入队列中"""
+    try:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+            for node in data.get("nodes", []):
+                task_queue.put(node)
+    except Exception as e:
+        print(f"读取任务文件时出错: {e}")
+
 
 def generate_key_trajectory(q):
-    """生成连续的钥匙轨迹并将其放入队列中"""
-    trajectory = [
-        (-2000, 0, 0),      # 起始位置
-        (-150, 50, 2.5),    # 驾驶座车门
-        (-50, 50, 1.5),     # 驾驶座
-        (50, 50, 1.5),      # 副驾驶
-        (50, 150, 1.5),     # 右后座
-        (-50, 150, 1.5),    # 左后座
-        (-150, 150, 1.5),   # 左后座车门
-        (-150, 400, 0.5),   # 车子左后方
-        (-0, 400, 1.5),     # 车子正后方
-        (150, 400, 0.5),    # 车子右后方
-        (150, 50, 1.5),     # 副驾驶座车门
-        (2000, 0, 0),       # 结束位置
-    ]
+    file_path = "CreatJsonforCirclePath/LinearPath.json"
+    """读取任务文件并提取节点数据"""
+    try:
+        with open(file_path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+            nodes = data.get("nodes", [])
+            for node in nodes:
+                position = node.get('pos')
+                if position:
+                    x = position.get('x')*100
+                    y = position.get('y')*100
+                    points.append((x, y))
+                    q.put((x, y, 0, 0))
+    except Exception as e:
+        print(f"读取任务文件时出错: {e}")
 
-    speed = 100  # 设置移动速度（单位：像素/秒）
 
-    for i in range(len(trajectory) - 1):
-        start_x, start_y, _ = trajectory[i]
-        end_x, end_y, delay = trajectory[i + 1]
+# def generate_key_trajectory(q):
+#     """生成连续的钥匙轨迹并将其放入队列中"""
+#     trajectory = [
+#         (-2000, 0, 0),      # 起始位置
+#         (-150, 50, 2.5),    # 驾驶座车门
+#         (-50, 50, 1.5),     # 驾驶座
+#         (50, 50, 1.5),      # 副驾驶
+#         (50, 150, 1.5),     # 右后座
+#         (-50, 150, 1.5),    # 左后座
+#         (-150, 150, 1.5),   # 左后座车门
+#         (-150, 400, 0.5),   # 车子左后方
+#         (-0, 400, 1.5),     # 车子正后方
+#         (150, 400, 0.5),    # 车子右后方
+#         (150, 50, 1.5),     # 副驾驶座车门
+#         (2000, 0, 0),       # 结束位置
+#     ]
 
-        # 计算距离
-        distance = math.sqrt((end_x - start_x) ** 2 + (end_y - start_y) ** 2)
-        
-        # 计算移动时间
-        move_time = distance / speed  # 秒
+#     speed = 100  # 设置移动速度（单位：像素/秒）
 
-        steps_per_move = 200  # 每个移动的步数
-        step_x = (end_x - start_x) / steps_per_move
-        step_y = (end_y - start_y) / steps_per_move
+#     for i in range(len(trajectory) - 1):
+#         start_x, start_y, _ = trajectory[i]
+#         end_x, end_y, delay = trajectory[i + 1]
 
-        # 在两个点之间移动
-        for step in range(steps_per_move):
-            x = start_x + step * step_x
-            y = start_y + step * step_y
+#         # 计算距离
+#         distance = math.sqrt((end_x - start_x) ** 2 + (end_y - start_y) ** 2)
 
-            # 添加随机跳动
-            jitter_x = random.uniform(-3, 3)  # 减小抖动幅度
-            jitter_y = random.uniform(-3, 3)
+#         # 计算移动时间
+#         move_time = distance / speed  # 秒
 
-            q.put((x + jitter_x, y + jitter_y, x, y))  # 负y值处理
-            time.sleep(move_time / steps_per_move)
+#         steps_per_move = 200  # 每个移动的步数
+#         step_x = (end_x - start_x) / steps_per_move
+#         step_y = (end_y - start_y) / steps_per_move
 
-        # 停留时间
-        if delay > 0:
-            time.sleep(delay)
+#         # 在两个点之间移动
+#         for step in range(steps_per_move):
+#             x = start_x + step * step_x
+#             y = start_y + step * step_y
+
+#             # 添加随机跳动
+#             jitter_x = random.uniform(-3, 3)  # 减小抖动幅度
+#             jitter_y = random.uniform(-3, 3)
+
+#             q.put((x + jitter_x, y + jitter_y, x, y))  # 负y值处理
+#             time.sleep(move_time / steps_per_move)
+
+#         # 停留时间
+#         if delay > 0:
+#             time.sleep(delay)
