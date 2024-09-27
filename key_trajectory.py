@@ -77,7 +77,9 @@ def generate_key_trajectory(q):
 
     # data = generate_linear_trajectory_json(start, end)
     # , ((4, 5), (0, 5)),((0, 0), (4, 0))
-    segments = [((0, 0), (4, 0)), ((4, 5), (0, 5)), ((4, -2), (-4, -10))]
+    segments = [((0, 0), (4, 0)), ((4, 5), (0, 5)),((0, 0), (4, 0))] 
+    segments = [((0, 9), (0,8.8)), ((1,7.8), (7.7, 7.8)),((7.7,5.8), ( 7.7,-5.8))] 
+    
     data = generate_linears_trajectory_json(segments)
     data = json.loads(data)  # 解析 JSON 字符串
     # print(data)

@@ -1,35 +1,64 @@
-import math
+import numpy as np
+from PyQt5 import QtCore, QtWidgets, QtGui
+import sys
 
-def calculate_arc_parameters(segment1, segment2, radius):
-    # 提取线段的起始点和结束点
-    p1, p2 = segment1
-    p3, p4 = segment2
+class CarPath(QtWidgets.QWidget):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle('Car Path Simulation')
+        self.setGeometry(100, 100, 800, 600)
+        self.path_points = self.generate_path()
+        self.current_index = 0
+        self.timer = QtCore.QTimer(self)
+        self.timer.timeout.connect(self.move_car)
+        self.timer.start(100)  # 每100毫秒更新一次
 
-    # 计算中点作为圆心
-    center_x = (p2[0] + p3[0]) / 2
-    center_y = (p2[1] + p3[1]) / 2
+    def generate_path(self):
+        points = []
+        # S曲线
+        for x in np.linspace(0, 40, 100):
+            y = 2 * np.sin((np.pi / 20) * x) + 2  # S曲线
+            points.append((x, y))
 
-    # 计算起始角度
-    start_angle = math.atan2(p2[1] - center_y, p2[0] - center_x)
-    # 计算结束角度
-    end_angle = math.atan2(p3[1] - center_y, p3[0] - center_x)
+        # 半圆
+        for angle in np.linspace(0, np.pi, 100):
+            x = 40 + 2 * np.cos(angle)
+            y = 4 + 2 * np.sin(angle)
+            points.append((x, y))
 
-    # 判断转弯方向
-    direction_vector = (p3[0] - p2[0], p3[1] - p2[1])
-    turn_direction = 'left' if direction_vector[1] > 0 else 'right'
+        # 从（40，4）到（0，4）
+        for x in np.linspace(40, 0, 100):
+            points.append((x, 4))
 
-    return {
-        "center": (center_x, center_y),
-        "radius": radius,
-        "start_angle": start_angle,
-        "end_angle": end_angle,
-        "direction": turn_direction
-    }
+        return points
 
-# 示例
-segment1 = ((0, 0), (4, 0))  # 第一条线段
-segment2 = ((4, 0), (4, 5))  # 第二条线段
-radius = 2.0  # 小车的转弯半径
+    def move_car(self):
+        if self.current_index < len(self.path_points) - 1:  # 让小车沿路径移动
+            self.current_index += 1
+        else:
+            self.current_index = 0  # 循环移动
 
-arc_parameters = calculate_arc_parameters(segment1, segment2, radius)
-print(arc_parameters)
+        self.update()  # 更新绘制内容
+
+    def paintEvent(self, event):
+        painter = QtGui.QPainter(self)
+        painter.setRenderHint(QtGui.QPainter.Antialiasing)
+
+        # 绘制路径
+        painter.setPen(QtGui.QPen(QtGui.QColor(200, 200, 200), 2))
+        for i in range(1, len(self.path_points)):
+            start_point = QtCore.QPointF(self.path_points[i-1][0], self.path_points[i-1][1])
+            end_point = QtCore.QPointF(self.path_points[i][0], self.path_points[i][1])
+            painter.drawLine(start_point, end_point)
+
+        # 绘制小车
+        if self.current_index < len(self.path_points):
+            car_pos = self.path_points[self.current_index]
+            painter.setBrush(QtGui.QColor(255, 0, 0))
+            painter.drawRect(float(car_pos[0]) - 2, float(car_pos[1]) - 2, 4, 4)  # 小车为一个小方块
+
+if __name__ == '__main__':
+    app = QtWidgets.QApplication(sys.argv)
+    window = CarPath()
+    window.show()
+    sys.exit(app.exec_())
