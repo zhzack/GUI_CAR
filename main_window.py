@@ -116,10 +116,10 @@ class MainWindow(QMainWindow):
         if not self.queue.empty():
             x, y, x1, y1 = self.queue.get()
             self.lastpos = (x, y, x1, y1)
-            self.canvas.set_key_position(x, y, x1, y1)
+            self.canvas.set_key_position(x, -y, x1, y1)
         else:
             x, y, x1, y1 = self.lastpos
-            self.canvas.set_key_position(x, y, x1, y1)
+            self.canvas.set_key_position(x, -y, x1, y1)
 
 
         

@@ -1,6 +1,7 @@
 import random
 import time
 from multiprocessing import Queue
+from CreatJsonforCirclePath import generate_circular_trajectory_json, generate_linear_trajectory_json, generate_linears_trajectory_json
 import json
 import math
 points = []
@@ -34,33 +35,60 @@ points = []
 #         time.sleep(0.2)  # 更小的间隔时间，使轨迹更加平滑
 
 
-def read_task_file(file_path, task_queue):
-    """读取任务文件并将每个任务放入队列中"""
-    try:
-        with open(file_path, 'r', encoding='utf-8') as f:
-            data = json.load(f)
-            for node in data.get("nodes", []):
-                task_queue.put(node)
-    except Exception as e:
-        print(f"读取任务文件时出错: {e}")
+# def read_task_file(file_path, task_queue):
+#     """读取任务文件并将每个任务放入队列中"""
+#     try:
+#         with open(file_path, 'r', encoding='utf-8') as f:
+#             data = json.load(f)
+#             for node in data.get("nodes", []):
+#                 task_queue.put(node)
+#     except Exception as e:
+#         print(f"读取任务文件时出错: {e}")
 
+
+# def generate_key_trajectory(q):
+#     file_path = "CreatJsonforCirclePath/LinearPath.json"
+#     """读取任务文件并提取节点数据"""
+#     try:
+#         with open(file_path, 'r', encoding='utf-8') as f:
+#             data = json.load(f)
+#             nodes = data.get("nodes", [])
+#             for node in nodes:
+#                 position = node.get('pos')
+#                 if position:
+#                     x = position.get('x')*100
+#                     y = position.get('y')*100
+#                     points.append((x, y))
+#                     q.put((x, y, 0, 0))
+#     except Exception as e:
+#         print(f"读取任务文件时出错: {e}")
 
 def generate_key_trajectory(q):
     file_path = "CreatJsonforCirclePath/LinearPath.json"
     """读取任务文件并提取节点数据"""
-    try:
-        with open(file_path, 'r', encoding='utf-8') as f:
-            data = json.load(f)
-            nodes = data.get("nodes", [])
-            for node in nodes:
-                position = node.get('pos')
-                if position:
-                    x = position.get('x')*100
-                    y = position.get('y')*100
-                    points.append((x, y))
-                    q.put((x, y, 0, 0))
-    except Exception as e:
-        print(f"读取任务文件时出错: {e}")
+
+    # 生成直线轨迹的JSON
+    start = (0, 0)  # 起点
+    end = (0, 4)    # 终点
+
+    data = generate_circular_trajectory_json(6)
+    data = data[0]  # 取出 JSON 字符串
+    # print(json_data)
+
+    # data = generate_linear_trajectory_json(start, end)
+    # , ((4, 5), (0, 5)),((0, 0), (4, 0))
+    segments = [((0, 0), (4, 0)), ((4, 5), (0, 5)), ((4, -2), (-4, -10))]
+    data = generate_linears_trajectory_json(segments)
+    data = json.loads(data)  # 解析 JSON 字符串
+    # print(data)
+    nodes = data.get("nodes", [])
+    for node in nodes:
+        position = node.get('pos')
+        if position:
+            x = position.get('x')*100
+            y = position.get('y')*100
+            points.append((x, y))
+            q.put((x, y, 0, 0))
 
 
 # def generate_key_trajectory(q):
