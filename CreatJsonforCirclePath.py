@@ -117,26 +117,40 @@ def calculate_angle(center, point):
     return angle  # 返回值以弧度表示
 
 
-def generate_arc(start_point, end_point, nodes=[], arc_length=0.1):
+def radians_to_degrees(radians):
+    return radians * (180 / math.pi)
+
+
+def generate_arc(start_point, end_point, nodes=[], rotation_direction=1, arc_length=0.1):
 
     radius = calculate_radius(start_point, end_point)
     # 计算圆心位置（在起始点和结束点的中间）
     center_x = (start_point[0] + end_point[0]) / 2
     center_y = (start_point[1] + end_point[1]) / 2
+
     angle_start = calculate_angle((center_x, center_y), start_point)
     angle_end = calculate_angle((center_x, center_y), end_point)
 
     # # # 计算起始和结束角度（半圆）
-    # angle_end -= math.pi*1/4  # 从0开始
-    # angle_start -= math.pi*1/4  # 半圆
-    print(angle_start)
-    print(angle_end)
+    # temp=angle_start
+    # angle_start = angle_end
+    # angle_end = temp
+    print(radians_to_degrees(angle_start))
+    print(radians_to_degrees(angle_end))
+    print(f"angle_start:{angle_start}")
+    print(f"angle_end:{angle_end}")
 
     arc_length_actual = math.pi * radius  # 半圆的弧长
     num_nodes = int(arc_length_actual / arc_length)
-
+    rotation_direction = rotation_direction % 2
+    # 生成节点
     for i in range(num_nodes + 1):
-        angle = angle_start + (angle_end - angle_start) * (i / num_nodes)
+        # 根据旋转方向调整角度计算
+        if rotation_direction == 1:  # 顺时针
+            angle = angle_start + (angle_end - angle_start) * (i / num_nodes)
+        else:  # 逆时针
+            angle = angle_start - (angle_end - angle_start) * (i / num_nodes)
+
         x = round(center_x + radius * math.cos(angle), 3)
         y = round(center_y + radius * math.sin(angle), 3)
         node = {"id": len(nodes) + 1, "pos": {"x": x, "y": y}}
@@ -149,16 +163,16 @@ def generate_linears_trajectory_json(segments, arc_radius=2.0, arc_length=0.1):
     all_nodes = []  # 用于存储所有节点
     last_start_point = None
     last_end_point = None
-
+    i = 1
     for start_point, end_point in segments:
-        print(2)
+        i += 1
         # 如果有前一段线段，则添加圆弧
         if last_start_point is not None and last_end_point is not None:
-            print(1)
-            print(1, len(all_nodes))
+            
+            
             all_nodes = generate_arc(
-                last_end_point, start_point, all_nodes, arc_length)
-            print(1, len(all_nodes))
+                last_end_point, start_point, all_nodes, i,arc_length)
+            
 
         # 生成当前线段的节点并添加到总节点中
         print(3)
@@ -315,9 +329,10 @@ if __name__ == "__main__":
 
     # 生成直线轨迹的JSON
     start = (0, 0)  # 起点
-    end = (4, 0)    # 终点
+    end = (40, 0)    # 终点
     linear_json_output = generate_linear_trajectory_json(start, end)
-    segments = [((0, 0), (4, 0)), ((4, 0), (4, 4)), ((4, 4), (0, 4))]  # 多个线段
+    segments = [((0, 0), (5, 0)), ((5, 4), (0, 4)), ((0, 8), (5, 8)), ((5, 2), (0, 2)), ((0, 6), (5, 6)), ((
+        5, 1), (0, 1)), ((0, 5), (5, 5)), ((5, 9), (0, 9)), ((0, 3), (5, 3)), ((5, 7), (0, 7))]
     # linear_json_output = generate_linears_trajectory_json(segments)
     linear_task_name = "LinearPath"
     save_json_to_file(linear_json_output, linear_task_name)
