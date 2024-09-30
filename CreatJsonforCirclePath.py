@@ -333,7 +333,7 @@ if __name__ == "__main__":
     linear_json_output = generate_linear_trajectory_json(start, end)
     segments = [((0, 0), (5, 0)), ((5, 4), (0, 4)), ((0, 8), (5, 8)), ((5, 2), (0, 2)), ((0, 6), (5, 6)), ((
         5, 1), (0, 1)), ((0, 5), (5, 5)), ((5, 9), (0, 9)), ((0, 3), (5, 3)), ((5, 7), (0, 7))]
-    # linear_json_output = generate_linears_trajectory_json(segments)
+    linear_json_output = generate_linears_trajectory_json(segments)
     linear_task_name = "LinearPath"
     save_json_to_file(linear_json_output, linear_task_name)
     print(f"Linear trajectory saved with task name: {linear_task_name}")
