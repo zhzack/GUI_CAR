@@ -31,13 +31,14 @@ class MainWindow(QMainWindow):
         car_item = QGraphicsPixmapItem(car_pixmap)
 
         # 设置图像的比例
-        car_item.setScale(0.8)  # 设置缩放比例，例如0.5表示缩小一半
+        car_item.setScale(0.655)  # 设置缩放比例，例如0.5表示缩小一半
 
         # 旋转图像
         # car_item.setRotation(45)  # 旋转45度
 
         # 设置图像的初始位置
-        car_item.setPos(-140, -240)
+        car_item.setPos(-115, -210)
+        # car_item.setPos(0, 0)
 
         # 将图像添加到场景中，并设置 z 值为较低的数值
         car_item.setZValue(-1000)  # 将 car_item 设置为最下层
@@ -58,7 +59,7 @@ class MainWindow(QMainWindow):
         # 使用定时器定期检查队列是否有新位置
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.update_key_position)
-        self.timer.start(50)  # 每50毫秒检查一次队列
+        self.timer.start(5)  # 每50毫秒检查一次队列
 
         # 添加电子围栏的菜单选项
         self.init_menu()

@@ -271,12 +271,12 @@ class CarCanvas(QGraphicsView):
             self.scene().addItem(line_item)
             self.lines1.append(line_item)
 
-            # 检查列表长度，超过50时删除第一个
-            if len(self.lines) > 500:
-                first_line = self.lines.pop(0)
-                self.scene().removeItem(first_line)
-                first_line = self.lines1.pop(0)
-                self.scene().removeItem(first_line)
+            # # 检查列表长度，超过50时删除第一个
+            # if len(self.lines) > 500:
+            #     first_line = self.lines.pop(0)
+            #     self.scene().removeItem(first_line)
+            #     first_line = self.lines1.pop(0)
+            #     self.scene().removeItem(first_line)
 
         # 移动钥匙1
         if self.key_item1 is None:

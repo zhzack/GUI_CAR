@@ -62,7 +62,7 @@ points = []
 #                     q.put((x, y, 0, 0))
 #     except Exception as e:
 #         print(f"读取任务文件时出错: {e}")
-def generate_segments(width, length):
+def _generate_segments(width, length):
     segments = []
 
     # 初始线段的起点和终点
@@ -106,9 +106,20 @@ def generate_key_trajectory(q):
     segments = [((0, 0), (4, 0)), ((4, 5), (0, 5)), ((0, 0), (4, 0))]
     segments = [((0, 0), (5, 0)), ((5, 4), (0, 4)), ((0, 8), (5, 8)), ((5, 2), (0, 2)), ((0, 6), (5, 6)), ((
         5, 1), (0, 1)), ((0, 5), (5, 5)), ((5, 9), (0, 9)), ((0, 3), (5, 3)), ((5, 7), (0, 7))]
-    
-    segments = [((0, 0), (4, 0)), ((4, 5), (0, 5)), ((0, 0), (4, 0))]
-    # segments = generate_segments(6, 8)
+
+    x = 2
+    segments = [((0,  0), (x, 0)),  ((x, 5-1), (0, 5-1)),
+                ((0, -1+1), (x, -1+1)), ((x, 6-1),  (0,  6-1)),
+                ((0, -2+1), (x, -2+1)), ((x, 7-1),  (0,  7-1)),
+                ((0, -3+1), (x, -3+1)), ((x, 8-1),  (0,  8-1)),
+                ((0, -4+1), (x, -4+1)), ((x, 9-1),  (0,  9-1)),
+                ((0, -5+1), (x, -5+1)), ((x, 10-1), (0, 10-1)),
+                ((0, -6+1), (x, -6+1)), ((x, 11-1), (0, 11-1)),
+                ((0, -7+1), (x, -7+1)), ((x, 12-1), (0, 12-1)),
+                ((0, -8+1), (x, -8+1)), ((x, 13-1), (0, 13-1)),
+                ((0, -9+1), (x, -9+1)), ((x, 14-1), (0, 14-1)),
+                ]
+    # segments = generate_segments(6, 1, 6)
 
     data = generate_linears_trajectory_json(segments)
     data = json.loads(data)  # 解析 JSON 字符串
@@ -120,7 +131,9 @@ def generate_key_trajectory(q):
             x = position.get('x')*100
             y = position.get('y')*100
             points.append((x, y))
-            q.put((x, y, 0, 0))
+
+            q.put((-y+200, x-130, -y+200, -(x-130)))
+            # q.put((x, y, 0, 0))
 
 
 # def generate_key_trajectory(q):
