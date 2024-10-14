@@ -55,43 +55,51 @@ def generate_line_nodes(start_point, end_point, nodes=[], arc_length=0.1):
         x = round(start_point[0] + i * arc_length * unit_vector[0], 3)
         y = round(start_point[1] + i * arc_length * unit_vector[1], 3)
         node = {"id": i + 1, "pos": {"x": x, "y": y}}
-        nodes.append(node)
 
         # 检查当前位置是否为特殊节点（每隔1米）
-        if i * arc_length % 1 == 0:
+        # print(i * arc_length % 1 == 0)
+        if x % 1 == 0:
             # 检查特殊节点是否已经在普通节点中
-            if not any(n['pos'] == {"x": x, "y": y} for n in nodes):
-                special_node = {
-                    "id": len(nodes) + 1,  # 特殊节点的 id 从普通节点后续开始
-                    "pos": {"x": x, "y": y},
-                    "task": {
-                        "task_id": len(nodes) + 1,
-                        "is_pre_defined": False,
-                        "defined_id": -1,
-                        "repeat_count": 1,
-                        "task_nodes": [
-                            {
-                                "arm_id": 1,
-                                "stay_time": 3,
-                                "arm_pose": {
-                                    "x": 0.04,
-                                    "y": 0.03,
-                                    "z": 0.49,
-                                    "roll": -89.96,
-                                    "pitch": -3.56,
-                                    "yaw": 88.89,
-                                    "joint1": -4.712,
-                                    "joint2": -2.870,
-                                    "joint3": 2.491,
-                                    "joint4": -2.727,
-                                    "joint5": 3.122,
-                                    "joint6": -0.026,
-                                },
-                            }
-                        ],
-                    },
-                }
-                nodes.append(special_node)  # 直接添加到节点列表中
+            # if not any(n['pos'] == {"x": x, "y": y} for n in nodes):
+            lenth_nodes = len(nodes)
+            if lenth_nodes == 0:
+                lenth_nodes = 1
+            else:
+                lenth_nodes += 1
+            special_node = {
+                "id": lenth_nodes,  # 特殊节点的 id 从普通节点后续开始
+                "pos": {"x": x, "y": y},
+                "task": {
+                    "task_id": lenth_nodes,
+                    "is_pre_defined": False,
+                    "defined_id": -1,
+                    "repeat_count": 1,
+                    "task_nodes": [
+                        {
+                            "arm_id": 1,
+                            "stay_time": 3,
+                            "arm_pose": {
+                                "x": 0.04,
+                                "y": 0.03,
+                                "z": 0.49,
+                                "roll": -89.96,
+                                "pitch": -3.56,
+                                "yaw": 88.89,
+                                "joint1": -4.712,
+                                "joint2": -2.870,
+                                "joint3": 2.491,
+                                "joint4": -2.727,
+                                "joint5": 3.122,
+                                "joint6": -0.026,
+                            },
+                        }
+                    ],
+                },
+            }
+            nodes.append(special_node)  # 直接添加到节点列表中
+            # nodes.append(node)
+        else:
+            nodes.append(node)
     return nodes
 
 
@@ -168,11 +176,9 @@ def generate_linears_trajectory_json(segments, arc_radius=2.0, arc_length=0.1):
         i += 1
         # 如果有前一段线段，则添加圆弧
         if last_start_point is not None and last_end_point is not None:
-            
-            
+
             all_nodes = generate_arc(
-                last_end_point, start_point, all_nodes, i,arc_length)
-            
+                last_end_point, start_point, all_nodes, i, arc_length)
 
         # 生成当前线段的节点并添加到总节点中
         print(3)
@@ -331,9 +337,12 @@ if __name__ == "__main__":
     start = (0, 0)  # 起点
     end = (40, 0)    # 终点
     linear_json_output = generate_linear_trajectory_json(start, end)
-    segments = [((0, 0), (5, 0)), ((5, 4), (0, 4)), ((0, 8), (5, 8)), ((5, 2), (0, 2)), ((0, 6), (5, 6)), ((
-        5, 1), (0, 1)), ((0, 5), (5, 5)), ((5, 9), (0, 9)), ((0, 3), (5, 3)), ((5, 7), (0, 7))]
+    segments = [((0, 0), (10, 0)), ((10, 4), (0, 4)), ((0, 8), (10, 8)), ((10, 2), (0, 2)), ((0, 6), (10, 6)), ((
+        10, 1), (0, 1)), ((0, 5), (10, 5)), ((10, 9), (0, 9)), ((0, 3), (10, 3)), ((10, 7), (0, 7))]
+    
+    segments = [((0, 0), (10, 0)), ((10, 4), (0, 4)), ((0, 8), (10, 8)), ((10, 2), (0, 2)), ((0, 6), (10, 6)), ((
+        10, 1), (0, 1)), ((0, 5), (10, 5)), ((10, 9), (0, 9)), ((0, 3), (10, 3)), ((10, 7), (0, 7))]
     linear_json_output = generate_linears_trajectory_json(segments)
-    linear_task_name = "LinearPath"
+    linear_task_name = "sLinearPath10_9"
     save_json_to_file(linear_json_output, linear_task_name)
     print(f"Linear trajectory saved with task name: {linear_task_name}")
