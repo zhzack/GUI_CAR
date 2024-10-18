@@ -12,6 +12,44 @@ from fence_tool import FenceTool
 from PyQt5.QtWidgets import QPushButton
 from PyQt5.QtCore import Qt, QRect
 from car_canvas import CarCanvas
+from PyQt5.QtWidgets import QMenu
+import os
+
+from PyQt5.QtWidgets import (
+    QApplication,
+    QMainWindow,
+    QTextEdit,
+    QLabel,
+    QVBoxLayout,
+    QWidget,
+    QMessageBox,
+    QAction,
+    QFileDialog,
+    QGridLayout,
+    QInputDialog,
+    QDialog,
+)
+from PyQt5.QtWidgets import (
+    QApplication,
+    QDialog,
+    QFormLayout,
+    QLineEdit,
+    QDialogButtonBox,
+    QVBoxLayout,
+    QPushButton,
+    QFileDialog,
+)
+from PyQt5.QtWidgets import (
+    QDialog,
+    QFormLayout,
+    QLineEdit,
+    QDialogButtonBox,
+    QVBoxLayout,
+    QToolBar,
+)
+from PyQt5.QtCore import QThread, pyqtSignal
+
+from mqtt_client import MQTTClient
 
 
 class MainWindow(QMainWindow):
@@ -19,6 +57,23 @@ class MainWindow(QMainWindow):
         super(MainWindow, self).__init__()
         self.setWindowTitle("汽车和钥匙位置")
         self.queue = queue  # 获取共享队列
+
+        self.mqtt_client = MQTTClient()
+        # self.mqtt_client.set_on_connect_callback(self.on_connect_status)
+        # self.mqtt_client.set_on_message_callback(self.on_message_received)
+        self.config = self.mqtt_client.get_config()
+        self.robot_topics = self.config.get("robot_topics", [])
+        self.res_topics = self.config.get("res_topics", {})
+        # print(self.robot_topics, self.res_topics)
+        self.mqtt_res_obj = {}
+
+        self.mqtt_client.connect()
+        self.mqtt_client.subscribe(
+            self.robot_topics + list(self.res_topics.values()))
+
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self.check_connection_status)
+        self.timer.start(1000)  # 每秒检查一次连接状态
 
         # 创建场景和画布
         self.scene = QGraphicsScene(self)
@@ -68,25 +123,130 @@ class MainWindow(QMainWindow):
         # 主布局
         self.layout = QVBoxLayout(self)
 
-
+    def check_connection_status(self):
+        # print("已连接" if self.mqtt_client.is_connected() else "断开")
+        pass
 
     def init_menu(self):
-        """创建菜单选项，选择电子围栏模式"""
         menu_bar = self.menuBar()
-        fence_menu = menu_bar.addMenu('电子围栏')
+        menu_items = {
+            '电子围栏': [
+                ('手动输入', self.manual_input_fence),
+                ('通过鼠标添加', self.start_fence_by_mouse),
+            ],
+            '设置': [
+                ('设置选项1', self.manual_input_fence),
+                ('设置选项2', self.manual_input_fence),
+            ]
+        }
 
-        add_fence_action = QAction('手动输入', self)
-        add_fence_action.triggered.connect(self.manual_input_fence)
+        # 需要直接添加到 menu_bar 的选项
+        direct_actions = [
+            ('小车任务配置', self.edit_task_set),
+            ('开始任务', self.btn_start_stop_pause),
+            ('暂停任务', self.btn_start_stop_pause),
+            ('停止任务', self.btn_start_stop_pause),
+            ('上传任务文件', self.btn_pub_send_task_file)
+        ]
 
-        add_fence_by_mouse_action = QAction('通过鼠标添加', self)
-        add_fence_by_mouse_action.triggered.connect(self.start_fence_by_mouse)
+        menu_bar = self.menuBar()
 
-        fence_menu.addAction(add_fence_action)
-        fence_menu.addAction(add_fence_by_mouse_action)
+        # 创建子菜单
+        for menu_name, actions in menu_items.items():
+            menu = menu_bar.addMenu(menu_name)
+            for action_name, callback in actions:
+                action = QAction(action_name, self)
+                action.triggered.connect(callback)
+                menu.addAction(action)
+
+        # 直接在菜单栏中添加多个选项
+        for action_name, callback in direct_actions:
+            option_action = QAction(action_name, self)
+            option_action.triggered.connect(callback)
+            menu_bar.addAction(option_action)
+
+    def btn_start_stop_pause(self):
+        action = self.sender()
+        print(f"点击了菜单项: {action.text()}")
+        text = action.text()
+        if text == '开始任务':
+            self.mqtt_client.pub_task_control(1)
+        elif text == '暂停任务':
+            self.mqtt_client.pub_task_control(0)
+        elif text == '停止任务':
+            self.mqtt_client.pub_task_control(2)
+
+    def open_file_dialog(self, file_name=False):
+        options = QFileDialog.Options()
+        options |= QFileDialog.ReadOnly
+        current_path = os.path.dirname(os.path.realpath(__file__))
+        file_path, _ = QFileDialog.getOpenFileName(
+            self,
+            "选择文件",
+            os.path.join(current_path, "CreatJsonforCirclePath"),
+            "JSON Files (*.json)",
+            options=options,
+        )
+        if file_name:
+            return os.path.basename(file_path)
+        return file_path if file_path else None
+
+    def btn_pub_send_task_file(self):
+        file_path = self.open_file_dialog()
+        if file_path:
+            self.mqtt_client.pub_send_task_file(file_path)
+
+    def edit_task_set(self):
+        config = self.mqtt_client.get_config()
+        task_set_msg = config["pub_config"]["task_set"]["task_set"]
+
+        dialog = QDialog()
+        dialog.setWindowTitle("设置任务")
+
+        layout = QVBoxLayout()
+        form_layout = QFormLayout()
+        input_fields = {}
+
+        for key, value in task_set_msg.items():
+            if key == "task_file":
+                file_button = QPushButton(task_set_msg["task_file"])
+                file_button.clicked.connect(
+                    lambda: file_button.setText(self.open_file_dialog(True))
+                )
+                form_layout.addRow(key, file_button)
+                input_fields[key] = file_button
+            else:
+                input_field = QLineEdit(str(value))
+                form_layout.addRow(key, input_field)
+                input_fields[key] = input_field
+
+        layout.addLayout(form_layout)
+
+        button_box = QDialogButtonBox(
+            QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        button_box.accepted.connect(dialog.accept)
+        button_box.rejected.connect(dialog.reject)
+        layout.addWidget(button_box)
+
+        dialog.setLayout(layout)
+
+        if dialog.exec_() == QDialog.Accepted:
+            for key, input_field in input_fields.items():
+                if key == "task_file":
+                    task_set_msg[key] = input_field.text()
+                else:
+                    task_set_msg[key] = input_field.text()
+            self.mqtt_client.pub_task_control(2)
+            self.mqtt_client.pub_task_set()
+            return task_set_msg
+        else:
+            return None
 
     def manual_input_fence(self):
         """手动输入围栏的顶点"""
         # 这里可以添加手动输入围栏顶点的代码
+        action = self.sender()
+        print(f"点击了菜单项: {action.text()}")
 
     def start_fence_by_mouse(self):
         """通过鼠标点击添加围栏"""
@@ -112,7 +272,6 @@ class MainWindow(QMainWindow):
     #         print(pos)
 
     def update_key_position(self):
-        
         """更新钥匙位置"""
         if not self.queue.empty():
             x, y, x1, y1 = self.queue.get()
@@ -121,6 +280,3 @@ class MainWindow(QMainWindow):
         else:
             x, y, x1, y1 = self.lastpos
             self.canvas.set_key_position(x, -y, x1, y1)
-
-
-        

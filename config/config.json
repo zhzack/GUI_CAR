@@ -1,0 +1,129 @@
+{
+    "broker": "212.129.236.95",
+    "port": 1883,
+    "keepalive_interval": 60,
+    "username": "sytest1",
+    "password": "sytest1",
+    "pub_config": {
+        "task_set": {
+            "topic": "/sy/user/task_set",
+            "task_set": {
+                "origin_latitude": "31.28557135",
+                "origin_longitude": "121.62910517",
+                "offset_latitude": "31.28553199",
+                "offset_longitude": "121.62910516",
+                "allowed_car_offset": 3.0,
+                "task_file": "CirclePath_Rad3m.json"
+            }
+        },
+        "control": {
+            "topic": "/sy/user/control",
+            "control": {
+                "cmd": 0,
+                "start_from_id": 0
+            }
+        },
+        "arm_set": {
+            "topic": "/sy/user/arm_set",
+            "arm_set": {
+                "arm_pose": {
+                    "x": 1.23,
+                    "y": 1.23,
+                    "z": 1.23,
+                    "roll": 1.23,
+                    "pitch": 1.23,
+                    "yaw": 1.23
+                }
+            }
+        },
+        "setting": {
+            "topic": "/sy/user/setting",
+            "setting": {
+                "heatbeat_interval": 1000,
+                "max_vehicle_speed_limit": 3.0,
+                "min_vehicle_speed_limit": 1.0,
+                "robot_arm_speed_rate": 0.25
+            }
+        },
+        "send_task_file": {
+            "topic": "/sy/user/send_task_file",
+            "send_task_file": {
+                "file_name": "default.json",
+                "override": true,
+                "basecode": ""
+            }
+        },
+        "request_task_file": {
+            "topic": "/sy/user/request_task_file",
+            "request_task_file": {
+                "request_all": false,
+                "file_name": "default.json"
+            }
+        }
+    },
+    "res_topics": {
+        "task_set": "/sy/res/user/task_set",
+        "control": "/sy/res/user/control",
+        "setting": "/sy/res/user/setting",
+        "send_task_file": "/sy/res/user/send_task_file",
+        "request_task_file": "/sy/res/user/request_task_file"
+    },
+    "robot_topics": [
+        "/sy/robot/heart_beat",
+        "/sy/robot/message"
+    ],
+    "headers0" :[
+        "sessionNumber",
+        "sessionID",
+        "MACAddress",
+        "status",
+        "Distance",
+        "AoAAzimuth",
+        "AoAAzimuthFOM",
+        "AoAElevation",
+        "AoAElevationFOM",
+        "PdoaFirst",
+        "PdoaSecond",
+        "PdoaThird",
+        "DstAoAAzimuth",
+        "DstAoAAzimuthFOM",
+        "DstAoAElevation",
+        "DstAoAElevationFOM",
+        "DstPdoaFirst",
+        "DstPdoaSecond",
+        "DstPdoaThird",
+        "RSSI"
+    ],
+
+    "headers1" : [
+        "sessionNumber",
+        "PdoaFirst",
+        "PdoaSecond",
+        "PdoaThird",
+        "AoAElevation",
+        "AoAAzimuth",
+        "Distance",
+        "x",
+        "y",
+        "z",
+        "x1",
+        "y1",
+        "z1",
+        "AoAAzimuth1"
+    ],
+
+    "headers" : [
+        "sessionNumber",
+        "PdoaFirst",
+        "PdoaSecond",
+        "PdoaThird",
+        "AoAElevation",
+        "AoAAzimuth",
+        "Distance",
+        "x",
+        "y",
+        "z",
+        "RSSI",
+        "timestamp"
+    ]
+}

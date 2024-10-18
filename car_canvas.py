@@ -252,10 +252,10 @@ class CarCanvas(QGraphicsView):
         self.coord_label.setText(
             f"""
             <div style='font-size: 28px;'>
-        <span style='color: green;'>真实坐标点: ({x1}, {-y1})</span><br>
-        <span style='color: red;'>UWB钥匙坐标点: ({x:.2f}, {-y:.2f})</span><br>
-        <span style='color: purple;'>蓝牙定位区域</span><br>
-    </div>
+                <span style='color: green;'>真实坐标点: ({x1}, {-y1})</span><br>
+                <span style='color: red;'>UWB钥匙坐标点: ({x:.2f}, {-y:.2f})</span><br>
+                <span style='color: purple;'>蓝牙定位区域</span><br>
+            </div>
             """
         )
         if self.last_position:
@@ -328,8 +328,8 @@ class CarCanvas(QGraphicsView):
 
         # print(int(self.width()/2),int(self.height()/2))
         # 确保钥匙在可见范围内
-        self.ensureVisible(self.key_item, int(
-            self.width()/2)-40, int(self.height()/2)-40)
+        # self.ensureVisible(self.key_item, int(
+        #     self.width()/2)-40, int(self.height()/2)-40)
 
     def check_concentric_circles(self, position):
         if self.highlighted:

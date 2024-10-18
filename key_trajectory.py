@@ -46,70 +46,72 @@ points = []
 #         print(f"读取任务文件时出错: {e}")
 
 
-def generate_key_trajectory(q):
-    file_path = "CreatJsonforCirclePath/cir.json"
-    """读取任务文件并提取节点数据"""
-    try:
-        with open(file_path, 'r', encoding='utf-8') as f:
-            data = json.load(f)
-            nodes = data.get("nodes", [])
-            for node in nodes:
-                position = node.get('pos')
-                if position:
-                    x = position.get('x')*100
-                    y = position.get('y')*100
-                    points.append((x, y))
-                    q.put((x, y, 0, 0))
-    except Exception as e:
-        print(f"读取任务文件时出错: {e}")
-
-
-
 # def generate_key_trajectory(q):
-#     file_path = "CreatJsonforCirclePath/LinearPath.json"
+#     file_path = "CreatJsonforCirclePath/cir.json"
 #     """读取任务文件并提取节点数据"""
+#     try:
+#         with open(file_path, 'r', encoding='utf-8') as f:
+#             data = json.load(f)
+#             nodes = data.get("nodes", [])
+#             for node in nodes:
+#                 position = node.get('pos')
+#                 if position:
+#                     x = position.get('x')*100
+#                     y = position.get('y')*100
+#                     points.append((x, y))
+#                     q.put((x, y, 0, 0))
+#     except Exception as e:
+#         print(f"读取任务文件时出错: {e}")
 
-#     # 生成直线轨迹的JSON
-#     start = (0, 0)  # 起点
-#     end = (0, 4)    # 终点
 
-#     data = generate_circular_trajectory_json(6)
-#     data = data[0]  # 取出 JSON 字符串
-#     # print(json_data)
 
-#     # data = generate_linear_trajectory_json(start, end)
-#     # , ((4, 5), (0, 5)),((0, 0), (4, 0))
-#     segments = [((0, 0), (4, 0)), ((4, 5), (0, 5)), ((0, 0), (4, 0))]
-#     segments = [((0, 0), (5, 0)), ((5, 4), (0, 4)), ((0, 8), (5, 8)), ((5, 2), (0, 2)), ((0, 6), (5, 6)), ((
-#         5, 1), (0, 1)), ((0, 5), (5, 5)), ((5, 9), (0, 9)), ((0, 3), (5, 3)), ((5, 7), (0, 7))]
+def generate_key_trajectory(q):
+    file_path = "CreatJsonforCirclePath/cir_l.json"
+    """读取任务文件并提取节点数据"""
 
-#     x = 2
-#     segments = [((0,  0), (x, 0)),  ((x, 5-1), (0, 5-1)),
-#                 ((0, -1+1), (x, -1+1)), ((x, 6-1),  (0,  6-1)),
-#                 ((0, -2+1), (x, -2+1)), ((x, 7-1),  (0,  7-1)),
-#                 ((0, -3+1), (x, -3+1)), ((x, 8-1),  (0,  8-1)),
-#                 ((0, -4+1), (x, -4+1)), ((x, 9-1),  (0,  9-1)),
-#                 ((0, -5+1), (x, -5+1)), ((x, 10-1), (0, 10-1)),
-#                 ((0, -6+1), (x, -6+1)), ((x, 11-1), (0, 11-1)),
-#                 ((0, -7+1), (x, -7+1)), ((x, 12-1), (0, 12-1)),
-#                 ((0, -8+1), (x, -8+1)), ((x, 13-1), (0, 13-1)),
-#                 ((0, -9+1), (x, -9+1)), ((x, 14-1), (0, 14-1)),
-#                 ]
-#     # segments = generate_segments(6, 1, 6)
+    # 生成直线轨迹的JSON
+    start = (0, 0)  # 起点
+    end = (0, 4)    # 终点
 
-#     data = generate_linears_trajectory_json(segments)
-#     data = json.loads(data)  # 解析 JSON 字符串
-#     # print(data)
-#     nodes = data.get("nodes", [])
-#     for node in nodes:
-#         position = node.get('pos')
-#         if position:
-#             x = position.get('x')*100
-#             y = position.get('y')*100
-#             points.append((x, y))
+    data = generate_circular_trajectory_json(6)
+    data = data[0]  # 取出 JSON 字符串
+    # print(json_data)
 
-#             q.put((-y+200, x-130, -y+200, -(x-130)))
-#             # q.put((x, y, 0, 0))
+    # data = generate_linear_trajectory_json(start, end)
+    # , ((4, 5), (0, 5)),((0, 0), (4, 0))
+    segments = [((0, 0), (4, 0)), ((4, 5), (0, 5)), ((0, 0), (4, 0))]
+    segments = [((0, 0), (5, 0)), ((5, 4), (0, 4)), ((0, 8), (5, 8)), ((5, 2), (0, 2)), ((0, 6), (5, 6)), ((
+        5, 1), (0, 1)), ((0, 5), (5, 5)), ((5, 9), (0, 9)), ((0, 3), (5, 3)), ((5, 7), (0, 7))]
+
+    x = 2
+    segments = [((0,  0), (x, 0)),  ((x, 5-1), (0, 5-1)),
+                ((0, -1+1), (x, -1+1)), ((x, 6-1),  (0,  6-1)),
+                ((0, -2+1), (x, -2+1)), ((x, 7-1),  (0,  7-1)),
+                ((0, -3+1), (x, -3+1)), ((x, 8-1),  (0,  8-1)),
+                ((0, -4+1), (x, -4+1)), ((x, 9-1),  (0,  9-1)),
+                ((0, -5+1), (x, -5+1)), ((x, 10-1), (0, 10-1)),
+                ((0, -6+1), (x, -6+1)), ((x, 11-1), (0, 11-1)),
+                ((0, -7+1), (x, -7+1)), ((x, 12-1), (0, 12-1)),
+                ((0, -8+1), (x, -8+1)), ((x, 13-1), (0, 13-1)),
+                ((0, -9+1), (x, -9+1)), ((x, 14-1), (0, 14-1)),
+                ]
+    # segments = generate_segments(6, 1, 6)
+
+    data = generate_linears_trajectory_json(segments)
+    data = json.loads(data)  # 解析 JSON 字符串
+
+    
+    # print(data)
+    nodes = data.get("nodes", [])
+    for node in nodes:
+        position = node.get('pos')
+        if position:
+            x = position.get('x')*100
+            y = position.get('y')*100
+            points.append((x, y))
+
+            q.put((-y+200, x-130, -y+200, -(x-130)))
+            # q.put((x, y, 0, 0))
 
 
 # def generate_key_trajectory(q):
