@@ -8,18 +8,18 @@
         "task_set": {
             "topic": "/sy/user/task_set",
             "task_set": {
-                "origin_latitude": "31.28557135",
-                "origin_longitude": "121.62910517",
-                "offset_latitude": "31.28553199",
-                "offset_longitude": "121.62910516",
-                "allowed_car_offset": 3.0,
-                "task_file": "CirclePath_Rad3m.json"
+                "origin_latitude": "31.1546225",
+                "origin_longitude": "120.265441",
+                "offset_latitude": "31.1547225",
+                "offset_longitude": "120.275442",
+                "allowed_car_offset": "3.0",
+                "task_file": "cir_l1.json"
             }
         },
         "control": {
             "topic": "/sy/user/control",
             "control": {
-                "cmd": 0,
+                "cmd": 2,
                 "start_from_id": 0
             }
         },
@@ -72,7 +72,7 @@
         "/sy/robot/heart_beat",
         "/sy/robot/message"
     ],
-    "headers0" :[
+    "headers0": [
         "sessionNumber",
         "sessionID",
         "MACAddress",
@@ -94,8 +94,7 @@
         "DstPdoaThird",
         "RSSI"
     ],
-
-    "headers1" : [
+    "headers1": [
         "sessionNumber",
         "PdoaFirst",
         "PdoaSecond",
@@ -111,8 +110,7 @@
         "z1",
         "AoAAzimuth1"
     ],
-
-    "headers" : [
+    "headers": [
         "sessionNumber",
         "PdoaFirst",
         "PdoaSecond",
@@ -123,6 +121,9 @@
         "x",
         "y",
         "z",
+        "DstPdoaFirst",
+        "DstPdoaSecond",
+        "DstPdoaThird",
         "RSSI",
         "timestamp"
     ]

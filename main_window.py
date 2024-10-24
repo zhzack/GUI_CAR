@@ -14,6 +14,7 @@ from PyQt5.QtCore import Qt, QRect
 from car_canvas import CarCanvas
 from PyQt5.QtWidgets import QMenu
 import os
+import json
 
 from PyQt5.QtWidgets import (
     QApplication,
@@ -61,7 +62,7 @@ class MainWindow(QMainWindow):
         self.mqtt_client = MQTTClient()
         # self.mqtt_client.set_on_connect_callback(self.on_connect_status)
         # self.mqtt_client.set_on_message_callback(self.on_message_received)
-        self.config = self.mqtt_client.get_config()
+        self.config = self.mqtt_client.config
         self.robot_topics = self.config.get("robot_topics", [])
         self.res_topics = self.config.get("res_topics", {})
         # print(self.robot_topics, self.res_topics)
@@ -140,17 +141,6 @@ class MainWindow(QMainWindow):
             ]
         }
 
-        # 需要直接添加到 menu_bar 的选项
-        direct_actions = [
-            ('小车任务配置', self.edit_task_set),
-            ('开始任务', self.btn_start_stop_pause),
-            ('暂停任务', self.btn_start_stop_pause),
-            ('停止任务', self.btn_start_stop_pause),
-            ('上传任务文件', self.btn_pub_send_task_file)
-        ]
-
-        menu_bar = self.menuBar()
-
         # 创建子菜单
         for menu_name, actions in menu_items.items():
             menu = menu_bar.addMenu(menu_name)
@@ -159,11 +149,43 @@ class MainWindow(QMainWindow):
                 action.triggered.connect(callback)
                 menu.addAction(action)
 
+        # 需要直接添加到 menu_bar 的选项
+        direct_actions = [
+            ('小车任务配置', self.edit_task_set),
+            ('开始任务', self.btn_start_stop_pause),
+            ('暂停任务', self.btn_start_stop_pause),
+            ('停止任务', self.btn_start_stop_pause),
+            ('上传任务文件', self.btn_pub_send_task_file),
+            ('设置任务轨迹', self.btn_set_task_path),
+            ('清除任务轨迹', self.btn_set_task_path),
+
+        ]
+
         # 直接在菜单栏中添加多个选项
         for action_name, callback in direct_actions:
             option_action = QAction(action_name, self)
             option_action.triggered.connect(callback)
             menu_bar.addAction(option_action)
+
+    def btn_set_task_path(self):
+
+        with open(json_path, 'r') as file:
+            self.data = json.load(file)
+        self.points = []  # 用于存储添加的点
+        for node in self.data["nodes"]:
+            x = node["pos"]["x"] * 100  # 缩放位置
+            y = node["pos"]["y"] * 100
+
+            # 判断是否有任务属性
+            if "task" in node:
+                point = QGraphicsEllipseItem(x, y, 10, 10)  # 任务点
+                point.setBrush('red')  # 用红色表示
+            else:
+                point = QGraphicsEllipseItem(x, y, 10, 10)  # 普通点
+                point.setBrush('blue')  # 用蓝色表示
+
+            self.scene.addItem(point)  # 添加到场景中
+            self.points.append(point)  # 存储点的引用
 
     def btn_start_stop_pause(self):
         action = self.sender()
@@ -197,12 +219,11 @@ class MainWindow(QMainWindow):
             self.mqtt_client.pub_send_task_file(file_path)
 
     def edit_task_set(self):
-        config = self.mqtt_client.get_config()
+        config = self.mqtt_client.config
         task_set_msg = config["pub_config"]["task_set"]["task_set"]
 
         dialog = QDialog()
         dialog.setWindowTitle("设置任务")
-
         layout = QVBoxLayout()
         form_layout = QFormLayout()
         input_fields = {}
@@ -219,6 +240,7 @@ class MainWindow(QMainWindow):
                 input_field = QLineEdit(str(value))
                 form_layout.addRow(key, input_field)
                 input_fields[key] = input_field
+        
 
         layout.addLayout(form_layout)
 

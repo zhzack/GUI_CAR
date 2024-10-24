@@ -59,11 +59,15 @@ class MQTTClient:
             with open(self.config_path, "w") as file:
                 json.dump(default_config, file, indent=4)
             return default_config
-
-    def get_config(self):
-        self.config = self.load_config()
-
-        return self.config
+        
+    def save_config(self, new_config):
+        """保存当前配置到文件中"""
+        try:
+            with open(self.config_path, "w") as file:
+                json.dump(new_config, file, indent=4)
+            print("配置已保存成功")
+        except Exception as e:
+            print(f"保存配置文件出错: {e}")
 
     def connect(self):
         self.client.username_pw_set(self.username, self.password)
@@ -120,6 +124,9 @@ class MQTTClient:
         topic = task_set["topic"]
         data = task_set["task_set"]
         print("设置任务成功")
+
+        self.save_config(self.config)
+
         self.publish(topic, json.dumps(data))
 
     def pub_task_control(self, cmd=0, start_from_id=0):
