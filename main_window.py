@@ -157,7 +157,7 @@ class MainWindow(QMainWindow):
             ('停止任务', self.btn_start_stop_pause),
             ('上传任务文件', self.btn_pub_send_task_file),
             ('设置任务轨迹', self.btn_set_task_path),
-            ('清除任务轨迹', self.btn_set_task_path),
+            ('清除任务轨迹', self.btn_remove_task_path),
 
         ]
 
@@ -166,23 +166,36 @@ class MainWindow(QMainWindow):
             option_action = QAction(action_name, self)
             option_action.triggered.connect(callback)
             menu_bar.addAction(option_action)
+    def btn_remove_task_path(self):
+        for point in self.points:
+            self.scene.removeItem(point)  # 从场景中移除点
+        self.points.clear()  # 清空点的引用列表
 
     def btn_set_task_path(self):
 
-        with open(json_path, 'r') as file:
+        self.json_path = self.mqtt_client.config['pub_config']["task_set"]["task_set"]["task_file"]
+
+        self.json_path = os.path.join(
+            self.mqtt_client.current_path, "CreatJsonforCirclePath", self.json_path)
+
+        print(self.json_path)
+        with open(self.json_path, 'r') as file:
             self.data = json.load(file)
         self.points = []  # 用于存储添加的点
         for node in self.data["nodes"]:
-            x = node["pos"]["x"] * 100  # 缩放位置
-            y = node["pos"]["y"] * 100
+            y = -node["pos"]["x"] * 100+267  # 缩放位置
+            x = -node["pos"]["y"] * 100+150
 
+            # x = -node["pos"]["y"] * 100+200  # 缩放位置
+            # y = node["pos"]["x"] * 100-130
+            
             # 判断是否有任务属性
             if "task" in node:
                 point = QGraphicsEllipseItem(x, y, 10, 10)  # 任务点
-                point.setBrush('red')  # 用红色表示
+                point.setBrush(QBrush(Qt.red))  # 用红色表示
             else:
                 point = QGraphicsEllipseItem(x, y, 10, 10)  # 普通点
-                point.setBrush('blue')  # 用蓝色表示
+                point.setBrush(QBrush(Qt.green))  # 用蓝色表示
 
             self.scene.addItem(point)  # 添加到场景中
             self.points.append(point)  # 存储点的引用
@@ -240,7 +253,6 @@ class MainWindow(QMainWindow):
                 input_field = QLineEdit(str(value))
                 form_layout.addRow(key, input_field)
                 input_fields[key] = input_field
-        
 
         layout.addLayout(form_layout)
 
@@ -298,7 +310,7 @@ class MainWindow(QMainWindow):
         if not self.queue.empty():
             x, y, x1, y1 = self.queue.get()
             self.lastpos = (x, y, x1, y1)
-            self.canvas.set_key_position(x, -y, x1, y1)
+            self.canvas.set_key_position(x, -y, x, -y)
         else:
             x, y, x1, y1 = self.lastpos
-            self.canvas.set_key_position(x, -y, x1, y1)
+            self.canvas.set_key_position(x, -y, x, -y)
