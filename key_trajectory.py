@@ -110,7 +110,7 @@ def generate_key_trajectory(q):
             y = position.get('y')*100
             points.append((x, y))
 
-            q.put((-y+150, x-267, -y+200, x-130-100,))
+            q.put((-y+150, x-267, -y+150, x-267,))
             # q.put((x, y, 0, 0))
 
 
