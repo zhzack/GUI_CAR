@@ -346,22 +346,22 @@ def list_to_str():
 
 if __name__ == "__main__":
     # # 设置参数
-    # radius = 3  # 半径为10
-    # current_path = os.path.dirname(os.path.realpath(__file__))
-    # print(f"current_path:{current_path}")
+    radius = 8  # 半径为10
+    current_path = os.path.dirname(os.path.realpath(__file__))
+    print(f"current_path:{current_path}")
 
-    # arc_length = 0.1  # 两节点之间的弧长约为0.1米
-    # task_name = (
-    #     "CirclePath_Rad" + str(radius) + "m"
-    # )  # _'+datetime.now().strftime("%Y-%m-%d-%H%M%S")
-    # task_name = os.path.join(current_path, task_name)
-    # print(f"task_name:{task_name}")
-    # list_to_str()
+    arc_length = 0.1  # 两节点之间的弧长约为0.1米
+    task_name = (
+        "CirclePath_Rad" + str(radius) + "m"
+    )  # _'+datetime.now().strftime("%Y-%m-%d-%H%M%S")
+    task_name = os.path.join(current_path, task_name)
+    print(f"task_name:{task_name}")
+    list_to_str()
 
     # # 生成圆形轨迹的JSON
-    # json_output, taskId_points = generate_circular_trajectory_json(radius)
+    json_output, taskId_points = generate_circular_trajectory_json(radius)
 
-    # save_json_to_file(json_output, task_name)
+    save_json_to_file(json_output, task_name)
     # print(f"taskId_points:{taskId_points}")
 
     # _, sdd = generate_circular_trajectory_json(3)

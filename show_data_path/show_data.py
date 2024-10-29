@@ -5,11 +5,15 @@ from matplotlib.colors import Normalize
 from matplotlib.cm import ScalarMappable
 
 # 假设数据已加载到 DataFrame 中
-data = pd.read_csv('your_data.csv')
+data = pd.read_csv('8m绕圈2.csv')
+
+str_uwb_distance='NDLB_VKM_PrivateCAN_V1.0.7_0x78_V1::CAR_UWB::uwb_fob_location_distance'
+str_Carsts_X='NDLB_VKM_PrivateCAN_V1.0.7_0x78_V1::CarSts::Carsts_X'
+str_Carsts_Y='NDLB_VKM_PrivateCAN_V1.0.7_0x78_V1::CarSts::Carsts_Y'
 
 # 确定 uwb_fob_location_distance 的最大和最小值
-min_value = data['uwb_fob_location_distance'].min()
-max_value = data['uwb_fob_location_distance'].max()
+min_value = data[str_uwb_distance].min()
+max_value = data[str_uwb_distance].max()
 
 # 创建归一化对象
 norm = Normalize(vmin=min_value, vmax=max_value)
@@ -17,8 +21,8 @@ cmap = plt.cm.viridis
 
 # 创建图形和坐标轴
 fig, ax = plt.subplots()
-x = data['Carsts_X']
-y = data['Carsts_Y']
+x = data[str_Carsts_X]
+y = data[str_Carsts_Y]
 plt.scatter(x, y, c=(1, 0, 0, 1),s=1)
 
 
@@ -28,9 +32,9 @@ x=0
 y=0
 # 遍历每一行数据，逐个添加坐标点
 for index, row in data.iterrows():
-    uwb_distance = row['uwb_fob_location_distance']
-    x1 = row['Carsts_X']
-    y1 = row['Carsts_Y']
+    uwb_distance = row[str_uwb_distance]
+    x1 = row[str_Carsts_X]
+    y1 = row[str_Carsts_Y]
     if pd.notna(x1) and pd.notna(y1) :
         x=x1
         y=y1
@@ -45,8 +49,8 @@ sm.set_array([])  # 空数组，以激活颜色条
 cbar = plt.colorbar(sm, ax=ax)  # 指定颜色条要附加的坐标轴
 
 # 设置标签和标题
-ax.set_xlabel('Carsts_X')
-ax.set_ylabel('Carsts_Y')
+ax.set_xlabel('str_Carsts_X')
+ax.set_ylabel('str_Carsts_Y')
 ax.set_title('坐标点颜色表示 uwb_fob_location_distance')
 
 # 显示图表

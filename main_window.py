@@ -184,7 +184,7 @@ class MainWindow(QMainWindow):
         self.points = []  # 用于存储添加的点
         for node in self.data["nodes"]:
             y = -node["pos"]["x"] * 100+267  # 缩放位置
-            x = -node["pos"]["y"] * 100+150
+            x = -node["pos"]["y"] * 100+145
 
             # x = -node["pos"]["y"] * 100+200  # 缩放位置
             # y = node["pos"]["x"] * 100-130
