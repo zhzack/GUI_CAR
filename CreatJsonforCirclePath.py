@@ -369,7 +369,7 @@ if __name__ == "__main__":
 
     # 生成直线轨迹的JSON
     start = (0, 0)  # 起点
-    end = (4, 0)    # 终点
+    end = (100, 0)    # 终点
     linear_json_output = generate_linear_trajectory_json(start, end)
     segments = [((0, 0), (10, 0)), ((10, 4), (0, 4)), ((0, 8), (10, 8)), ((10, 2), (0, 2)), ((0, 6), (10, 6)), ((
         10, 1), (0, 1)), ((0, 5), (10, 5)), ((10, 9), (0, 9)), ((0, 3), (10, 3)), ((10, 7), (0, 7))]
@@ -418,7 +418,7 @@ if __name__ == "__main__":
                 ((1, -9+1), (x, -9+1)), ((x, 14-2), (1, 14-2)),
                 ]
 
-    linear_json_output = generate_linears_trajectory_json(segments)
-    linear_task_name = "cirRRRRR"
+    # linear_json_output = generate_linears_trajectory_json(segments)
+    linear_task_name = "linePath100"
     save_json_to_file(linear_json_output, linear_task_name)
     print(f"Linear trajectory saved with task name: {linear_task_name}")

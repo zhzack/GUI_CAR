@@ -8,7 +8,8 @@ from paho.mqtt import client as mqtt_client
 
 
 class MQTTClient:
-    def __init__(self):
+    def __init__(self,queue):
+        self.queue=queue
         self.current_path = os.path.dirname(os.path.realpath(__file__))
         self.config_path = os.path.join(
             self.current_path, "config", "config.json")
@@ -59,7 +60,7 @@ class MQTTClient:
             with open(self.config_path, "w") as file:
                 json.dump(default_config, file, indent=4)
             return default_config
-        
+
     def save_config(self, new_config):
         """保存当前配置到文件中"""
         try:
@@ -192,31 +193,41 @@ class MQTTClient:
     def merge_data(self, msg):
         payload = json.loads(msg.payload)
         pose = payload.get("pose", {})
-        task_status = payload.get("task_status", "未知")
-        current_task_id = payload.get("current_task_id", "未知")
         time_stamp = payload.get("timestamp", "未知")
+
+        task_status = payload.get("task_status", "未知")
         current_robot_status = payload.get("current_robot_status", "未知")
+        current_arm_status = payload.get("current_arm_status", "未知")
+        current_task_id = payload.get("current_task_id", "未知")
+        obstacle_status = payload.get("obstacle_status", "未知")
+        battery_status = payload.get("battery_status", "未知")
+        arm_id = payload.get("arm_id", "未知")
+        arm_pose = payload.get("arm_pose", "未知")
 
         msg_object = {
             "local_angle": pose.get("local_angle", 0),
             "local_x": pose.get("local_x", 0),
             "local_y": pose.get("local_y", 0),
-            "current_task_id": current_task_id,
             "latitude": pose.get("latitude", 0),
             "longitude": pose.get("longitude", 0),
             "altitude": pose.get("altitude", 0),
             "rev_time": int(time.time() * 1000),
             "timestamp": time_stamp,
             "task_status": task_status,
+            "current_task_id": current_task_id,
             "current_robot_status": current_robot_status,
+            "current_arm_status": current_arm_status,
             "topic": msg.topic,
         }
-
+        
         # print(msg_object)
         return msg_object
 
     def handle_robot_heart_beat(self, msg):
         msg_object = self.merge_data(msg)
+        # print(msg_object["local_x"],msg_object["local_y"],0,0)
+        self.queue.put((float(msg_object["local_x"])*100,float(msg_object["local_y"])*100))
+
         # self.plot_mqtt.update_plot(msg_object["local_x"], msg_object["local_y"])
         # self.mqtt_res_obj = self.merge_data(msg)
 

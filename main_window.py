@@ -59,7 +59,7 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("汽车和钥匙位置")
         self.queue = queue  # 获取共享队列
 
-        self.mqtt_client = MQTTClient()
+        self.mqtt_client = MQTTClient(self.queue)
         # self.mqtt_client.set_on_connect_callback(self.on_connect_status)
         # self.mqtt_client.set_on_message_callback(self.on_message_received)
         self.config = self.mqtt_client.config
@@ -166,6 +166,7 @@ class MainWindow(QMainWindow):
             option_action = QAction(action_name, self)
             option_action.triggered.connect(callback)
             menu_bar.addAction(option_action)
+
     def btn_remove_task_path(self):
         for point in self.points:
             self.scene.removeItem(point)  # 从场景中移除点
@@ -188,7 +189,7 @@ class MainWindow(QMainWindow):
 
             # x = -node["pos"]["y"] * 100+200  # 缩放位置
             # y = node["pos"]["x"] * 100-130
-            
+
             # 判断是否有任务属性
             if "task" in node:
                 point = QGraphicsEllipseItem(x, y, 10, 10)  # 任务点
@@ -308,8 +309,10 @@ class MainWindow(QMainWindow):
     def update_key_position(self):
         """更新钥匙位置"""
         if not self.queue.empty():
-            x, y, x1, y1 = self.queue.get()
-            self.lastpos = (x, y, x1, y1)
+            # print(self.queue.get())
+            x, y = self.queue.get()
+            self.lastpos = (x, y)
+            # print(self.lastpos)
             self.canvas.set_key_position(x, -y, 0,0)
         # else:
         #     x, y, x1, y1 = self.lastpos
