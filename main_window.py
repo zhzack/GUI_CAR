@@ -81,6 +81,9 @@ class MainWindow(QMainWindow):
         # 初始化电子围栏工具
         self.fence_tool = FenceTool(self.scene)
         self.canvas = CarCanvas(self.scene, self)
+        
+        # 保存任务轨迹
+        self.points = []
 
         # 加载汽车图像
         car_pixmap = QPixmap('car_image.png')
@@ -168,12 +171,13 @@ class MainWindow(QMainWindow):
             menu_bar.addAction(option_action)
 
     def btn_remove_task_path(self):
-        for point in self.points:
-            self.scene.removeItem(point)  # 从场景中移除点
-        self.points.clear()  # 清空点的引用列表
+        if self.points:
+            for point in self.points:
+                self.scene.removeItem(point)  # 从场景中移除点
+            self.points.clear()  # 清空点的引用列表
 
     def btn_set_task_path(self):
-
+        self.btn_remove_task_path()
         self.json_path = self.mqtt_client.config['pub_config']["task_set"]["task_set"]["task_file"]
 
         self.json_path = os.path.join(
@@ -182,7 +186,7 @@ class MainWindow(QMainWindow):
         print(self.json_path)
         with open(self.json_path, 'r') as file:
             self.data = json.load(file)
-        self.points = []  # 用于存储添加的点
+        #   用于存储添加的点
         for node in self.data["nodes"]:
             y = -node["pos"]["x"] * 100+267  # 缩放位置
             x = -node["pos"]["y"] * 100+145

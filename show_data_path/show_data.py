@@ -3,9 +3,12 @@ import pandas as pd
 import numpy as np
 from matplotlib.colors import Normalize
 from matplotlib.cm import ScalarMappable
+import os
 
 # 假设数据已加载到 DataFrame 中
-data = pd.read_csv('2024年10月28日14点20分绕圈.csv')
+current_path = os.path.dirname(os.path.realpath(__file__))
+current_path=os.path.join(current_path,'2024年10月28日14点20分绕圈.csv')
+data = pd.read_csv(current_path)
 
 str_uwb_distance='NDLB_VKM_PrivateCAN_V1.0.7_0x78_V1::CAR_UWB::uwb_fob_location_distance'
 str_Carsts_X='NDLB_VKM_PrivateCAN_V1.0.7_0x78_V1::CarSts::Carsts_X'
