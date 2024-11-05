@@ -4,6 +4,8 @@ from multiprocessing import Queue
 from CreatJsonforCirclePath import generate_circular_trajectory_json, generate_linear_trajectory_json, generate_linears_trajectory_json
 import json
 import math
+import csv
+import os
 points = []
 # def generate_key_trajectory(data, process_function):
 #     """通用处理函数"""
@@ -63,6 +65,76 @@ points = []
 #     except Exception as e:
 #         print(f"读取任务文件时出错: {e}")
 
+def read_csv_and_put_in_queue(queue):
+    """
+    读取 CSV 文件中的 x 和 y 列数据，并放入队列。
+    """
+    current_path = os.path.dirname(os.path.realpath(__file__))
+    path = '不同距离绕圈'
+    csv_file_path = os.path.join(
+        current_path, 'show_data_path', path, '绕圈10301435两移远新板子.csv')
+    str_uwb_distance = 'NDLB_VKM_PrivateCAN_V1.0.7_0x78_V1::CAR_UWB::uwb_fob_location_distance'
+    str_Carsts_X = 'NDLB_VKM_PrivateCAN_V1.0.7_0x78_V1::CarSts::Carsts_X'
+    str_Carsts_Y = 'NDLB_VKM_PrivateCAN_V1.0.7_0x78_V1::CarSts::Carsts_Y'
+
+    str_uwb_x = 'NDLB_VKM_PrivateCAN_V1.0.7_0x78_V1::CAR_UWB::uwb_fob_location_x'
+    str_uwb_y = 'NDLB_VKM_PrivateCAN_V1.0.7_0x78_V1::CAR_UWB::uwb_fob_location_y'
+    str_pdoa20 = 'NDLB_VKM_PrivateCAN_V1.0.7_0x78_V1::CAR_UWB::uwb_fob_location_pdoa20'
+    str_pdoa12 = 'NDLB_VKM_PrivateCAN_V1.0.7_0x78_V1::CAR_UWB::uwb_fob_location_pdoa12'
+    str_pdoa01 = 'NDLB_VKM_PrivateCAN_V1.0.7_0x78_V1::CAR_UWB::uwb_fob_location_pdoa01'
+    last_pdoa_20 = 0
+    last_pdoa_12 = 0
+    last_pdoa_01 = 0
+    try:
+        with open(csv_file_path, mode='r') as file:
+            reader = csv.DictReader(file)  # 使用 DictReader 更方便读取列名
+            for row in reader:
+                # 获取 x 和 y 列数据，处理可能为空的值
+                try:
+                    # 读取并检查是否为空字符串或无效数据
+                    x = row[str_uwb_x].strip()  # 去掉可能的空格
+                    y = row[str_uwb_y].strip()  # 去掉可能的空格
+                    pdoa_20 = row[str_pdoa20]
+                    pdoa_12 = row[str_pdoa12]
+                    pdoa_01 = row[str_pdoa01]
+                    abs_pdoa_20 = abs(last_pdoa_20-pdoa_20)
+                    abs_pdoa_12 = abs(last_pdoa_12-pdoa_12)
+                    abs_pdoa_01 = abs(last_pdoa_01-pdoa_01)
+
+                    if abs_pdoa_20 >= 100 and last_pdoa_20-pdoa_20 > 0:
+                        pdoa_20 += abs_pdoa_20
+                        last_pdoa_20 = pdoa_20
+                    else:
+                        last_pdoa_20 -= abs_pdoa_20
+                        pdoa_20 = last_pdoa_20
+                    if abs_pdoa_12 >= 100 and last_pdoa_12-pdoa_12 > 0:
+                        pdoa_12 += abs_pdoa_12
+                        last_pdoa_12 = pdoa_12
+                    else:
+                        last_pdoa_12 -= abs_pdoa_12
+                        pdoa_12 = last_pdoa_12
+                    if abs_pdoa_01 >= 100 and last_pdoa_01-pdoa_01 > 0:
+                        pdoa_01 += abs_pdoa_01
+                        last_pdoa_01 = pdoa_01
+                    else:
+                        last_pdoa_01 -= abs_pdoa_01
+                        pdoa_01 = last_pdoa_01
+                    
+
+                    if x == '' or y == '':  # 如果 x 或 y 为空字符串，则跳过
+                        continue
+
+                    # 尝试将 x 和 y 转换为浮动类型，如果失败，则跳过该行
+                    x = float(x)
+                    y = float(y)
+
+                    # 将 (x, y) 数据放入队列
+                    queue.put((x, y))
+                except ValueError:
+                    # 如果转换失败（例如空字符串），则跳过当前行
+                    continue
+    except Exception as e:
+        print(f"读取 CSV 文件时发生错误: {e}")
 
 
 def generate_key_trajectory(q):
@@ -100,7 +172,6 @@ def generate_key_trajectory(q):
     data = generate_linears_trajectory_json(segments)
     data = json.loads(data)  # 解析 JSON 字符串
 
-    
     # print(data)
     nodes = data.get("nodes", [])
     for node in nodes:

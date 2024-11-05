@@ -59,6 +59,8 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("汽车和钥匙位置")
         self.queue = queue  # 获取共享队列
 
+        self.current_path = os.path.dirname(os.path.realpath(__file__))
+
         self.mqtt_client = MQTTClient(self.queue)
         # self.mqtt_client.set_on_connect_callback(self.on_connect_status)
         # self.mqtt_client.set_on_message_callback(self.on_message_received)
@@ -86,7 +88,8 @@ class MainWindow(QMainWindow):
         self.points = []
 
         # 加载汽车图像
-        car_pixmap = QPixmap('car_image.png')
+        car_img=os.path.join(self.current_path,'img','car_image.png')
+        car_pixmap = QPixmap(car_img)
         car_item = QGraphicsPixmapItem(car_pixmap)
 
         # 设置图像的比例

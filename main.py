@@ -12,6 +12,7 @@ if __name__ == '__main__':
 
     # 创建生成轨迹的子进程
     trajectory_process = Process(target=key_trajectory.generate_key_trajectory, args=(queue,))
+    trajectory_process = Process(target=key_trajectory.read_csv_and_put_in_queue, args=(queue,))
     trajectory_process.start()
 
     # 创建主窗口并传递队列
