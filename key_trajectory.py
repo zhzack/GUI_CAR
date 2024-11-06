@@ -7,6 +7,7 @@ import math
 import csv
 import os
 import numpy as np
+from movingAverage import MovingAverage 
 
 points = []
 # def generate_key_trajectory(data, process_function):
@@ -174,6 +175,18 @@ def read_csv_and_put_in_queue(queue):
     last_pdoa_01 = 0
     last_index = 0  # 标记第一次读取的数据
 
+    # 滑动平均窗口大小
+    window_size = 5  # 设置窗口大小为5
+
+    # 用来跟踪异常值的阈值
+    threshold_factor = 5  # 偏差的阈值因子，表示差异大于平均值的两倍为异常值
+
+    # 创建滑动平均对象
+    ma_pdoa_20 = MovingAverage(window_size,threshold_factor)
+    ma_pdoa_01 = MovingAverage(window_size,threshold_factor)
+    ma_pdoa_12 = MovingAverage(window_size,threshold_factor)
+
+
     # try:
     with open(csv_file_path, mode='r') as file:
         reader = csv.DictReader(file)  # 使用 DictReader 更方便读取列名
@@ -210,7 +223,7 @@ def read_csv_and_put_in_queue(queue):
                       diff_pdoa_12}, pdoa_20: {diff_pdoa_20}")
 
 
-                diff=40
+                diff=240
                 # 更新上一行的数据
                 if last_pdoa_01 > pdoa_01 and diff_pdoa_01 > diff:
                     pdoa_01 = pdoa_01+diff_pdoa_01
@@ -227,6 +240,27 @@ def read_csv_and_put_in_queue(queue):
                     pdoa_20 = pdoa_20+diff_pdoa_20
                 elif last_pdoa_20 < pdoa_20 and diff_pdoa_20 > diff:
                     pdoa_20 = pdoa_20-diff_pdoa_20
+
+                # if ma_pdoa_20.get_average():
+                #     # 假设偏差超过阈值是异常值
+                #     if abs(pdoa_20 - ma_pdoa_20.get_average()) > threshold_factor * np.std(ma_pdoa_20.data):
+                #         print(f"异常值检测 - pdoa_20: {pdoa_20} 被视为异常")
+                #         continue  # 跳过该数据点
+
+                #     if abs(pdoa_01 - ma_pdoa_01.get_average()) > threshold_factor * np.std(ma_pdoa_01.data):
+                #         print(f"异常值检测 - pdoa_01: {pdoa_01} 被视为异常")
+                #         continue  # 跳过该数据点
+
+                #     if abs(pdoa_12 - ma_pdoa_12.get_average()) > threshold_factor * np.std(ma_pdoa_12.data):
+                #         print(f"异常值检测 - pdoa_12: {pdoa_12} 被视为异常")
+                #         continue  # 跳过该数据点
+
+                # 滑动平均更新
+                pdoa_20 = ma_pdoa_20.update(pdoa_20)
+                pdoa_01 = ma_pdoa_01.update(pdoa_01)
+                pdoa_12 = ma_pdoa_12.update(pdoa_12)
+
+                
 
                 last_pdoa_20 = pdoa_20
                 last_pdoa_01 = pdoa_01

@@ -121,7 +121,7 @@ class MainWindow(QMainWindow):
         # 使用定时器定期检查队列是否有新位置
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.update_key_position)
-        self.timer.start(1)  # 每50毫秒检查一次队列
+        self.timer.start(0)  # 每50毫秒检查一次队列
 
         # 添加电子围栏的菜单选项
         self.init_menu()

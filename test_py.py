@@ -4,8 +4,11 @@ import os
 
 current_path = os.path.dirname(os.path.realpath(__file__))
 path = '不同距离绕圈'
+path='8m绕圈'
+file_name='绕圈10301435两移远新板子.csv'
+file_name='8m绕圈两端新移远i平放1543.csv'
 csv_file_path = os.path.join(
-    current_path, 'show_data_path', path, '绕圈10301435两移远新板子.csv')
+    current_path, 'show_data_path', path, file_name)
 # 读取CSV文件
 df = pd.read_csv(csv_file_path)
 
