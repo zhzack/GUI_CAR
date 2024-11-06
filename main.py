@@ -11,7 +11,7 @@ if __name__ == '__main__':
     queue = Queue()
 
     # 创建生成轨迹的子进程
-    trajectory_process = Process(target=key_trajectory.generate_key_trajectory, args=(queue,))
+    # trajectory_process = Process(target=key_trajectory.generate_key_trajectory, args=(queue,))
     trajectory_process = Process(target=key_trajectory.read_csv_and_put_in_queue, args=(queue,))
     trajectory_process.start()
 

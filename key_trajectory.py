@@ -6,6 +6,9 @@ import json
 import math
 import csv
 import os
+import numpy as np
+from movingAverage import MovingAverage 
+
 points = []
 # def generate_key_trajectory(data, process_function):
 #     """通用处理函数"""
@@ -64,6 +67,90 @@ points = []
 #                     q.put((x, y, 0, 0))
 #     except Exception as e:
 #         print(f"读取任务文件时出错: {e}")
+# 正侧面60度
+def process_degree_direct_60(degree1, degree2, degree3):
+    values = [degree1, degree2, degree3]
+    sorted_values = sorted(values, reverse=1)  # 降序
+
+    if sorted_values == [degree3, degree1, degree2]:
+        return sorted_values[1], +60, 1
+
+    elif sorted_values == [degree1, degree3, degree2]:
+        return -sorted_values[1], 60+60, 2
+
+    elif sorted_values == [degree1, degree2, degree3]:
+        return sorted_values[1], 60+60+60, 3
+
+    elif sorted_values == [degree2, degree1, degree3]:
+        return -sorted_values[1], 60+60+60+60, 4
+
+    elif sorted_values == [degree2, degree3, degree1]:
+        return sorted_values[1], 60+60+60+60+60, 5
+
+    elif sorted_values == [degree3, degree2, degree1]:
+        return -sorted_values[1], 60+60+60+60+60+60, 6
+
+
+def process_pdoaToAng(pdoa_first, pdoa_second, pdoa_third):
+    # 01 20 12
+    # print(pdoa_first,pdoa_second,pdoa_third)
+    def limit_value(value):
+        if value > 180:
+            return 1
+        elif value < -180:
+            return -1
+        else:
+            return value/180
+
+    pdoa_first = limit_value(pdoa_first)
+    pdoa_second = limit_value(pdoa_second)
+    pdoa_third = limit_value(pdoa_third)
+
+    # Custom3DPlot.process_values(pdoa_first,pdoa_second,pdoa_third)
+    # pdoa_ressult,pdoa_offset=process_values(pdoa_first, pdoa_third,pdoa_second)
+
+    # print(f"np.arcsin(pdoa_first):{np.arcsin(pdoa_first)}")
+    # print(f"np.arcsin(pdoa_second):{np.arcsin(pdoa_second)}")
+    # print(f"np.arcsin(pdoa_third):{np.arcsin(pdoa_third)}")
+
+    arcsin_degrees1 = np.degrees(np.arcsin(pdoa_first))
+    arcsin_degrees2 = np.degrees(np.arcsin(pdoa_second))
+    arcsin_degrees3 = np.degrees(np.arcsin(pdoa_third))
+    # print(f"arcsin_degrees1:{arcsin_degrees1}")
+    # print(f"arcsin_degrees2:{arcsin_degrees2}")
+    # print(f"arcsin_degrees3:{arcsin_degrees3}")
+
+    degree_result, degree_offset, x = process_degree_direct_60(
+        arcsin_degrees1, arcsin_degrees2, arcsin_degrees3)
+    # print(degree_result,degree_offset+120)
+    # print(degree_result)
+    # print(x)
+    return degree_result+degree_offset
+    return (degree_result+degree_offset) % 360, x, degree_offset, degree_result, arcsin_degrees1, arcsin_degrees2, arcsin_degrees3
+
+
+def spherical_to_cartesian(azimuth, distance, elevation=0):
+    # 将角度转换为弧度
+    azimuth_rad = math.radians(azimuth)
+    elevation_rad = math.radians(elevation)
+
+    # 计算x, y, z
+    x = distance * math.cos(elevation_rad) * math.cos(azimuth_rad)
+    y = distance * math.cos(elevation_rad) * math.sin(azimuth_rad)
+    z = distance * math.sin(elevation_rad)
+    return x, y, z
+
+
+def update_pdoa(last_pdoa, pdoa, abs_pdoa):
+    # print("last_pdoa, pdoa, abs_pdoa:",last_pdoa, pdoa, abs_pdoa)
+    if abs_pdoa >= 100 and last_pdoa - pdoa > 0:
+        pdoa += abs_pdoa
+        last_pdoa = pdoa
+    else:
+        last_pdoa -= abs_pdoa
+        pdoa = last_pdoa
+    return last_pdoa, pdoa
+
 
 def read_csv_and_put_in_queue(queue):
     """
@@ -82,59 +169,119 @@ def read_csv_and_put_in_queue(queue):
     str_pdoa20 = 'NDLB_VKM_PrivateCAN_V1.0.7_0x78_V1::CAR_UWB::uwb_fob_location_pdoa20'
     str_pdoa12 = 'NDLB_VKM_PrivateCAN_V1.0.7_0x78_V1::CAR_UWB::uwb_fob_location_pdoa12'
     str_pdoa01 = 'NDLB_VKM_PrivateCAN_V1.0.7_0x78_V1::CAR_UWB::uwb_fob_location_pdoa01'
+    # 初始化 last_pdoa_XX 变量用于保存上一次的值
     last_pdoa_20 = 0
     last_pdoa_12 = 0
     last_pdoa_01 = 0
-    try:
-        with open(csv_file_path, mode='r') as file:
-            reader = csv.DictReader(file)  # 使用 DictReader 更方便读取列名
-            for row in reader:
-                # 获取 x 和 y 列数据，处理可能为空的值
-                try:
-                    # 读取并检查是否为空字符串或无效数据
-                    x = row[str_uwb_x].strip()  # 去掉可能的空格
-                    y = row[str_uwb_y].strip()  # 去掉可能的空格
-                    pdoa_20 = row[str_pdoa20]
-                    pdoa_12 = row[str_pdoa12]
-                    pdoa_01 = row[str_pdoa01]
-                    abs_pdoa_20 = abs(last_pdoa_20-pdoa_20)
-                    abs_pdoa_12 = abs(last_pdoa_12-pdoa_12)
-                    abs_pdoa_01 = abs(last_pdoa_01-pdoa_01)
+    last_index = 0  # 标记第一次读取的数据
 
-                    if abs_pdoa_20 >= 100 and last_pdoa_20-pdoa_20 > 0:
-                        pdoa_20 += abs_pdoa_20
-                        last_pdoa_20 = pdoa_20
-                    else:
-                        last_pdoa_20 -= abs_pdoa_20
-                        pdoa_20 = last_pdoa_20
-                    if abs_pdoa_12 >= 100 and last_pdoa_12-pdoa_12 > 0:
-                        pdoa_12 += abs_pdoa_12
-                        last_pdoa_12 = pdoa_12
-                    else:
-                        last_pdoa_12 -= abs_pdoa_12
-                        pdoa_12 = last_pdoa_12
-                    if abs_pdoa_01 >= 100 and last_pdoa_01-pdoa_01 > 0:
-                        pdoa_01 += abs_pdoa_01
-                        last_pdoa_01 = pdoa_01
-                    else:
-                        last_pdoa_01 -= abs_pdoa_01
-                        pdoa_01 = last_pdoa_01
-                    
+    # 滑动平均窗口大小
+    window_size = 5  # 设置窗口大小为5
 
-                    if x == '' or y == '':  # 如果 x 或 y 为空字符串，则跳过
-                        continue
+    # 用来跟踪异常值的阈值
+    threshold_factor = 5  # 偏差的阈值因子，表示差异大于平均值的两倍为异常值
 
-                    # 尝试将 x 和 y 转换为浮动类型，如果失败，则跳过该行
-                    x = float(x)
-                    y = float(y)
+    # 创建滑动平均对象
+    ma_pdoa_20 = MovingAverage(window_size,threshold_factor)
+    ma_pdoa_01 = MovingAverage(window_size,threshold_factor)
+    ma_pdoa_12 = MovingAverage(window_size,threshold_factor)
 
-                    # 将 (x, y) 数据放入队列
-                    queue.put((x, y))
-                except ValueError:
-                    # 如果转换失败（例如空字符串），则跳过当前行
-                    continue
-    except Exception as e:
-        print(f"读取 CSV 文件时发生错误: {e}")
+
+    # try:
+    with open(csv_file_path, mode='r') as file:
+        reader = csv.DictReader(file)  # 使用 DictReader 更方便读取列名
+        for row in reader:
+            # 获取 x、y、pdoa 值，并做空值检查
+            try:
+                # 替换 'str_pdoa20' 为实际列名
+                pdoa_20 = float(row[str_pdoa20].strip())
+                # 替换 'str_pdoa12' 为实际列名
+                pdoa_12 = float(row[str_pdoa12].strip())
+                # 替换 'str_pdoa01' 为实际列名
+                pdoa_01 = float(row[str_pdoa01].strip())
+                # 替换 'str_pdoa01' 为实际列名
+                uwb_distance = float(row[str_uwb_distance].strip())
+
+            except ValueError:
+                # print("跳过无效数据行：", row)
+                continue  # 如果数据无法转换为浮动数值则跳过这一行
+
+            # 第一次循环时初始化
+            if last_index == 0:
+                last_pdoa_01 = pdoa_01
+                last_pdoa_12 = pdoa_12
+                last_pdoa_20 = pdoa_20
+                last_index = 1
+                # print(f"第一次读取数据: pdoa_01: {pdoa_01}, pdoa_12: {pdoa_12}, pdoa_20: {pdoa_20}")
+            else:
+                # 从第二行开始计算差值
+                diff_pdoa_20 = abs(pdoa_20 - last_pdoa_20)
+                diff_pdoa_12 = abs(pdoa_12 - last_pdoa_12)
+                diff_pdoa_01 = abs(pdoa_01 - last_pdoa_01)
+
+                print(f"差值计算: pdoa_01: {last_pdoa_01}, pdoa_12: {
+                      diff_pdoa_12}, pdoa_20: {diff_pdoa_20}")
+
+
+                diff=240
+                # 更新上一行的数据
+                if last_pdoa_01 > pdoa_01 and diff_pdoa_01 > diff:
+                    pdoa_01 = pdoa_01+diff_pdoa_01
+                elif last_pdoa_01 < pdoa_01 and diff_pdoa_01 > diff:
+                    pdoa_01 = pdoa_01-diff_pdoa_01
+
+                # pdoa_01 = last_pdoa_01
+                if last_pdoa_12 > pdoa_12 and diff_pdoa_12 > diff:
+                    pdoa_12 = pdoa_12+diff_pdoa_12
+                elif last_pdoa_12 < pdoa_12 and diff_pdoa_12 > diff:
+                    pdoa_12 = pdoa_12-diff_pdoa_12
+
+                if last_pdoa_20 > pdoa_20 and diff_pdoa_20 > diff:
+                    pdoa_20 = pdoa_20+diff_pdoa_20
+                elif last_pdoa_20 < pdoa_20 and diff_pdoa_20 > diff:
+                    pdoa_20 = pdoa_20-diff_pdoa_20
+
+                # if ma_pdoa_20.get_average():
+                #     # 假设偏差超过阈值是异常值
+                #     if abs(pdoa_20 - ma_pdoa_20.get_average()) > threshold_factor * np.std(ma_pdoa_20.data):
+                #         print(f"异常值检测 - pdoa_20: {pdoa_20} 被视为异常")
+                #         continue  # 跳过该数据点
+
+                #     if abs(pdoa_01 - ma_pdoa_01.get_average()) > threshold_factor * np.std(ma_pdoa_01.data):
+                #         print(f"异常值检测 - pdoa_01: {pdoa_01} 被视为异常")
+                #         continue  # 跳过该数据点
+
+                #     if abs(pdoa_12 - ma_pdoa_12.get_average()) > threshold_factor * np.std(ma_pdoa_12.data):
+                #         print(f"异常值检测 - pdoa_12: {pdoa_12} 被视为异常")
+                #         continue  # 跳过该数据点
+
+                # 滑动平均更新
+                pdoa_20 = ma_pdoa_20.update(pdoa_20)
+                pdoa_01 = ma_pdoa_01.update(pdoa_01)
+                pdoa_12 = ma_pdoa_12.update(pdoa_12)
+
+                
+
+                last_pdoa_20 = pdoa_20
+                last_pdoa_01 = pdoa_01
+                last_pdoa_12 = pdoa_12
+            # print(pdoa_20)
+            azimuth = process_pdoaToAng(pdoa_01, pdoa_20, pdoa_12)
+            x, y, z = spherical_to_cartesian(azimuth, uwb_distance)
+            # print(x,y)
+
+            # # 尝试将 x 和 y 转换为浮动类型，如果失败，则跳过该行
+            x = float(x)
+            y = float(y)
+
+            # 将 (x, y) 数据放入队列
+            queue.put((x, y))
+            # except ValueError:
+            #     # 如果转换失败（例如空字符串），则跳过当前行
+            #     print("sdd")
+            #     continue
+    # except Exception as e:
+    #     print(f"读取 CSV 文件时发生错误: {e}")
 
 
 def generate_key_trajectory(q):
