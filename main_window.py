@@ -83,12 +83,12 @@ class MainWindow(QMainWindow):
         # 初始化电子围栏工具
         self.fence_tool = FenceTool(self.scene)
         self.canvas = CarCanvas(self.scene, self)
-        
+
         # 保存任务轨迹
         self.points = []
 
         # 加载汽车图像
-        car_img=os.path.join(self.current_path,'img','car_image.png')
+        car_img = os.path.join(self.current_path, 'img', 'car_image.png')
         car_pixmap = QPixmap(car_img)
         car_item = QGraphicsPixmapItem(car_pixmap)
 
@@ -315,12 +315,13 @@ class MainWindow(QMainWindow):
 
     def update_key_position(self):
         """更新钥匙位置"""
+        # if  self.queue.qsize()>40000:
         if not self.queue.empty():
             # print(self.queue.get())
-            x, y = self.queue.get()
+            y, x = self.queue.get()
             self.lastpos = (x, y)
             # print(self.lastpos)
-            self.canvas.set_key_position(x, -y, 0,0)
+            self.canvas.set_key_position(-x, -y, 0,0)
         # else:
         #     x, y, x1, y1 = self.lastpos
         #     self.canvas.set_key_position(x, -y, x, -y)

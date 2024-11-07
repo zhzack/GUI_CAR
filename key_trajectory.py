@@ -7,7 +7,7 @@ import math
 import csv
 import os
 import numpy as np
-from movingAverage import MovingAverage 
+from movingAverage import MovingAverage
 
 points = []
 # def generate_key_trajectory(data, process_function):
@@ -125,7 +125,7 @@ def process_pdoaToAng(pdoa_first, pdoa_second, pdoa_third):
     # print(degree_result,degree_offset+120)
     # print(degree_result)
     # print(x)
-    return degree_result+degree_offset
+    return (degree_result+degree_offset+30) % 360
     return (degree_result+degree_offset) % 360, x, degree_offset, degree_result, arcsin_degrees1, arcsin_degrees2, arcsin_degrees3
 
 
@@ -152,14 +152,19 @@ def update_pdoa(last_pdoa, pdoa, abs_pdoa):
     return last_pdoa, pdoa
 
 
-def read_csv_and_put_in_queue(queue):
+def read_csv_and_put_in_queue(queue, pdoa_queue):
     """
     读取 CSV 文件中的 x 和 y 列数据，并放入队列。
     """
     current_path = os.path.dirname(os.path.realpath(__file__))
     path = '不同距离绕圈'
+    file_name = '绕圈10301435两移远新板子.csv'
+    path = '8m绕圈'
+    file_name = '8m绕圈两端新移远i平放1543.csv'
+    path = '拉距'
+    file_name = '两端旧移远1415.csv'
     csv_file_path = os.path.join(
-        current_path, 'show_data_path', path, '绕圈10301435两移远新板子.csv')
+        current_path, 'show_data_path', path, file_name)
     str_uwb_distance = 'NDLB_VKM_PrivateCAN_V1.0.7_0x78_V1::CAR_UWB::uwb_fob_location_distance'
     str_Carsts_X = 'NDLB_VKM_PrivateCAN_V1.0.7_0x78_V1::CarSts::Carsts_X'
     str_Carsts_Y = 'NDLB_VKM_PrivateCAN_V1.0.7_0x78_V1::CarSts::Carsts_Y'
@@ -176,16 +181,16 @@ def read_csv_and_put_in_queue(queue):
     last_index = 0  # 标记第一次读取的数据
 
     # 滑动平均窗口大小
-    window_size = 5  # 设置窗口大小为5
+    window_size = 10  # 设置窗口大小为5
 
     # 用来跟踪异常值的阈值
-    threshold_factor = 5  # 偏差的阈值因子，表示差异大于平均值的两倍为异常值
+    threshold_factor = 2  # 偏差的阈值因子，表示差异大于平均值的两倍为异常值
 
     # 创建滑动平均对象
-    ma_pdoa_20 = MovingAverage(window_size,threshold_factor)
-    ma_pdoa_01 = MovingAverage(window_size,threshold_factor)
-    ma_pdoa_12 = MovingAverage(window_size,threshold_factor)
-
+    ma_pdoa_20 = MovingAverage(window_size, threshold_factor)
+    ma_pdoa_01 = MovingAverage(window_size, threshold_factor)
+    ma_pdoa_12 = MovingAverage(window_size, threshold_factor)
+    ma_uwb_distance = MovingAverage(window_size, threshold_factor)
 
     # try:
     with open(csv_file_path, mode='r') as file:
@@ -219,18 +224,16 @@ def read_csv_and_put_in_queue(queue):
                 diff_pdoa_12 = abs(pdoa_12 - last_pdoa_12)
                 diff_pdoa_01 = abs(pdoa_01 - last_pdoa_01)
 
-                print(f"差值计算: pdoa_01: {last_pdoa_01}, pdoa_12: {
-                      diff_pdoa_12}, pdoa_20: {diff_pdoa_20}")
+                # print(f"差值计算: pdoa_01: {last_pdoa_01}, pdoa_12: {
+                #       diff_pdoa_12}, pdoa_20: {diff_pdoa_20}")
 
-
-                diff=240
-                # 更新上一行的数据
+                diff = 300
+                # # 更新上一行的数据
                 if last_pdoa_01 > pdoa_01 and diff_pdoa_01 > diff:
                     pdoa_01 = pdoa_01+diff_pdoa_01
                 elif last_pdoa_01 < pdoa_01 and diff_pdoa_01 > diff:
                     pdoa_01 = pdoa_01-diff_pdoa_01
 
-                # pdoa_01 = last_pdoa_01
                 if last_pdoa_12 > pdoa_12 and diff_pdoa_12 > diff:
                     pdoa_12 = pdoa_12+diff_pdoa_12
                 elif last_pdoa_12 < pdoa_12 and diff_pdoa_12 > diff:
@@ -259,8 +262,9 @@ def read_csv_and_put_in_queue(queue):
                 pdoa_20 = ma_pdoa_20.update(pdoa_20)
                 pdoa_01 = ma_pdoa_01.update(pdoa_01)
                 pdoa_12 = ma_pdoa_12.update(pdoa_12)
+                uwb_distance = ma_uwb_distance.update(uwb_distance)
 
-                
+                pdoa_queue.put((pdoa_01, pdoa_12, pdoa_20))
 
                 last_pdoa_20 = pdoa_20
                 last_pdoa_01 = pdoa_01
