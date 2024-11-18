@@ -73,8 +73,11 @@ class MQTTClient:
     def connect(self):
         self.client.username_pw_set(self.username, self.password)
         self.client.on_connect = self.on_connect
-        self.client.connect(self.broker, self.port,
+        try:
+            self.client.connect(self.broker, self.port,
                             keepalive=self.keepalive_interval)
+        except Exception as e:
+            print(f'mqtt连接失败:{e}')
         self.client.loop_start()
 
     def on_connect(self, client, userdata, flags, rc):
@@ -99,6 +102,7 @@ class MQTTClient:
         self.on_message_callback = callback
 
     def publish(self, topic, message):
+        print(self.is_connected())
         result = self.client.publish(topic, message)
         status = result[0]
         if status == 0:
@@ -167,6 +171,9 @@ class MQTTClient:
         self.publish(topic, json.dumps(data))
 
     def is_connected(self):
+        isConnected=self.client.is_connected()
+        if not isConnected:
+            self.connect()
         return self.client.is_connected()
 
     def run(self, user_data, robot_topics, res_topics):
