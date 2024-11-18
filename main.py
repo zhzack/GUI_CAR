@@ -66,7 +66,7 @@ if __name__ == '__main__':
     # 创建生成轨迹的子进程
     # trajectory_process = Process(target=key_trajectory.generate_key_trajectory, args=(queue,))
     trajectory_process = Process(target=key_trajectory.read_csv_and_put_in_queue, args=(queue,pdoa_queue))
-    trajectory_process.start()
+    # trajectory_process.start()
 
     # 创建线程来实时绘制图表
     plot_process = Process(target=plot_data_from_queue, args=(pdoa_queue,))

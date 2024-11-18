@@ -52,6 +52,7 @@ from PyQt5.QtCore import QThread, pyqtSignal
 
 from mqtt_client import MQTTClient
 
+JsonforCPath='CreatJsonforCirclePath'
 
 class MainWindow(QMainWindow):
     def __init__(self, queue):
@@ -184,7 +185,7 @@ class MainWindow(QMainWindow):
         self.json_path = self.mqtt_client.config['pub_config']["task_set"]["task_set"]["task_file"]
 
         self.json_path = os.path.join(
-            self.mqtt_client.current_path, "CreatJsonforCirclePath", self.json_path)
+            self.mqtt_client.current_path, JsonforCPath, self.json_path)
 
         print(self.json_path)
         with open(self.json_path, 'r') as file:
@@ -226,7 +227,7 @@ class MainWindow(QMainWindow):
         file_path, _ = QFileDialog.getOpenFileName(
             self,
             "选择文件",
-            os.path.join(current_path, "CreatJsonforCirclePath"),
+            os.path.join(current_path, JsonforCPath),
             "JSON Files (*.json)",
             options=options,
         )
