@@ -52,7 +52,8 @@ from PyQt5.QtCore import QThread, pyqtSignal
 
 from mqtt_client import MQTTClient
 
-JsonforCPath='CreatJsonforCirclePath'
+JsonforCPath = 'CreatJsonforCirclePath'
+
 
 class MainWindow(QMainWindow):
     def __init__(self, queue):
@@ -74,7 +75,8 @@ class MainWindow(QMainWindow):
         # self.mqtt_client.connect()
         # self.mqtt_client.subscribe(
         #     self.robot_topics + list(self.res_topics.values()))
-        self.mqtt_client.run(self.mqtt_client.robot_topics + list(self.mqtt_client.res_topics.values()))
+        self.mqtt_client.run(self.mqtt_client.robot_topics +
+                             list(self.mqtt_client.res_topics.values()))
 
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.check_connection_status)
@@ -318,12 +320,19 @@ class MainWindow(QMainWindow):
     def update_key_position(self):
         """更新钥匙位置"""
         # if  self.queue.qsize()>40000:
-        if not self.queue.empty():
-            # print(self.queue.get())
-            y, x = self.queue.get()
-            self.lastpos = (x, y)
+        while not self.queue.empty():
+            object = self.queue.get()
+            # y, x = self.queue.get()
+            # self.lastpos = (x, y)
             # print(self.lastpos)
-            self.canvas.set_key_position(-x, -y, 0,0)
+            # self.canvas.set_key_position(-x, -y, 0,0)
+            for key in object:
+                print(f"Key: {key}, Value: {object[key]}")
+                self.canvas.set_key_position(-object[key]['x'], -object[key]['y'], 0,0)
+
+            # 方法 2：使用 keys() 明确表示
+            for key in object.keys():
+                print(f"Key: {key}")
         # else:
         #     x, y, x1, y1 = self.lastpos
         #     self.canvas.set_key_position(x, -y, x, -y)

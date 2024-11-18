@@ -148,7 +148,7 @@ def generate_circular_trajectory_json(radius, arc_length=0.1, special_angle=30,a
 
     return json.dumps({"task_name": task_name, "nodes": nodes}, indent=4, ensure_ascii=False)
 
-def generate_linears_trajectory_json(segments, arc_radius=2.0, arc_length=0.1):
+def generate_linears_trajectory_json(segments,add_special_nodes=True, arc_length=0.1):
     all_nodes = []  # 用于存储所有节点
     last_start_point = None
     last_end_point = None
