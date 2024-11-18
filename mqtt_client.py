@@ -5,6 +5,7 @@ import time
 import json
 import os
 from paho.mqtt import client as mqtt_client
+import threading
 
 
 class MQTTClient:
@@ -33,6 +34,10 @@ class MQTTClient:
         self.on_connect_callback = None
         self.on_message_callback = None
 
+        self.check_connection_interval = 1  # 每隔5秒检查一次连接
+        self.check_connection_thread = None
+        self.stop_checking = False  # 控制检查线程的退出
+
     # @property
     # def value(self):
     #     return self._value
@@ -42,6 +47,33 @@ class MQTTClient:
     #     if self._value != value:
     #         print(f"Value changed from {self._value} to {value}")
     #     self._value = value
+
+    def start_connection_check(self):
+        """
+        启动一个线程，定时检查 MQTT 连接状态。
+        """
+        self.stop_checking = False
+        self.check_connection_thread = threading.Thread(target=self.check_connection_loop, daemon=True)
+        self.check_connection_thread.start()
+    
+    def stop_connection_check(self):
+        """
+        停止检查线程。
+        """
+        self.stop_checking = True
+        if self.check_connection_thread and self.check_connection_thread.is_alive():
+            self.check_connection_thread.join()
+    
+    def check_connection_loop(self):
+        """
+        检查 MQTT 是否连接的循环函数。
+        """
+        print("检查mqtt连接")
+        while not self.stop_checking:
+            if not self.is_connected():
+                print("MQTT 断开连接，正在尝试重连...")
+                self.connect()
+            time.sleep(self.check_connection_interval)
 
     def load_config(self):
         try:
@@ -76,14 +108,16 @@ class MQTTClient:
         try:
             self.client.connect(self.broker, self.port,
                             keepalive=self.keepalive_interval)
+            self.client.loop_start()
         except Exception as e:
             print(f'mqtt连接失败:{e}')
-        self.client.loop_start()
+        
 
     def on_connect(self, client, userdata, flags, rc):
         status = "连接到MQTT Broker!" if rc == 0 else f"连接失败，返回码 {rc}"
         if self.on_connect_callback:
             self.on_connect_callback(status)
+            
 
     def subscribe(self, topics):
         for topic in topics:
@@ -96,7 +130,7 @@ class MQTTClient:
             self.on_message_callback(msg)
 
     def set_on_connect_callback(self, callback):
-        self.on_connect_callback = callback
+        print(f'mqtt连接状态:{callback}')
 
     def set_on_message_callback(self, callback):
         self.on_message_callback = callback
@@ -176,9 +210,10 @@ class MQTTClient:
             self.connect()
         return self.client.is_connected()
 
-    def run(self, user_data, robot_topics, res_topics):
+    def run(self, robot_topics):
         self.connect()
-        self.subscribe(robot_topics + list(res_topics.values()))
+        self.start_connection_check()  # 启动定时检查线程
+        self.subscribe(robot_topics )
         # while True:
         #     time.sleep(5)
         #     task_set_ = user_data["task_set"]
