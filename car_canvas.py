@@ -32,7 +32,6 @@ class CarCanvas(QGraphicsView):
 
         self.key_item = None  # 钥匙的图形项
         self.last_position = None  # 钥匙的上一位置
-        self.last_position1 = None  # 钥匙的上一位置
         self.last_fence = None  # 钥匙上一个所在的区域
         self.fence_cont = 0
         self.zoom_factor = 1  # 缩放系数
@@ -41,15 +40,13 @@ class CarCanvas(QGraphicsView):
         self.setViewportUpdateMode(QGraphicsView.FullViewportUpdate)
         self.setSceneRect(-2000, -2000, 4000, 4000)  # 调整场景边界大小
 
-        self.lines = []  # 存储线段对象
-        self.lines1 = []  # 存储线段对象
+        self.lines = {}  # 存储线段对象，不同输入的轨迹保存
 
         # 存储多个多边形和圆形区域
         self.polygon_fences = []
         self.circle_fences = []
         self.concentric_circles = []
         self.key_item = None
-        self.key_item1 = None
 
         # 添加多个多边形和圆形区域
         self.add_polygons()
@@ -245,14 +242,28 @@ class CarCanvas(QGraphicsView):
             self.circle_fences.append(
                 (circle_item, center, circle[1], circle[2]))
 
-    def set_key_position(self, x, y, x1, y1):
+    def set_key_position(self, object):
+        path_key = ''
+
+        # self.lines 是一个列表，每个元素是一个字典，包含 'name' 和 'value' 键值对
+        for key, value in object.items():
+            print(f"Key: {key}, Value: {value}")
+            path_key = key
+
+            if key not in self.lines:
+                self.lines[key] = {}
+            self.lines[key]['points']=[]
+            self.lines[key]['points'].append((value['x'], value['y']))
+
+
+        # self.lines[{path_key}]['path'].append((value['x'], value['y']))
+        print(self.lines[path_key])
         """更新钥匙位置并检查是否进入多边形或圆形区域"""
         new_position = QPointF(x, y)
-        new_position1 = QPointF(x1, y1)
         self.coord_label.setText(
             f"""
             <div style='font-size: 28px;'>
-                <span style='color: green;'>真实坐标点: ({x1}, {-y1})</span><br>
+                <span style='color: green;'>真实坐标点: ({x:.2f}, {-y:.2f})</span><br>
                 <span style='color: red;'>UWB钥匙坐标点: ({x:.2f}, {-y:.2f})</span><br>
                 <span style='color: purple;'>蓝牙定位区域</span><br>
             </div>
@@ -265,12 +276,6 @@ class CarCanvas(QGraphicsView):
             self.scene().addItem(line_item)
             self.lines.append(line_item)
 
-            line_item = QGraphicsLineItem(self.last_position1.x(), self.last_position1.y(),
-                                          new_position1.x(), new_position1.y())
-            line_item.setPen(QPen(Qt.green, 2))  # 设置线段颜色和宽度
-            self.scene().addItem(line_item)
-            self.lines1.append(line_item)
-
             # # 检查列表长度，超过50时删除第一个
             # if len(self.lines) > 500:
             #     first_line = self.lines.pop(0)
@@ -278,19 +283,12 @@ class CarCanvas(QGraphicsView):
             #     first_line = self.lines1.pop(0)
             #     self.scene().removeItem(first_line)
 
-        # 移动钥匙1
-        if self.key_item1 is None:
-            self.key_item1 = self.scene().addRect(
-                x - 15, y - 15, 30, 30, QPen(Qt.red), QBrush(Qt.red))
-        else:
-            self.key_item1.setRect(x - 25, y - 25, 50, 50)
-
         # 移动钥匙
         if self.key_item is None:
             self.key_item = self.scene().addRect(
-                x1 - 15, y1 - 15, 30, 30, QPen(Qt.green), QBrush(Qt.green))
+                x - 15, y - 15, 30, 30, QPen(Qt.red), QBrush(Qt.red))
         else:
-            self.key_item.setRect(x1 - 15, y1 - 15, 30, 30)
+            self.key_item.setRect(x - 25, y - 25, 50, 50)
 
         # 检查钥匙是否进入多边形区域
         for polygon_item in self.polygon_fences:
@@ -324,7 +322,6 @@ class CarCanvas(QGraphicsView):
         # 检查钥匙是否进入同心圆的圆环区域
         self.check_concentric_circles(new_position)
         self.last_position = new_position
-        self.last_position1 = new_position1
 
         # print(int(self.width()/2),int(self.height()/2))
         # 确保钥匙在可见范围内

@@ -75,12 +75,14 @@ class MainWindow(QMainWindow):
         # self.mqtt_client.connect()
         # self.mqtt_client.subscribe(
         #     self.robot_topics + list(self.res_topics.values()))
-        self.mqtt_client.run(self.mqtt_client.robot_topics +
-                             list(self.mqtt_client.res_topics.values()))
 
-        self.timer = QTimer(self)
-        self.timer.timeout.connect(self.check_connection_status)
-        self.timer.start(1000)  # 每秒检查一次连接状态
+        # 是否开启mqtt
+        # self.mqtt_client.run(self.mqtt_client.robot_topics +
+        #                      list(self.mqtt_client.res_topics.values()))
+
+        # self.timer = QTimer(self)
+        # self.timer.timeout.connect(self.check_connection_status)
+        # self.timer.start(1000)  # 每秒检查一次连接状态
 
         # 创建场景和画布
         self.scene = QGraphicsScene(self)
@@ -133,10 +135,6 @@ class MainWindow(QMainWindow):
         self.canvas.setMouseTracking(True)
         # 主布局
         self.layout = QVBoxLayout(self)
-
-    def check_connection_status(self):
-        # print("已连接" if self.mqtt_client.is_connected() else "断开")
-        pass
 
     def init_menu(self):
         menu_bar = self.menuBar()
@@ -326,13 +324,19 @@ class MainWindow(QMainWindow):
             # self.lastpos = (x, y)
             # print(self.lastpos)
             # self.canvas.set_key_position(-x, -y, 0,0)
-            for key in object:
-                print(f"Key: {key}, Value: {object[key]}")
-                self.canvas.set_key_position(-object[key]['x'], -object[key]['y'], 0,0)
+            # self.canvas.set_key_position(object)
+            # for key in object:
+            #     print(f"Key: {key}, Value: {object[key]}")
+            #     self.canvas.set_key_position(-object[key]
+            #                                  ['x'], -object[key]['y'])
+
+            for value in object:
+                print(f"Value: {value}")
+                self.canvas.set_key_position(value)
 
             # 方法 2：使用 keys() 明确表示
-            for key in object.keys():
-                print(f"Key: {key}")
+            # for key in object.keys():
+            #     print(f"Key: {key}")
         # else:
         #     x, y, x1, y1 = self.lastpos
         #     self.canvas.set_key_position(x, -y, x, -y)
