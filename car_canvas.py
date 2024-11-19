@@ -30,8 +30,6 @@ class CarCanvas(QGraphicsView):
         self.color_0 = QColor(255, 255, 0, 50)
         self.color_1 = QColor(255, 255, 0, 100)
 
-        self.key_item = None  # 钥匙的图形项
-        self.last_position = None  # 钥匙的上一位置
         self.last_fence = None  # 钥匙上一个所在的区域
         self.fence_cont = 0
         self.zoom_factor = 1  # 缩放系数
@@ -244,22 +242,30 @@ class CarCanvas(QGraphicsView):
 
     def set_key_position(self, object):
         path_key = ''
-
-        # self.lines 是一个列表，每个元素是一个字典，包含 'name' 和 'value' 键值对
+        x = 0
+        y = 0
         for key, value in object.items():
             print(f"Key: {key}, Value: {value}")
             path_key = key
-
             if key not in self.lines:
                 self.lines[key] = {}
-            self.lines[key]['points']=[]
-            self.lines[key]['points'].append((value['x'], value['y']))
+                self.lines[key]['points'] = []
+                self.lines[key]['last_position'] = None  # 上一个点的位置
+                self.lines[key]['items'] = []  # 钥匙标志对象
+                self.lines[key]['item'] = None
 
+            # self.lines[key]['points'].append((value['x'], value['y']))
+            # self.lines[key]['last_position']=(value['x'], value['y'])
+            x = value['x']
+            y = value['y']
+            new_position = QPointF(x, y)
+            last_position = self.lines[key]['last_position']
+            self.lines[key]['points'].append(new_position)
 
         # self.lines[{path_key}]['path'].append((value['x'], value['y']))
-        print(self.lines[path_key])
+        # print(self.lines[path_key])
         """更新钥匙位置并检查是否进入多边形或圆形区域"""
-        new_position = QPointF(x, y)
+
         self.coord_label.setText(
             f"""
             <div style='font-size: 28px;'>
@@ -269,26 +275,27 @@ class CarCanvas(QGraphicsView):
             </div>
             """
         )
-        if self.last_position:
-            line_item = QGraphicsLineItem(self.last_position.x(), self.last_position.y(),
+        if last_position:
+
+            line_item = QGraphicsLineItem(last_position.x(), last_position.y(),
                                           new_position.x(), new_position.y())
             line_item.setPen(QPen(Qt.red, 2))  # 设置线段颜色和宽度
             self.scene().addItem(line_item)
-            self.lines.append(line_item)
+            self.lines[key]['items'].append(line_item)
 
-            # # 检查列表长度，超过50时删除第一个
-            # if len(self.lines) > 500:
-            #     first_line = self.lines.pop(0)
-            #     self.scene().removeItem(first_line)
-            #     first_line = self.lines1.pop(0)
-            #     self.scene().removeItem(first_line)
+            # 检查列表长度，超过50时删除第一个
+            if len(self.lines[key]['items']) > 500:
+                first_line = self.lines[key]['items'].pop(0)
+                self.scene().removeItem(first_line)
+                first_line = self.lines[key]['items'].pop(0)
+                self.scene().removeItem(first_line)
 
         # 移动钥匙
-        if self.key_item is None:
-            self.key_item = self.scene().addRect(
+        if self.lines[key]['item'] is None:
+            self.lines[key]['item'] = self.scene().addRect(
                 x - 15, y - 15, 30, 30, QPen(Qt.red), QBrush(Qt.red))
         else:
-            self.key_item.setRect(x - 25, y - 25, 50, 50)
+            self.lines[key]['item'].setRect(x - 25, y - 25, 50, 50)
 
         # 检查钥匙是否进入多边形区域
         for polygon_item in self.polygon_fences:
@@ -321,7 +328,8 @@ class CarCanvas(QGraphicsView):
 
         # 检查钥匙是否进入同心圆的圆环区域
         self.check_concentric_circles(new_position)
-        self.last_position = new_position
+
+        self.lines[key]['last_position'] = new_position
 
         # print(int(self.width()/2),int(self.height()/2))
         # 确保钥匙在可见范围内
@@ -462,16 +470,16 @@ class CarCanvas(QGraphicsView):
         # """更新钥匙的位置并绘制轨迹"""
         # new_position = QPointF(x, y)
 
-        # if self.last_position:
+        # if last_position:
         #     pen = QPen(Qt.red, 2)
-        #     self.scene().addLine(self.last_position.x(), self.last_position.y(), new_position.x(), new_position.y(), pen)
+        #     self.scene().addLine(last_position.x(), last_position.y(), new_position.x(), new_position.y(), pen)
 
         # if self.key_item is None:
         #     self.key_item = self.scene().addEllipse(x - 5, y - 5, 10, 10, QPen(Qt.red), QBrush(Qt.red))
         # else:
         #     self.key_item.setRect(x - 5, y - 5, 10, 10)
 
-        # self.last_position = new_position
+        # last_position = new_position
 
         # # 更新钥匙的实时坐标显示
         # self.coord_label.setText(f"X: {x:.2f}, Y: {-y:.2f}")

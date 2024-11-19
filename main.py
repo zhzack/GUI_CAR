@@ -5,8 +5,11 @@ from main_window import MainWindow
 import matplotlib.pyplot as plt
 import key_trajectory
 
+import tcp_server
 
-    # 用于实时绘制折线图的线程
+# 用于实时绘制折线图的线程
+
+
 def plot_data_from_queue(pdoa_queue):
     # 初始化图表
     fig, ax = plt.subplots()
@@ -27,10 +30,10 @@ def plot_data_from_queue(pdoa_queue):
     # 设置图表的限制
     ax.set_xlim(0, 3266)  # 假设 x 的范围在 0 到 50 之间
     ax.set_ylim(-300, 300)  # 假设 y 的范围在 0 到 100 之间
-    
+
     while True:
         # 如果队列里有新的数据，则更新图表
-       
+
         if not pdoa_queue.empty():
             pdoa1, pdoa2, pdoa3 = pdoa_queue.get()
 
@@ -56,6 +59,7 @@ def plot_data_from_queue(pdoa_queue):
             else:
                 print(len(pdoa1_data))
 
+
 if __name__ == '__main__':
     app = QApplication(sys.argv)
 
@@ -64,13 +68,18 @@ if __name__ == '__main__':
     pdoa_queue = Queue()
 
     # 创建生成轨迹的子进程
-    trajectory_process = Process(target=key_trajectory.generate_key_trajectory, args=(queue,))
+    trajectory_process = Process(
+        target=key_trajectory.generate_key_trajectory, args=(queue,))
     # trajectory_process = Process(target=key_trajectory.read_csv_and_put_in_queue, args=(queue,pdoa_queue))
-    trajectory_process.start()
+    # trajectory_process.start()
 
     # 创建线程来实时绘制图表
     plot_process = Process(target=plot_data_from_queue, args=(pdoa_queue,))
     # plot_process.start()
+
+    # 创建 TCP 服务进程
+    tcp_process = Process(target=tcp_server.tcp_server, args=(queue,))
+    tcp_process.start()
 
     # 创建主窗口并传递队列
     window = MainWindow(queue)
@@ -80,6 +89,9 @@ if __name__ == '__main__':
         sys.exit(app.exec_())
     finally:
         # 退出时终止子进程
-        trajectory_process.terminate()
-        trajectory_process.join()
-
+        # trajectory_process.terminate()
+        # trajectory_process.join()
+        # plot_process.terminate()
+        # plot_process.join()
+        tcp_process.terminate()
+        tcp_process.join()

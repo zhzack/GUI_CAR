@@ -318,25 +318,10 @@ class MainWindow(QMainWindow):
     def update_key_position(self):
         """更新钥匙位置"""
         # if  self.queue.qsize()>40000:
-        while not self.queue.empty():
+        if not self.queue.empty():
             object = self.queue.get()
-            # y, x = self.queue.get()
-            # self.lastpos = (x, y)
-            # print(self.lastpos)
-            # self.canvas.set_key_position(-x, -y, 0,0)
-            # self.canvas.set_key_position(object)
-            # for key in object:
-            #     print(f"Key: {key}, Value: {object[key]}")
-            #     self.canvas.set_key_position(-object[key]
-            #                                  ['x'], -object[key]['y'])
 
             for value in object:
-                print(f"Value: {value}")
+                # print(f"Value: {value}")
                 self.canvas.set_key_position(value)
 
-            # 方法 2：使用 keys() 明确表示
-            # for key in object.keys():
-            #     print(f"Key: {key}")
-        # else:
-        #     x, y, x1, y1 = self.lastpos
-        #     self.canvas.set_key_position(x, -y, x, -y)

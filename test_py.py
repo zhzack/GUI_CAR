@@ -1,57 +1,24 @@
-import pandas as pd
-import matplotlib.pyplot as plt
-import os
+import socket
+import json
+import random
+import time
 
-current_path = os.path.dirname(os.path.realpath(__file__))
-path = '不同距离绕圈'
-path='8m绕圈'
-file_name='绕圈10301435两移远新板子.csv'
-file_name='8m绕圈两端新移远i平放1543.csv'
-csv_file_path = os.path.join(
-    current_path, 'show_data_path', path, file_name)
-# 读取CSV文件
-df = pd.read_csv(csv_file_path)
+client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+client_socket.connect(('localhost', 8080))
 
-# 选择要处理的三列，假设这三列是列名为 'col1', 'col2', 'col3'
-str_pdoa20 = 'NDLB_VKM_PrivateCAN_V1.0.7_0x78_V1::CAR_UWB::uwb_fob_location_pdoa20'
-str_pdoa12 = 'NDLB_VKM_PrivateCAN_V1.0.7_0x78_V1::CAR_UWB::uwb_fob_location_pdoa12'
-str_pdoa01 = 'NDLB_VKM_PrivateCAN_V1.0.7_0x78_V1::CAR_UWB::uwb_fob_location_pdoa01'
-columns_to_process = [str_pdoa20,str_pdoa12,str_pdoa01]
+x = 0
+y = 0
 
-# 用于存储上一行有效的数据
-last_valid_data = {col: None for col in columns_to_process}
+for i in range(0,10000000000):
 
-# 遍历前500行（从第二行开始）
-for i in range(1, len(df)):
-    for col in columns_to_process:
-        current_value = df[col].iloc[i]
-        
-        # 检查当前行是否有有效数据，如果没有，则跳过
-        if pd.notna(current_value):
-            # 如果上一行有有效数据
-            if last_valid_data[col] is not None:
-                # 判断是否满足差值条件
-                if abs(current_value - last_valid_data[col]) >= 230:
-                    if last_valid_data[col] < current_value:
-                        # 当前行减去差值
-                        df[col].iloc[i] -= abs(current_value - last_valid_data[col])
-                    else:
-                        # 当前行加上差值
-                        df[col].iloc[i] += abs(current_value - last_valid_data[col])
-            
-            # 更新上一行有效数据
-            last_valid_data[col] = df[col].iloc[i]
+    # 创建符合格式的数据
+    data = {
+        'path3': {'x': x, 'y': y}
+    }
+    client_socket.send(json.dumps(data).encode('utf-8'))
+    x+= random.randint(-1, 1)
+    y+= random.randint(-1, 1)
+    time.sleep(0.001)
 
-
-# 绘制折线图
-plt.figure(figsize=(10, 6))
-for col in columns_to_process:
-    plt.plot(df.index, df[col], label=col)
-
-# 设置图形标题和标签
-plt.title('Processed Data')
-plt.xlabel('Index')
-plt.ylabel('Value')
-plt.legend()
-plt.grid(True)
-plt.show()
+# 关闭连接
+client_socket.close()

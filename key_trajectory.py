@@ -332,9 +332,9 @@ def generate_key_trajectory(q):
             y = position.get('y')*100
             points.append((x, y))
             cc = [{'path': {'x': x, 'y': y}}]
-
-            # q.put((-y+150, x-267, -y+150, x-267,))
-            # q.put((x, y, 0, 0))
+            print(cc)
+            q.put(cc)
+            cc = [{'path2': {'x': -y, 'y': -x}}]
             q.put(cc)
 
 
