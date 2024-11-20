@@ -244,23 +244,29 @@ class CarCanvas(QGraphicsView):
         path_key = ''
         x = 0
         y = 0
-        for key, value in object.items():
-            print(f"Key: {key}, Value: {value}")
-            path_key = key
-            if key not in self.lines:
-                self.lines[key] = {}
-                self.lines[key]['points'] = []
-                self.lines[key]['last_position'] = None  # 上一个点的位置
-                self.lines[key]['items'] = []  # 钥匙标志对象
-                self.lines[key]['item'] = None
+        try:
+            for key, value in object.items():
+                print(f"Key: {key}, Value: {value}")
+                path_key = key
+                if key not in self.lines:
+                    self.lines[key] = {}
+                    self.lines[key]['points'] = []
+                    self.lines[key]['last_position'] = None  # 上一个点的位置
+                    self.lines[key]['items'] = []  # 钥匙标志对象
+                    self.lines[key]['item'] = None
 
-            # self.lines[key]['points'].append((value['x'], value['y']))
-            # self.lines[key]['last_position']=(value['x'], value['y'])
-            x = value['x']
-            y = value['y']
-            new_position = QPointF(x, y)
-            last_position = self.lines[key]['last_position']
-            self.lines[key]['points'].append(new_position)
+                # self.lines[key]['points'].append((value['x'], value['y']))
+                # self.lines[key]['last_position']=(value['x'], value['y'])
+                x = value['x']
+                y = value['y']
+                new_position = QPointF(x, y)
+                last_position = self.lines[key]['last_position']
+                self.lines[key]['points'].append(new_position)
+        except Exception as e:
+            print(e)
+            return
+            # pass
+            
 
         # self.lines[{path_key}]['path'].append((value['x'], value['y']))
         # print(self.lines[path_key])
@@ -279,12 +285,12 @@ class CarCanvas(QGraphicsView):
 
             line_item = QGraphicsLineItem(last_position.x(), last_position.y(),
                                           new_position.x(), new_position.y())
-            line_item.setPen(QPen(Qt.red, 2))  # 设置线段颜色和宽度
+            line_item.setPen(QPen(Qt.red, 10))  # 设置线段颜色和宽度
             self.scene().addItem(line_item)
             self.lines[key]['items'].append(line_item)
 
             # 检查列表长度，超过50时删除第一个
-            if len(self.lines[key]['items']) > 500:
+            if len(self.lines[key]['items']) > 50:
                 first_line = self.lines[key]['items'].pop(0)
                 self.scene().removeItem(first_line)
                 first_line = self.lines[key]['items'].pop(0)

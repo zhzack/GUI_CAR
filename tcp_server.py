@@ -70,7 +70,7 @@ def handle_client(client_socket, queue):
             data = client_socket.recv(1024)
             if not data:
                 continue
-            # print(data)
+            print(data)
             # 解析数据
             try:
                 # 假设数据是 JSON 格式

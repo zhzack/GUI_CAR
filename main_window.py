@@ -322,6 +322,6 @@ class MainWindow(QMainWindow):
             object = self.queue.get()
 
             for value in object:
-                # print(f"Value: {value}")
+                print(f"Value: {value}")
                 self.canvas.set_key_position(value)
 

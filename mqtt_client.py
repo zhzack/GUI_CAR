@@ -9,8 +9,8 @@ import threading
 
 
 class MQTTClient:
-    def __init__(self,queue):
-        self.queue=queue
+    def __init__(self, queue):
+        self.queue = queue
         self.current_path = os.path.dirname(os.path.realpath(__file__))
         self.config_path = os.path.join(
             self.current_path, "config", "config.json")
@@ -53,9 +53,10 @@ class MQTTClient:
         启动一个线程，定时检查 MQTT 连接状态。
         """
         self.stop_checking = False
-        self.check_connection_thread = threading.Thread(target=self.check_connection_loop, daemon=True)
+        self.check_connection_thread = threading.Thread(
+            target=self.check_connection_loop, daemon=True)
         self.check_connection_thread.start()
-    
+
     def stop_connection_check(self):
         """
         停止检查线程。
@@ -63,7 +64,7 @@ class MQTTClient:
         self.stop_checking = True
         if self.check_connection_thread and self.check_connection_thread.is_alive():
             self.check_connection_thread.join()
-    
+
     def check_connection_loop(self):
         """
         检查 MQTT 是否连接的循环函数。
@@ -107,17 +108,16 @@ class MQTTClient:
         self.client.on_connect = self.on_connect
         try:
             self.client.connect(self.broker, self.port,
-                            keepalive=self.keepalive_interval)
-            self.client.loop_start()
+                                keepalive=self.keepalive_interval)
+
         except Exception as e:
             print(f'mqtt连接失败:{e}')
-        
+        self.client.loop_start()
 
     def on_connect(self, client, userdata, flags, rc):
         status = "连接到MQTT Broker!" if rc == 0 else f"连接失败，返回码 {rc}"
         if self.on_connect_callback:
             self.on_connect_callback(status)
-            
 
     def subscribe(self, topics):
         for topic in topics:
@@ -125,12 +125,14 @@ class MQTTClient:
         self.client.on_message = self.on_message
 
     def on_message(self, client, userdata, msg):
+        print(msg)
         self.on_message_received(msg)
         if self.on_message_callback:
             self.on_message_callback(msg)
 
     def set_on_connect_callback(self, callback):
         print(f'mqtt连接状态:{callback}')
+        self.on_connect_callback = (callback)
 
     def set_on_message_callback(self, callback):
         self.on_message_callback = callback
@@ -205,7 +207,7 @@ class MQTTClient:
         self.publish(topic, json.dumps(data))
 
     def is_connected(self):
-        isConnected=self.client.is_connected()
+        isConnected = self.client.is_connected()
         if not isConnected:
             self.connect()
         return self.client.is_connected()
@@ -213,7 +215,8 @@ class MQTTClient:
     def run(self, robot_topics):
         self.connect()
         self.start_connection_check()  # 启动定时检查线程
-        self.subscribe(robot_topics )
+        self.subscribe(robot_topics)
+        print('sad')
         # while True:
         #     time.sleep(5)
         #     task_set_ = user_data["task_set"]
@@ -261,14 +264,17 @@ class MQTTClient:
             "current_arm_status": current_arm_status,
             "topic": msg.topic,
         }
-        
+
         # print(msg_object)
         return msg_object
 
     def handle_robot_heart_beat(self, msg):
         msg_object = self.merge_data(msg)
-        # print(msg_object["local_x"],msg_object["local_y"],0,0)
-        self.queue.put((float(msg_object["local_x"])*100,float(msg_object["local_y"])*100))
+        print(msg_object["local_x"], msg_object["local_y"], 0, 0)
+        x = float(msg_object["local_x"])*100
+        y = float(msg_object["local_y"])*100
+        cc = [{'path': {'x': x, 'y': y}}]
+        self.queue.put(cc)
 
         # self.plot_mqtt.update_plot(msg_object["local_x"], msg_object["local_y"])
         # self.mqtt_res_obj = self.merge_data(msg)
