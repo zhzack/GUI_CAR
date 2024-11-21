@@ -125,7 +125,7 @@ class MQTTClient:
         self.client.on_message = self.on_message
 
     def on_message(self, client, userdata, msg):
-        print(msg)
+        # print(msg)
         self.on_message_received(msg)
         if self.on_message_callback:
             self.on_message_callback(msg)
@@ -216,7 +216,6 @@ class MQTTClient:
         self.connect()
         self.start_connection_check()  # 启动定时检查线程
         self.subscribe(robot_topics)
-        print('sad')
         # while True:
         #     time.sleep(5)
         #     task_set_ = user_data["task_set"]
@@ -270,10 +269,10 @@ class MQTTClient:
 
     def handle_robot_heart_beat(self, msg):
         msg_object = self.merge_data(msg)
-        print(msg_object["local_x"], msg_object["local_y"], 0, 0)
+        # print(msg_object["local_x"], msg_object["local_y"], 0, 0)
         x = float(msg_object["local_x"])*100
         y = float(msg_object["local_y"])*100
-        cc = [{'path': {'x': x, 'y': y}}]
+        cc = [{'car': {'x': x, 'y': y}}]
         self.queue.put(cc)
 
         # self.plot_mqtt.update_plot(msg_object["local_x"], msg_object["local_y"])

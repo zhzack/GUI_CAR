@@ -15,6 +15,7 @@ for i in range(0,10000000000):
     data = {
         'path3': {'x': x, 'y': y}
     }
+    data=f'car,0,{i},1 UWB1,0,0,1 UWB2,0,0,1 BLE,2,0,1 '
     client_socket.send(json.dumps(data).encode('utf-8'))
     x+= random.randint(-1, 1)
     y+= random.randint(-1, 1)

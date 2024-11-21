@@ -191,6 +191,7 @@ if __name__ == "__main__":
     radius = 3  # 半径为8
     arc_length = 0.1  # 两节点之间的弧长约为0.1米
     add_special_nodes = True  # 控制是否添加特殊节点
+    add_special_nodes = False  # 控制是否添加特殊节点
     special_angle=30 #经过special_angle度添加特殊节点
 
     # 生成圆形轨迹的JSON
@@ -219,6 +220,7 @@ if __name__ == "__main__":
                 ((0, -3), (6, -3)), ((6, 8), (0, 8)),
                 ((0, -4), (6, -4)), ((6, 9), (0, 9)),
                 ((0, -5), (6, -5)), ((6, 10), (0, 10)),]
+    # 李文韬
     x = 3
     segments = [((0,  0), (x, 0)),  ((x, 5), (0, 5)),
                 ((0, -1), (x, -1)), ((x, 6), (0, 6)),
@@ -253,8 +255,18 @@ if __name__ == "__main__":
                 ((1, -8+1), (x, -8+1)), ((x, 13-2), (1, 13-2)),
                 ((1, -9+1), (x, -9+1)), ((x, 14-2), (1, 14-2)),
                 ]
+    # 李文韬
+    x = 3
+    segments = [((0,  0), (x, 0)),  ((x, 5), (0, 5)),
+                ((0, -1), (x, -1)), ((x, 6), (0, 6)),
+                ((0, -2), (x, -2)), ((x, 7), (0, 7)),
+                ((0, -3), (x, -3)), ((x, 8), (0, 8)),
+                ((0, -4), (x, -4)), ((x, 9), (0, 9)),
+                ((0, -5), (x, -5)), ((x, 10), (0, 10)),
+                ((0,  0), (x, 0)),  ((x, 5), (0, 5)),
+                ((0,  0), (0.1, 0)), ]
 
     linear_json_output = generate_linears_trajectory_json(segments,add_special_nodes)
-    linear_task_name = "linePath100"
+    linear_task_name = "liwentao1"
     save_json_to_file(linear_json_output, linear_task_name)
     print(f"Linear trajectory saved with task name: {linear_task_name}")

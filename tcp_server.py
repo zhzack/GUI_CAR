@@ -33,7 +33,6 @@ def kill_process_using_port(port):
     except Exception as e:
         print(f"错误: {e}")
         return False
-        
 
 
 def tcp_server(queue, port=8080):
@@ -53,7 +52,8 @@ def tcp_server(queue, port=8080):
         while True:
             client_socket, client_address = server_socket.accept()
             print(f"客户端 {client_address} 已连接.")
-            client_thread = threading.Thread(target=handle_client, args=(client_socket, queue))
+            client_thread = threading.Thread(
+                target=handle_client, args=(client_socket, queue))
             client_thread.start()
 
     except OSError as e:
@@ -64,25 +64,48 @@ def tcp_server(queue, port=8080):
 
 
 def handle_client(client_socket, queue):
+    buffer = b''
     try:
         while True:
             # 接收客户端发送的数据（最多 1024 字节）
             data = client_socket.recv(1024)
             if not data:
                 continue
-            print(data)
-            # 解析数据
-            try:
-                # 假设数据是 JSON 格式
-                json_data = data.decode('utf-8')
-                data_dict = json.loads(json_data)
-                # print(f"接收到数据: {data_dict}")
+            # print(data)
+            buffer += data
+            while b' ' in buffer:
+                packet_end = buffer.index(b' ') + 1
+                packet = buffer[:packet_end]  # 解码为字符串
+                buffer = buffer[packet_end:]  # 剩余的数据
+                # print(packet)
+                packet = packet.decode('utf-8')
 
-                # 处理数据并放入队列
-                queue.put([data_dict])
-            except json.JSONDecodeError:
-                print("接收到的不是有效的 JSON 数据.")
-                pass
+                packet.replace('"',"")
+                packet.replace(' ',"")
+                parts = packet.split(',')
+                parsed_data = {}
+                # 第一个元素作为主键（比如 'BLE'）
+                key = parts[0]
+
+                # 其他元素转换为数字，映射到 'x' 和 'y'
+                x, y ,isTrue= map(int, parts[1:4])  # 假设只有 x, y 两个值
+                if isTrue:
+                    # 构造字典
+                    parsed_data[key] = {'x': x, 'y': y}
+                    # print(parsed_data)
+                    queue.put([parsed_data])
+            # 解析数据
+            # try:
+            #     # 假设数据是 JSON 格式
+            #     json_data = data.decode('utf-8')
+            #     data_dict = json.loads(json_data)
+            #     # print(f"接收到数据: {data_dict}")
+
+            #     # 处理数据并放入队列
+            #     queue.put([data_dict])
+            # except json.JSONDecodeError:
+            #     print("接收到的不是有效的 JSON 数据.")
+            #     pass
 
     except Exception as e:
         print(f"处理客户端数据时发生错误: {e}")

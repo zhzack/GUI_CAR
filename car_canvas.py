@@ -246,7 +246,7 @@ class CarCanvas(QGraphicsView):
         y = 0
         try:
             for key, value in object.items():
-                print(f"Key: {key}, Value: {value}")
+                # print(f"Key: {key}, Value: {value}")
                 path_key = key
                 if key not in self.lines:
                     self.lines[key] = {}
@@ -266,7 +266,7 @@ class CarCanvas(QGraphicsView):
             print(e)
             return
             # pass
-            
+
 
         # self.lines[{path_key}]['path'].append((value['x'], value['y']))
         # print(self.lines[path_key])
@@ -290,11 +290,11 @@ class CarCanvas(QGraphicsView):
             self.lines[key]['items'].append(line_item)
 
             # 检查列表长度，超过50时删除第一个
-            if len(self.lines[key]['items']) > 50:
-                first_line = self.lines[key]['items'].pop(0)
-                self.scene().removeItem(first_line)
-                first_line = self.lines[key]['items'].pop(0)
-                self.scene().removeItem(first_line)
+            # if len(self.lines[key]['items']) > 50:
+            #     first_line = self.lines[key]['items'].pop(0)
+            #     self.scene().removeItem(first_line)
+            #     first_line = self.lines[key]['items'].pop(0)
+            #     self.scene().removeItem(first_line)
 
         # 移动钥匙
         if self.lines[key]['item'] is None:

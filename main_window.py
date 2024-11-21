@@ -72,9 +72,9 @@ class MainWindow(QMainWindow):
         # print(self.robot_topics, self.res_topics)
         self.mqtt_res_obj = {}
 
-        # self.mqtt_client.connect()
-        # self.mqtt_client.subscribe(
-        #     self.robot_topics + list(self.res_topics.values()))
+        self.mqtt_client.connect()
+        self.mqtt_client.subscribe(
+            self.robot_topics + list(self.res_topics.values()))
 
         # 是否开启mqtt
         # self.mqtt_client.run(self.mqtt_client.robot_topics +
@@ -318,10 +318,10 @@ class MainWindow(QMainWindow):
     def update_key_position(self):
         """更新钥匙位置"""
         # if  self.queue.qsize()>40000:
-        if not self.queue.empty():
+        while not self.queue.empty():
             object = self.queue.get()
 
             for value in object:
-                print(f"Value: {value}")
+                # print(f"Value: {value}")
                 self.canvas.set_key_position(value)
 
