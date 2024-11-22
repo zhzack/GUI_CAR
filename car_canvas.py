@@ -1,3 +1,4 @@
+import random
 from PyQt5.QtWidgets import QGraphicsView, QLabel, QVBoxLayout
 from PyQt5.QtGui import QPen, QBrush, QColor, QPainter
 from PyQt5.QtCore import Qt, QPointF, QPoint
@@ -150,6 +151,7 @@ class CarCanvas(QGraphicsView):
 
             # 画多边形顶点
             for point in points:
+                continue
                 self.add_fence_point(point)
 
     def add_fence_point(self, point):
@@ -240,6 +242,8 @@ class CarCanvas(QGraphicsView):
             self.circle_fences.append(
                 (circle_item, center, circle[1], circle[2]))
 
+
+    
     def set_key_position(self, object):
         path_key = ''
         x = 0
@@ -254,6 +258,9 @@ class CarCanvas(QGraphicsView):
                     self.lines[key]['last_position'] = None  # 上一个点的位置
                     self.lines[key]['items'] = []  # 钥匙标志对象
                     self.lines[key]['item'] = None
+                    
+                    # 创建随机颜色
+                    self.lines[key]['color'] = QColor(random.randint(0, 255),random.randint(0, 255),random.randint(0, 255))
 
                 # self.lines[key]['points'].append((value['x'], value['y']))
                 # self.lines[key]['last_position']=(value['x'], value['y'])
@@ -271,7 +278,7 @@ class CarCanvas(QGraphicsView):
         # self.lines[{path_key}]['path'].append((value['x'], value['y']))
         # print(self.lines[path_key])
         """更新钥匙位置并检查是否进入多边形或圆形区域"""
-
+        
         self.coord_label.setText(
             f"""
             <div style='font-size: 28px;'>
@@ -285,21 +292,21 @@ class CarCanvas(QGraphicsView):
 
             line_item = QGraphicsLineItem(last_position.x(), last_position.y(),
                                           new_position.x(), new_position.y())
-            line_item.setPen(QPen(Qt.red, 10))  # 设置线段颜色和宽度
+            line_item.setPen(QPen(self.lines[key]['color'], 10))  # 设置线段颜色和宽度
             self.scene().addItem(line_item)
             self.lines[key]['items'].append(line_item)
 
             # 检查列表长度，超过50时删除第一个
-            # if len(self.lines[key]['items']) > 50:
-            #     first_line = self.lines[key]['items'].pop(0)
-            #     self.scene().removeItem(first_line)
-            #     first_line = self.lines[key]['items'].pop(0)
-            #     self.scene().removeItem(first_line)
+            if len(self.lines[key]['items']) > 50:
+                first_line = self.lines[key]['items'].pop(0)
+                self.scene().removeItem(first_line)
+                first_line = self.lines[key]['items'].pop(0)
+                self.scene().removeItem(first_line)
 
         # 移动钥匙
         if self.lines[key]['item'] is None:
             self.lines[key]['item'] = self.scene().addRect(
-                x - 15, y - 15, 30, 30, QPen(Qt.red), QBrush(Qt.red))
+                x - 15, y - 15, 30, 30, QPen(self.lines[key]['color']), QBrush(self.lines[key]['color']))
         else:
             self.lines[key]['item'].setRect(x - 25, y - 25, 50, 50)
 
@@ -419,46 +426,46 @@ class CarCanvas(QGraphicsView):
                 # outer_circle_item.setBrush(QBrush(Qt.NoBrush))  # 移除外圈高亮
                 outer_circle_item.setBrush(QBrush(QColor(0, 255, 0, 100)))
 
-    def drawForeground(self, painter, rect):
-        """绘制无限延伸的X和Y坐标轴及刻度"""
-        painter.save()
-        pen = QPen(Qt.black, 2)
-        painter.setPen(pen)
-        # painter.scale(1, -1)  # 仅翻转 Y 轴
+    # def drawForeground(self, painter, rect):
+    #     """绘制无限延伸的X和Y坐标轴及刻度"""
+    #     painter.save()
+    #     pen = QPen(Qt.black, 2)
+    #     painter.setPen(pen)
+    #     # painter.scale(1, -1)  # 仅翻转 Y 轴
 
-        # 获取当前场景的可见区域
-        view_rect = self.mapToScene(self.viewport().rect()).boundingRect()
+    #     # 获取当前场景的可见区域
+    #     view_rect = self.mapToScene(self.viewport().rect()).boundingRect()
 
-        # 获取当前缩放因子
-        scale_x = self.transform().m11()  # x轴缩放因子
-        scale_y = self.transform().m22()  # y轴缩放因子
+    #     # 获取当前缩放因子
+    #     scale_x = self.transform().m11()  # x轴缩放因子
+    #     scale_y = self.transform().m22()  # y轴缩放因子
 
-        # 设置刻度间隔
-        tick_interval = 100 * max(abs(scale_x), abs(scale_y))  # 根据缩放因子调整刻度间隔
+    #     # 设置刻度间隔
+    #     tick_interval = 100 * max(abs(scale_x), abs(scale_y))  # 根据缩放因子调整刻度间隔
 
-        # 绘制X轴和刻度
-        x_start = int(view_rect.left())
-        x_end = int(view_rect.right())
-        painter.drawLine(QPoint(x_start, 0), QPoint(x_end, 0))
-        x = x_start - (x_start % tick_interval)
-        while x < x_end:
-            x_int = int(x)
-            painter.drawLine(QPoint(x_int, -5), QPoint(x_int, 5))
-            painter.drawText(x_int + 5, 15, str(x_int))
-            x += tick_interval
+    #     # 绘制X轴和刻度
+    #     x_start = int(view_rect.left())
+    #     x_end = int(view_rect.right())
+    #     painter.drawLine(QPoint(x_start, 0), QPoint(x_end, 0))
+    #     x = x_start - (x_start % tick_interval)
+    #     while x < x_end:
+    #         x_int = int(x)
+    #         painter.drawLine(QPoint(x_int, -5), QPoint(x_int, 5))
+    #         painter.drawText(x_int + 5, 15, str(x_int))
+    #         x += tick_interval
 
-        # 绘制Y轴和刻度
-        y_start = int(view_rect.top())
-        y_end = int(view_rect.bottom())
-        painter.drawLine(QPoint(0, y_start), QPoint(0, y_end))
-        y = y_start - (y_start % tick_interval)
-        while y < y_end:
-            y_int = int(y)
-            painter.drawLine(QPoint(-5, y_int), QPoint(5, y_int))
-            painter.drawText(15, y_int + 15, str(-y_int))
-            y += tick_interval
+    #     # 绘制Y轴和刻度
+    #     y_start = int(view_rect.top())
+    #     y_end = int(view_rect.bottom())
+    #     painter.drawLine(QPoint(0, y_start), QPoint(0, y_end))
+    #     y = y_start - (y_start % tick_interval)
+    #     while y < y_end:
+    #         y_int = int(y)
+    #         painter.drawLine(QPoint(-5, y_int), QPoint(5, y_int))
+    #         painter.drawText(15, y_int + 15, str(-y_int))
+    #         y += tick_interval
 
-        painter.restore()
+    #     painter.restore()
 
     def wheelEvent(self, event):
         """鼠标滚轮缩放"""
@@ -471,24 +478,3 @@ class CarCanvas(QGraphicsView):
         else:
             self.scale(zoom_out_factor, zoom_out_factor)
             self.zoom_factor *= zoom_out_factor
-
-    # def set_key_position(self, x, y):
-        # """更新钥匙的位置并绘制轨迹"""
-        # new_position = QPointF(x, y)
-
-        # if last_position:
-        #     pen = QPen(Qt.red, 2)
-        #     self.scene().addLine(last_position.x(), last_position.y(), new_position.x(), new_position.y(), pen)
-
-        # if self.key_item is None:
-        #     self.key_item = self.scene().addEllipse(x - 5, y - 5, 10, 10, QPen(Qt.red), QBrush(Qt.red))
-        # else:
-        #     self.key_item.setRect(x - 5, y - 5, 10, 10)
-
-        # last_position = new_position
-
-        # # 更新钥匙的实时坐标显示
-        # self.coord_label.setText(f"X: {x:.2f}, Y: {-y:.2f}")
-
-        # # 确保钥匙在可见范围内
-        # self.ensureVisible(self.key_item, 50, 50)
