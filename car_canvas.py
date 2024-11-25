@@ -242,15 +242,13 @@ class CarCanvas(QGraphicsView):
             self.circle_fences.append(
                 (circle_item, center, circle[1], circle[2]))
 
-
-    
     def set_key_position(self, object):
         path_key = ''
         x = 0
         y = 0
         try:
             for key, value in object.items():
-                # print(f"Key: {key}, Value: {value}")
+                print(f"Key: {key}, Value: {value}")
                 path_key = key
                 if key not in self.lines:
                     self.lines[key] = {}
@@ -258,9 +256,10 @@ class CarCanvas(QGraphicsView):
                     self.lines[key]['last_position'] = None  # 上一个点的位置
                     self.lines[key]['items'] = []  # 钥匙标志对象
                     self.lines[key]['item'] = None
-                    
+
                     # 创建随机颜色
-                    self.lines[key]['color'] = QColor(random.randint(0, 255),random.randint(0, 255),random.randint(0, 255))
+                    self.lines[key]['color'] = QColor(random.randint(
+                        0, 255), random.randint(0, 255), random.randint(0, 255))
 
                 # self.lines[key]['points'].append((value['x'], value['y']))
                 # self.lines[key]['last_position']=(value['x'], value['y'])
@@ -274,11 +273,11 @@ class CarCanvas(QGraphicsView):
             return
             # pass
 
-
         # self.lines[{path_key}]['path'].append((value['x'], value['y']))
         # print(self.lines[path_key])
         """更新钥匙位置并检查是否进入多边形或圆形区域"""
-        
+        # for key in self.lines:
+        #     print(key)
         self.coord_label.setText(
             f"""
             <div style='font-size: 28px;'>

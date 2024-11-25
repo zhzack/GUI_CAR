@@ -1,2 +1,5 @@
 /__pycache__/
 *.pyc
+/main.dist/
+main.exe
+main.cmd
