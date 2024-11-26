@@ -465,6 +465,136 @@ class CarCanvas(QGraphicsView):
     #         y += tick_interval
 
     #     painter.restore()
+    def drawForeground(self, painter, rect):
+        """绘制无限延伸的X和Y坐标轴及刻度，同时绘制网格线"""
+        painter.save()
+        pen = QPen(Qt.black, 2)
+        painter.setPen(pen)
+        # painter.scale(1, -1)  # 仅翻转 Y 轴
+
+        # 获取当前场景的可见区域
+        view_rect = self.mapToScene(self.viewport().rect()).boundingRect()
+
+        # 获取当前缩放因子
+        scale_x = self.transform().m11()  # x轴缩放因子
+        scale_y = self.transform().m22()  # y轴缩放因子
+
+        # 设置刻度间隔
+        tick_interval = 100 * max(abs(scale_x), abs(scale_y))  # 根据缩放因子调整刻度间隔
+
+        # 创建网格线的画笔，设置为灰色并使用虚线样式
+        grid_pen = QPen(Qt.lightGray, 3, Qt.DotLine)  # 轻灰色虚线
+        painter.setPen(grid_pen)
+
+        # 绘制网格线（水平和垂直）
+        x_start = int(view_rect.left())
+        x_end = int(view_rect.right())
+        y_start = int(view_rect.top())
+        y_end = int(view_rect.bottom())
+
+        # 水平网格线
+        x = x_start - (x_start % tick_interval)
+        while x < x_end:
+            x_int = int(x)
+            painter.drawLine(QPoint(x_int, y_start), QPoint(x_int, y_end))
+            x += tick_interval
+
+        # 垂直网格线
+        y = y_start - (y_start % tick_interval)
+        while y < y_end:
+            y_int = int(y)
+            painter.drawLine(QPoint(x_start, y_int), QPoint(x_end, y_int))
+            y += tick_interval
+
+        # 绘制X轴和刻度
+        painter.setPen(QPen(Qt.black, 2))  # 恢复主坐标轴的画笔
+        painter.drawLine(QPoint(x_start, 0), QPoint(x_end, 0))
+        x = x_start - (x_start % tick_interval)
+        while x < x_end:
+            x_int = int(x)
+            painter.drawLine(QPoint(x_int, -5), QPoint(x_int, 5))
+            painter.drawText(x_int + 5, 15, str(x_int))
+            x += tick_interval
+
+        # 绘制Y轴和刻度
+        painter.drawLine(QPoint(0, y_start), QPoint(0, y_end))
+        y = y_start - (y_start % tick_interval)
+        while y < y_end:
+            y_int = int(y)
+            painter.drawLine(QPoint(-5, y_int), QPoint(5, y_int))
+            painter.drawText(15, y_int + 15, str(-y_int))
+            y += tick_interval
+
+        painter.restore()
+    
+    # def drawForeground(self, painter, rect):
+    #     """绘制无限延伸的X和Y坐标轴及100的整数倍刻度，同时绘制网格线"""
+    #     painter.save()
+    #     pen = QPen(Qt.black, 2)
+    #     painter.setPen(pen)
+
+    #     # 获取当前场景的可见区域
+    #     view_rect = self.mapToScene(self.viewport().rect()).boundingRect()
+
+    #     # 获取当前缩放因子
+    #     scale_x = self.transform().m11()  # x轴缩放因子
+    #     scale_y = self.transform().m22()  # y轴缩放因子
+
+    #     # 设置刻度间隔为100的整数倍，调整最小刻度间隔
+    #     base_tick_interval = 100  # 刻度间隔为100的倍数
+    #     tick_interval_x = max(base_tick_interval, int(view_rect.width() / 10 * scale_x))
+    #     tick_interval_y = max(base_tick_interval, int(view_rect.height() / 10 * scale_y))
+
+    #     # 向上调整刻度间隔为100的倍数
+    #     tick_interval_x = base_tick_interval * ((tick_interval_x + base_tick_interval - 1) // base_tick_interval)
+    #     tick_interval_y = base_tick_interval * ((tick_interval_y + base_tick_interval - 1) // base_tick_interval)
+
+    #     # 创建网格线的画笔，设置为灰色并使用虚线样式
+    #     grid_pen = QPen(Qt.lightGray, 1, Qt.DotLine)  # 轻灰色虚线
+    #     painter.setPen(grid_pen)
+
+    #     # 绘制网格线（水平和垂直）
+    #     x_start = int(view_rect.left())
+    #     x_end = int(view_rect.right())
+    #     y_start = int(view_rect.top())
+    #     y_end = int(view_rect.bottom())
+
+    #     # 水平网格线
+    #     x = x_start - (x_start % tick_interval_x)
+    #     while x < x_end:
+    #         x_int = int(x)
+    #         painter.drawLine(QPoint(x_int, y_start), QPoint(x_int, y_end))
+    #         x += tick_interval_x
+
+    #     # 垂直网格线
+    #     y = y_start - (y_start % tick_interval_y)
+    #     while y < y_end:
+    #         y_int = int(y)
+    #         painter.drawLine(QPoint(x_start, y_int), QPoint(x_end, y_int))
+    #         y += tick_interval_y
+
+    #     # 绘制X轴和刻度
+    #     painter.setPen(QPen(Qt.black, 2))  # 恢复主坐标轴的画笔
+    #     painter.drawLine(QPoint(x_start, 0), QPoint(x_end, 0))
+    #     x = x_start - (x_start % tick_interval_x)
+    #     while x < x_end:
+    #         x_int = int(x)
+    #         painter.drawLine(QPoint(x_int, -5), QPoint(x_int, 5))
+    #         painter.drawText(x_int + 5, 15, str(x_int))
+    #         x += tick_interval_x
+
+    #     # 绘制Y轴和刻度
+    #     painter.drawLine(QPoint(0, y_start), QPoint(0, y_end))
+    #     y = y_start - (y_start % tick_interval_y)
+    #     while y < y_end:
+    #         y_int = int(y)
+    #         painter.drawLine(QPoint(-5, y_int), QPoint(5, y_int))
+    #         painter.drawText(15, y_int + 15, str(-y_int))
+    #         y += tick_interval_y
+
+    #     painter.restore()
+
+
 
     def wheelEvent(self, event):
         """鼠标滚轮缩放"""
