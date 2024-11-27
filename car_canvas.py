@@ -1,16 +1,17 @@
 import random
-from PyQt5.QtWidgets import QGraphicsView, QLabel, QVBoxLayout
+from PyQt5.QtWidgets import QGraphicsView, QLabel
 from PyQt5.QtGui import QPen, QBrush, QColor, QPainter
 from PyQt5.QtCore import Qt, QPointF, QPoint
 
 from PyQt5.QtWidgets import QGraphicsPolygonItem, QGraphicsEllipseItem, QGraphicsLineItem
-from PyQt5.QtGui import QPolygonF, QPen, QBrush, QColor
 from PyQt5.QtCore import Qt, QPointF
+from PyQt5.QtGui import QPolygonF, QPen, QBrush, QColor,QPixmap
 from PyQt5.QtCore import Qt, QRect
-from PyQt5.QtWidgets import QVBoxLayout, QWidget
 
 from fence_tool import FenceTool
+import os
 
+lineLen=10
 
 class CarCanvas(QGraphicsView):
     def __init__(self, scene, parent=None):
@@ -140,8 +141,20 @@ class CarCanvas(QGraphicsView):
              QPointF(-300, 530), QPointF(-300, 340)],
 
         ]
+        
+        
 
         for points in polygons:
+            
+            temp_points=[]
+            for point in points:
+                point.setX(point.x()+90)
+                point.setY(point.y()-220)
+                # print(point)
+                temp_points.append(point)
+            print(temp_points)
+            points=temp_points
+            
             polygon = QPolygonF(points)
             polygon_item = QGraphicsPolygonItem(polygon)
             polygon_item.setPen(QPen(Qt.transparent, 2))
@@ -151,7 +164,7 @@ class CarCanvas(QGraphicsView):
 
             # 画多边形顶点
             for point in points:
-                continue
+                # continue
                 self.add_fence_point(point)
 
     def add_fence_point(self, point):
@@ -219,7 +232,7 @@ class CarCanvas(QGraphicsView):
         ]
 
         # for i in range(0, len(circles)):
-        center = QPointF(0, 0)
+        center = QPointF(90, -220)
 
         #  [200, 0, 200]
 
@@ -291,12 +304,12 @@ class CarCanvas(QGraphicsView):
 
             line_item = QGraphicsLineItem(last_position.x(), last_position.y(),
                                           new_position.x(), new_position.y())
-            line_item.setPen(QPen(self.lines[key]['color'], 10))  # 设置线段颜色和宽度
+            line_item.setPen(QPen(self.lines[key]['color'], 5))  # 设置线段颜色和宽度
             self.scene().addItem(line_item)
             self.lines[key]['items'].append(line_item)
 
             # 检查列表长度，超过50时删除第一个
-            if len(self.lines[key]['items']) > 50:
+            if len(self.lines[key]['items']) > lineLen:
                 first_line = self.lines[key]['items'].pop(0)
                 self.scene().removeItem(first_line)
                 first_line = self.lines[key]['items'].pop(0)
@@ -305,9 +318,58 @@ class CarCanvas(QGraphicsView):
         # 移动钥匙
         if self.lines[key]['item'] is None:
             self.lines[key]['item'] = self.scene().addRect(
-                x - 15, y - 15, 30, 30, QPen(self.lines[key]['color']), QBrush(self.lines[key]['color']))
+                x - 7.5, y - 7.5, 15, 15, QPen(self.lines[key]['color']), QBrush(self.lines[key]['color']))
         else:
-            self.lines[key]['item'].setRect(x - 25, y - 25, 50, 50)
+            self.lines[key]['item'].setRect(x - 7.5, y - 7.5, 15, 15)
+            
+        # logo=os.path.join(os.path.dirname(os.path.realpath(__file__)), 'img', 'bieke.jpg')
+        # if self.lines[key]['item'] is None:
+        #     # 加载并缩放图像为 10x10
+        #     pixmap = QPixmap(logo)  # 替换为实际的图片路径
+        #     pixmap = pixmap.scaled(10, 10, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+
+        #     # 创建一个带圆角的 QPixmap
+        #     rounded_pixmap = QPixmap(10, 10)
+        #     rounded_pixmap.fill(Qt.transparent)  # 填充透明背景
+
+        #     # 使用 QPainter 创建圆角效果
+        #     painter = QPainter(rounded_pixmap)
+        #     painter.setRenderHint(QPainter.Antialiasing)
+        #     painter.setBrush(QBrush(pixmap))  # 使用缩放后的图像作为画刷
+        #     painter.setPen(Qt.NoPen)
+
+        #     # 绘制一个带圆角的矩形
+        #     painter.drawRoundedRect(0, 0, 10, 10, 5, 5)  # 半径为 5 创建圆角
+        #     painter.end()
+
+        #     # 创建 QGraphicsPixmapItem 来显示带圆角的图片
+        #     self.lines[key]['item'] = self.scene().addPixmap(rounded_pixmap)
+        #     # 设置图片的位置，使其中心对齐 (x, y) 坐标
+        #     # self.lines[key]['item'].setOffset(-rounded_pixmap.width() / 2, -rounded_pixmap.height() / 2)
+        # else:
+        #     # 获取已经存在的图像项
+        #     # logo=os.path.join(self.current_path, 'img', 'bieke.jpg')
+        #     pixmap = QPixmap(logo).scaled(10, 10, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+
+        #     # 创建一个带圆角的 QPixmap
+        #     rounded_pixmap = QPixmap(10, 10)
+        #     rounded_pixmap.fill(Qt.transparent)
+
+        #     # 使用 QPainter 创建圆角效果
+        #     painter = QPainter(rounded_pixmap)
+        #     painter.setRenderHint(QPainter.Antialiasing)
+        #     painter.setBrush(QBrush(pixmap))
+        #     painter.setPen(Qt.NoPen)
+
+        #     # 绘制一个带圆角的矩形
+        #     painter.drawRoundedRect(0, 0, 10, 10, 5, 5)
+        #     painter.end()
+
+        #     # 更新 QGraphicsPixmapItem 的图片
+        #     self.lines[key]['item'].setPixmap(rounded_pixmap)
+        #     self.lines[key]['item'].setOffset(-rounded_pixmap.width() / 2, -rounded_pixmap.height() / 2)
+
+
 
         # 检查钥匙是否进入多边形区域
         for polygon_item in self.polygon_fences:
@@ -353,7 +415,7 @@ class CarCanvas(QGraphicsView):
             return
         """检查钥匙是否在同心圆的圆环或范围之外"""
         # 计算钥匙到圆心的距离
-        center = QPoint(0, 0)  # 所有同心圆的中心相同
+        center = QPoint(90, -220)  # 所有同心圆的中心相同
         distance_to_center = ((position.x() - center.x())
                               ** 2 + (position.y() - center.y())**2)**0.5
 
@@ -367,18 +429,13 @@ class CarCanvas(QGraphicsView):
                     # print(1)
                     circle_item.setBrush(QBrush(self.color_1))  # 高亮为黄色
                     # circle_item.setPen(QPen(Qt.green,200))
-                    pass
                 else:
                     circle_item.setPen(QPen(self.color_1, (max-min)))
-                    pass
             else:
                 if min == 0:
                     circle_item.setBrush(QBrush(Qt.transparent))
-                    pass
                 else:
                     circle_item.setPen(QPen(Qt.transparent))
-                    pass
-                pass
 
     def highlight_fence(self, fence_item, highlight):
         """高亮或取消高亮围栏区域"""
@@ -420,7 +477,6 @@ class CarCanvas(QGraphicsView):
                     QBrush(QColor(255, 0, 0, 100)))  # 移除高亮
                 # inner_circle_item.setBrush(QBrush(QColor(0, 255, 0, 100)))  # 绿色半透明高亮
             else:
-                pass
                 inner_circle_item.setBrush(QBrush(Qt.NoBrush))  # 移除内圈高亮
                 # outer_circle_item.setBrush(QBrush(Qt.NoBrush))  # 移除外圈高亮
                 outer_circle_item.setBrush(QBrush(QColor(0, 255, 0, 100)))

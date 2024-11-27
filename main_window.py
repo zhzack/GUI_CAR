@@ -105,7 +105,7 @@ class MainWindow(QMainWindow):
         # car_item.setRotation(45)  # 旋转45度
 
         # 设置图像的初始位置
-        car_item.setPos(-115, -210)
+        car_item.setPos(-115+90, -210-220)
         # car_item.setPos(0, 0)
 
         # 将图像添加到场景中，并设置 z 值为较低的数值
