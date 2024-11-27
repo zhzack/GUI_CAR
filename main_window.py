@@ -89,13 +89,15 @@ class MainWindow(QMainWindow):
         # 初始化电子围栏工具
         self.fence_tool = FenceTool(self.scene)
         self.canvas = CarCanvas(self.scene, self)
+        self.canvas.queue=queue
 
         # 保存任务轨迹
         self.points = []
 
         # 加载汽车图像
-        car_img = os.path.join(self.current_path, 'img', 'car_image.png')
-        car_pixmap = QPixmap(car_img)
+        self.car_img = os.path.join(self.current_path, 'img', 'car_image.png')
+        car_pixmap = QPixmap(self.car_img)
+        self.zhaun_img = os.path.join(self.current_path, 'img', '石砖2.jpg')
         car_item = QGraphicsPixmapItem(car_pixmap)
 
         # 设置图像的比例
@@ -135,6 +137,100 @@ class MainWindow(QMainWindow):
         self.canvas.setMouseTracking(True)
         # 主布局
         self.layout = QVBoxLayout(self)
+        self.show_coordinate_system = True  # 控制坐标系显示的变量
+
+        # 绘制坐标系
+        self.draw_coordinate_system()
+        # 绘制背景
+        # self.set_background_image()
+
+    def set_background_image(self):
+
+        image_path = self.zhaun_img
+        """设置场景的背景图片并平铺"""
+        # 加载图片
+        pixmap = QPixmap(image_path)
+
+        # 获取场景的边界
+        scene_rect = self.scene.sceneRect()
+        scene_width = scene_rect.width()
+        scene_height = scene_rect.height()
+
+        # 计算图片的重复次数
+        image_width = pixmap.width()
+        image_height = pixmap.height()
+
+        # 平铺背景：在场景中添加多个 QGraphicsPixmapItem
+        for x in range(-int(scene_width), int(scene_width), image_width):
+            for y in range(-int(scene_height), int(scene_height), image_height):
+                # 创建一个 QGraphicsPixmapItem，将图片放置到场景的相应位置
+                pixmap_item = QGraphicsPixmapItem(pixmap)
+                pixmap_item.setPos(x, y)  # 设置每个图片的位置
+                pixmap_item.setZValue(-2000)
+                self.scene.addItem(pixmap_item)
+
+    def draw_coordinate_system(self):
+        """绘制坐标系和网格线"""
+        if not self.show_coordinate_system:
+            return  # 如果不显示坐标系，直接返回
+
+        # 设置网格线的样式
+        pen = QPen(QColor(200, 200, 200))  # 浅灰色网格线
+        pen.setStyle(Qt.DashLine)
+
+        length = 30000
+        part = 50
+
+        # 绘制网格线：横线和竖线
+        for x in range(-length, length, part):  # 每part单位画一条竖线
+            self.scene.addLine(x, -length, x, length, pen)
+        for y in range(-length, length, part):  # 每part单位画一条横线
+            self.scene.addLine(-length, y, length, y, pen)
+
+        # 绘制X轴和Y轴
+        axis_pen = QPen(Qt.black)  # 黑色轴线
+        self.scene.addLine(0, -length, 0, length, axis_pen)  # Y轴
+        self.scene.addLine(-length, 0, length, 0, axis_pen)  # X轴
+
+        # 设置刻度线的样式
+        scale_pen = QPen(Qt.black)
+        scale_font = self.canvas.font()  # 使用画布的字体
+
+        # 绘制X轴刻度线和刻度值
+        for x in range(-length, length, part):
+            if x % 100 == 0:
+                # 绘制X轴上的刻度线
+                self.scene.addLine(x, 0, x, 10, scale_pen)  # 刻度线
+                # 绘制刻度值
+                text_item = self.scene.addText(str(x), scale_font)
+                text_item.setPos(x-15, 10)  # 将文本位置稍微偏移
+            else:
+                # 绘制X轴上的刻度线
+                self.scene.addLine(x, 0, x, 5, scale_pen)  # 刻度线
+
+        # 绘制Y轴刻度线和刻度值
+        for y in range(-length, length, part):
+            if y % 100 == 0:
+                # 绘制Y轴上的刻度线
+                self.scene.addLine(0, y, 10, y, scale_pen)  # 刻度线
+                # 绘制刻度值
+                text_item = self.scene.addText(str(-y), scale_font)
+                text_item.setPos(10, y-10)  # 将文本位置稍微偏移
+            else:
+                # 绘制Y轴上的刻度线
+                self.scene.addLine(0, y, 5, y, scale_pen)  # 刻度线
+                # 绘制刻度值
+                # text_item = self.scene.addText(str(-y), scale_font)
+                # text_item.setPos(5, y + 5)  # 将文本位置稍微偏移
+
+        self.canvas.update()  # 更新画布，确保所有图形被绘制
+
+    def toggle_coordinate_system(self):
+        """切换坐标系的显示状态"""
+        self.show_coordinate_system = not self.show_coordinate_system
+        self.scene.clear()  # 清除当前场景
+        self.draw_coordinate_system()  # 重新绘制坐标系
+        self.canvas.update()  # 更新画布显示
 
     def init_menu(self):
         menu_bar = self.menuBar()
@@ -144,7 +240,7 @@ class MainWindow(QMainWindow):
                 ('通过鼠标添加', self.start_fence_by_mouse),
             ],
             '设置': [
-                ('设置选项1', self.manual_input_fence),
+                ('鼠标模拟位置', self.setMouseMoveActive),
                 ('设置选项2', self.manual_input_fence),
             ]
         }
@@ -286,6 +382,10 @@ class MainWindow(QMainWindow):
         else:
             return None
 
+    def setMouseMoveActive(self):
+        # print(self.canvas.mouse_move_active)
+        self.canvas.mouse_move_active = not self.canvas.mouse_move_active
+
     def manual_input_fence(self):
         """手动输入围栏的顶点"""
         # 这里可以添加手动输入围栏顶点的代码
@@ -314,6 +414,7 @@ class MainWindow(QMainWindow):
     #         self.fence_tool.update_temp_line(pos)
     #         self.fence_tool.show_coordinates(pos)
     #         print(pos)
+    
 
     def update_key_position(self):
         """更新钥匙位置"""
@@ -324,4 +425,3 @@ class MainWindow(QMainWindow):
             for value in object:
                 # print(f"Value: {value}")
                 self.canvas.set_key_position(value)
-

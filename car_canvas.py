@@ -5,13 +5,14 @@ from PyQt5.QtCore import Qt, QPointF, QPoint
 
 from PyQt5.QtWidgets import QGraphicsPolygonItem, QGraphicsEllipseItem, QGraphicsLineItem
 from PyQt5.QtCore import Qt, QPointF
-from PyQt5.QtGui import QPolygonF, QPen, QBrush, QColor,QPixmap
+from PyQt5.QtGui import QPolygonF, QPen, QBrush, QColor, QPixmap
 from PyQt5.QtCore import Qt, QRect
 
 from fence_tool import FenceTool
 import os
 
-lineLen=10
+lineLen = 10
+
 
 class CarCanvas(QGraphicsView):
     def __init__(self, scene, parent=None):
@@ -23,9 +24,10 @@ class CarCanvas(QGraphicsView):
         self.setDragMode(QGraphicsView.ScrollHandDrag)
         self.setTransformationAnchor(QGraphicsView.AnchorUnderMouse)
         self.setResizeAnchor(QGraphicsView.AnchorUnderMouse)
-
+        self.queue=None
         self.fence_mode_active = False
-        self.highlighted = True
+        self.mouse_move_active = True
+        self.highlighted = False
 
         self.fence_tool = FenceTool(scene)
 
@@ -49,13 +51,8 @@ class CarCanvas(QGraphicsView):
         self.key_item = None
 
         # 添加多个多边形和圆形区域
-        self.add_polygons()
         self.add_circles()
-        # self.add_concentric_circles()
-        # 添加一个绿色圆环，宽度为20
-        # self.add_thick_circle(QPointF(0, 0), outer_radius=100, inner_radius=10, color=Qt.red)
-        # 添加一个宽度为20的圆环，内圈填充为红色
-        # self.add_thick_circle(QPointF(0, 0), outer_radius=1000, inner_radius=100, outer_color=Qt.green, inner_color=Qt.red)
+
         # 创建浮动展示台
         self.float_widget = QLabel("", self)
 
@@ -101,7 +98,7 @@ class CarCanvas(QGraphicsView):
                 if self.fence_mode_active:
                     # 完成围栏的操作
                     self.fence_tool.finish_fence(self.parent)
-                    self.fence_tool.draw_fences()
+                    # self.fence_tool.draw_fences()
 
     def mouseMoveEvent(self, event):
         super().mouseMoveEvent(event)
@@ -113,109 +110,12 @@ class CarCanvas(QGraphicsView):
 
             self.fence_tool.update_temp_line(pos)  # 更新临时线
             self.fence_tool.show_coordinates(pos)  # 显示坐标
-
-    def add_polygons(self):
-        """添加多个多边形区域"""
-        polygons = [
-            #             [QPointF(-100, 100), QPointF(-100, 0),
-            #              QPointF(0, 0), QPointF(0, 100)],
-            # # y+100
-            #             [QPointF(-100, 100+100), QPointF(-100, 0+100),
-            #              QPointF(0, 0+100), QPointF(0, 100+100)],
-            # # x-100
-            #              [QPointF(-100+100, 100), QPointF(-100+100, 0),
-            #              QPointF(0+100, 0), QPointF(0+100, 100)],
-            # # x-100  y+100
-            #              [QPointF(-100+100, 100+100), QPointF(-100+100, 0+100),
-            #              QPointF(0+100, 0+100), QPointF(0+100, 100+100)],
-            [QPointF(-100, 220), QPointF(-100, -60),
-             QPointF(100, -60), QPointF(100, 220)],
-
-            [QPointF(-100, 340), QPointF(-100, -230),
-             QPointF(-500, -230), QPointF(-500, 340)],
-
-            [QPointF(100, 340), QPointF(100, -230),
-             QPointF(500, -230), QPointF(500, 340)],
-
-            [QPointF(300, 340), QPointF(300, 530),
-             QPointF(-300, 530), QPointF(-300, 340)],
-
-        ]
-        
-        
-
-        for points in polygons:
-            
-            temp_points=[]
-            for point in points:
-                point.setX(point.x()+90)
-                point.setY(point.y()-220)
-                # print(point)
-                temp_points.append(point)
-            print(temp_points)
-            points=temp_points
-            
-            polygon = QPolygonF(points)
-            polygon_item = QGraphicsPolygonItem(polygon)
-            polygon_item.setPen(QPen(Qt.transparent, 2))
-            polygon_item.setBrush(QBrush(Qt.transparent))
-            self.scene().addItem(polygon_item)
-            self.polygon_fences.append(polygon_item)
-
-            # 画多边形顶点
-            for point in points:
-                # continue
-                self.add_fence_point(point)
-
-    def add_fence_point(self, point):
-        """在给定位置添加围栏的顶点"""
-        ellipse = QGraphicsEllipseItem(point.x() - 5, point.y() - 5, 10, 10)
-        ellipse.setPen(QPen(Qt.red))
-        ellipse.setBrush(QBrush(Qt.red))
-        self.scene().addItem(ellipse)
-
-    def add_concentric_circles(self):
-        """添加同心圆区域"""
-        center = QPointF(0, 0)
-        radii = [500, 300, 200]  # 定义同心圆的半径，按照半径从大到小排列
-        real_r = [600, 400, 200]
-
-        # 根据不同的半径创建同心圆
-        for index, radius in enumerate(radii):
-            # 创建圆
-            circle_item = QGraphicsEllipseItem(
-                center.x() - radius, center.y() - radius, 2 * radius, 2 * radius)
-
-            if index != len(radii)-1:
-                circle_item.setPen(QPen(Qt.transparent, 200))
-                circle_item.setBrush(QBrush(Qt.transparent))
-            else:
-                circle_item.setPen(QPen(Qt.transparent, 1))
-                circle_item.setBrush(QBrush(Qt.transparent))
-                # circle_item.setBrush(QBrush(Qt.green))
-            # 将圆加入到场景中
-            self.scene().addItem(circle_item)
-            self.concentric_circles.append((circle_item, center, radius))
-
-    def add_thick_circle(self, center, outer_radius, inner_radius, outer_color=Qt.green, inner_color=Qt.transparent):
-        """添加具有特定宽度和颜色的圆环"""
-        # 绘制外圆
-        outer_circle_item = QGraphicsEllipseItem(center.x(
-        ) - outer_radius, center.y() - outer_radius, 2 * outer_radius, 2 * outer_radius)
-        outer_circle_item.setPen(QPen(outer_color, 2))  # 设置边框颜色和宽度
-        outer_circle_item.setBrush(QBrush(inner_color))  # 设置内圈填充颜色
-        self.scene().addItem(outer_circle_item)
-
-        # 绘制内圆
-        inner_circle_item = QGraphicsEllipseItem(center.x(
-        ) - inner_radius, center.y() - inner_radius, 2 * inner_radius, 2 * inner_radius)
-        inner_circle_item.setPen(QPen(Qt.transparent))  # 透明背景
-        inner_circle_item.setBrush(QBrush(Qt.transparent))  # 透明背景
-        self.scene().addItem(inner_circle_item)
-
-        # 将圆环信息存储
-        self.concentric_circles.append(
-            (outer_circle_item, center, outer_radius))
+        if self.mouse_move_active:
+            pos = self.mapToScene(event.pos())
+            parsed_data={}
+            parsed_data['鼠标'] = {'x': pos.x(), 'y': pos.y()}
+            # print(parsed_data)
+            self.queue.put([parsed_data])
 
     def add_circles(self):
         """添加多个圆形区域"""
@@ -233,16 +133,6 @@ class CarCanvas(QGraphicsView):
 
         # for i in range(0, len(circles)):
         center = QPointF(90, -220)
-
-        #  [200, 0, 200]
-
-        # radius = 500
-        # circle_item = QGraphicsEllipseItem(
-        #     center.x() - radius, center.y() - radius, 2 * radius, 2 * radius)
-        # circle_item.setPen(QPen(Qt.transparent))
-        # circle_item.setBrush(QBrush(Qt.transparent))
-        # self.scene().addItem(circle_item)
-        # self.circle_fences.append((circle_item, center, 0, 500))
 
         for circle in circles:
             radius = (circle[2]+circle[1])/2
@@ -279,6 +169,7 @@ class CarCanvas(QGraphicsView):
                 x = value['x']
                 y = value['y']
                 new_position = QPointF(x, y)
+                self.fence_tool.highlight_fence_by_point(new_position)
                 last_position = self.lines[key]['last_position']
                 self.lines[key]['points'].append(new_position)
         except Exception as e:
@@ -321,84 +212,6 @@ class CarCanvas(QGraphicsView):
                 x - 7.5, y - 7.5, 15, 15, QPen(self.lines[key]['color']), QBrush(self.lines[key]['color']))
         else:
             self.lines[key]['item'].setRect(x - 7.5, y - 7.5, 15, 15)
-            
-        # logo=os.path.join(os.path.dirname(os.path.realpath(__file__)), 'img', 'bieke.jpg')
-        # if self.lines[key]['item'] is None:
-        #     # 加载并缩放图像为 10x10
-        #     pixmap = QPixmap(logo)  # 替换为实际的图片路径
-        #     pixmap = pixmap.scaled(10, 10, Qt.KeepAspectRatio, Qt.SmoothTransformation)
-
-        #     # 创建一个带圆角的 QPixmap
-        #     rounded_pixmap = QPixmap(10, 10)
-        #     rounded_pixmap.fill(Qt.transparent)  # 填充透明背景
-
-        #     # 使用 QPainter 创建圆角效果
-        #     painter = QPainter(rounded_pixmap)
-        #     painter.setRenderHint(QPainter.Antialiasing)
-        #     painter.setBrush(QBrush(pixmap))  # 使用缩放后的图像作为画刷
-        #     painter.setPen(Qt.NoPen)
-
-        #     # 绘制一个带圆角的矩形
-        #     painter.drawRoundedRect(0, 0, 10, 10, 5, 5)  # 半径为 5 创建圆角
-        #     painter.end()
-
-        #     # 创建 QGraphicsPixmapItem 来显示带圆角的图片
-        #     self.lines[key]['item'] = self.scene().addPixmap(rounded_pixmap)
-        #     # 设置图片的位置，使其中心对齐 (x, y) 坐标
-        #     # self.lines[key]['item'].setOffset(-rounded_pixmap.width() / 2, -rounded_pixmap.height() / 2)
-        # else:
-        #     # 获取已经存在的图像项
-        #     # logo=os.path.join(self.current_path, 'img', 'bieke.jpg')
-        #     pixmap = QPixmap(logo).scaled(10, 10, Qt.KeepAspectRatio, Qt.SmoothTransformation)
-
-        #     # 创建一个带圆角的 QPixmap
-        #     rounded_pixmap = QPixmap(10, 10)
-        #     rounded_pixmap.fill(Qt.transparent)
-
-        #     # 使用 QPainter 创建圆角效果
-        #     painter = QPainter(rounded_pixmap)
-        #     painter.setRenderHint(QPainter.Antialiasing)
-        #     painter.setBrush(QBrush(pixmap))
-        #     painter.setPen(Qt.NoPen)
-
-        #     # 绘制一个带圆角的矩形
-        #     painter.drawRoundedRect(0, 0, 10, 10, 5, 5)
-        #     painter.end()
-
-        #     # 更新 QGraphicsPixmapItem 的图片
-        #     self.lines[key]['item'].setPixmap(rounded_pixmap)
-        #     self.lines[key]['item'].setOffset(-rounded_pixmap.width() / 2, -rounded_pixmap.height() / 2)
-
-
-
-        # 检查钥匙是否进入多边形区域
-        for polygon_item in self.polygon_fences:
-            if polygon_item.polygon().containsPoint(new_position, Qt.OddEvenFill):
-                if self.last_fence == polygon_item:
-                    self.fence_cont += 1
-                else:
-                    self.last_fence = polygon_item
-
-                if self.fence_cont >= 25:
-                    self.fence_cont = 0
-                    self.highlight_fence(polygon_item, True)  # 高亮多边形
-                    for circle_item, _, min, max in self.circle_fences:
-
-                        self.highlighted = True
-                        if min == 0:
-                            circle_item.setBrush(QBrush(Qt.transparent))
-                        else:
-                            circle_item.setPen(QPen(Qt.transparent))
-            else:
-                self.highlight_fence(polygon_item, False)  # 恢复透明
-                self.highlighted = False
-
-        # # # 检查钥匙是否进入圆形区域
-        # for circle_item, center, radius in self.circle_fences:
-        #     if (new_position - center).manhattanLength() <= radius:
-        #         self.highlight_fence(circle_item, True)  # 高亮圆形
-        #     else:
-        #         self.highlight_fence(circle_item, False)  # 恢复透明
 
         # 检查钥匙是否进入同心圆的圆环区域
         self.check_concentric_circles(new_position)
@@ -436,221 +249,6 @@ class CarCanvas(QGraphicsView):
                     circle_item.setBrush(QBrush(Qt.transparent))
                 else:
                     circle_item.setPen(QPen(Qt.transparent))
-
-    def highlight_fence(self, fence_item, highlight):
-        """高亮或取消高亮围栏区域"""
-        if highlight:
-            fence_item.setBrush(QBrush(QColor(255, 100, 255, 200)))  # 高亮为黄色
-        else:
-            fence_item.setBrush(QBrush(Qt.transparent))  # 恢复透明
-
-    def highlight_ring(self, inner_circle_item, outer_circle_item, highlight):
-        """
-        高亮两个同心圆之间的圆环区域，或单独高亮最小圆或最大圆外区域
-        inner_circle_item: 内圈圆 (如果高亮最小圆的内部，该值为 None)
-        outer_circle_item: 外圈圆 (如果高亮最大圆外区域，该值为 None)
-        highlight: 是否高亮
-        """
-        if inner_circle_item is None and outer_circle_item is None:
-            return  # 如果两个都为空，没有可高亮的内容
-
-        if inner_circle_item is None:  # 最小圆的内部区域
-            if highlight:
-                outer_circle_item.setBrush(
-                    QBrush(QColor(255, 255, 0, 100)))  # 黄色半透明高亮
-            else:
-                outer_circle_item.setBrush(QBrush(Qt.NoBrush))  # 移除高亮
-        elif outer_circle_item is None:  # 最大圆外的区域
-            if highlight:
-                inner_circle_item.setBrush(
-                    QBrush(QColor(255, 0, 0, 100)))  # 红色半透明高亮
-            else:
-                inner_circle_item.setBrush(QBrush(Qt.NoBrush))  # 移除高亮
-        else:  # 两个圆之间的圆环区域
-            if highlight:
-                max_circle_item, _, _ = self.concentric_circles[-1]
-                max_circle_item.setBrush(QBrush(Qt.NoBrush))
-                # 高亮两个圆之间的区域
-                outer_circle_item.setBrush(
-                    QBrush(QColor(0, 255, 0, 100)))  # 绿色半透明高亮
-                inner_circle_item.setBrush(
-                    QBrush(QColor(255, 0, 0, 100)))  # 移除高亮
-                # inner_circle_item.setBrush(QBrush(QColor(0, 255, 0, 100)))  # 绿色半透明高亮
-            else:
-                inner_circle_item.setBrush(QBrush(Qt.NoBrush))  # 移除内圈高亮
-                # outer_circle_item.setBrush(QBrush(Qt.NoBrush))  # 移除外圈高亮
-                outer_circle_item.setBrush(QBrush(QColor(0, 255, 0, 100)))
-
-    # def drawForeground(self, painter, rect):
-    #     """绘制无限延伸的X和Y坐标轴及刻度"""
-    #     painter.save()
-    #     pen = QPen(Qt.black, 2)
-    #     painter.setPen(pen)
-    #     # painter.scale(1, -1)  # 仅翻转 Y 轴
-
-    #     # 获取当前场景的可见区域
-    #     view_rect = self.mapToScene(self.viewport().rect()).boundingRect()
-
-    #     # 获取当前缩放因子
-    #     scale_x = self.transform().m11()  # x轴缩放因子
-    #     scale_y = self.transform().m22()  # y轴缩放因子
-
-    #     # 设置刻度间隔
-    #     tick_interval = 100 * max(abs(scale_x), abs(scale_y))  # 根据缩放因子调整刻度间隔
-
-    #     # 绘制X轴和刻度
-    #     x_start = int(view_rect.left())
-    #     x_end = int(view_rect.right())
-    #     painter.drawLine(QPoint(x_start, 0), QPoint(x_end, 0))
-    #     x = x_start - (x_start % tick_interval)
-    #     while x < x_end:
-    #         x_int = int(x)
-    #         painter.drawLine(QPoint(x_int, -5), QPoint(x_int, 5))
-    #         painter.drawText(x_int + 5, 15, str(x_int))
-    #         x += tick_interval
-
-    #     # 绘制Y轴和刻度
-    #     y_start = int(view_rect.top())
-    #     y_end = int(view_rect.bottom())
-    #     painter.drawLine(QPoint(0, y_start), QPoint(0, y_end))
-    #     y = y_start - (y_start % tick_interval)
-    #     while y < y_end:
-    #         y_int = int(y)
-    #         painter.drawLine(QPoint(-5, y_int), QPoint(5, y_int))
-    #         painter.drawText(15, y_int + 15, str(-y_int))
-    #         y += tick_interval
-
-    #     painter.restore()
-    def drawForeground(self, painter, rect):
-        """绘制无限延伸的X和Y坐标轴及刻度，同时绘制网格线"""
-        painter.save()
-        pen = QPen(Qt.black, 2)
-        painter.setPen(pen)
-        # painter.scale(1, -1)  # 仅翻转 Y 轴
-
-        # 获取当前场景的可见区域
-        view_rect = self.mapToScene(self.viewport().rect()).boundingRect()
-
-        # 获取当前缩放因子
-        scale_x = self.transform().m11()  # x轴缩放因子
-        scale_y = self.transform().m22()  # y轴缩放因子
-
-        # 设置刻度间隔
-        tick_interval = 100 * max(abs(scale_x), abs(scale_y))  # 根据缩放因子调整刻度间隔
-
-        # 创建网格线的画笔，设置为灰色并使用虚线样式
-        grid_pen = QPen(Qt.lightGray, 3, Qt.DotLine)  # 轻灰色虚线
-        painter.setPen(grid_pen)
-
-        # 绘制网格线（水平和垂直）
-        x_start = int(view_rect.left())
-        x_end = int(view_rect.right())
-        y_start = int(view_rect.top())
-        y_end = int(view_rect.bottom())
-
-        # 水平网格线
-        x = x_start - (x_start % tick_interval)
-        while x < x_end:
-            x_int = int(x)
-            painter.drawLine(QPoint(x_int, y_start), QPoint(x_int, y_end))
-            x += tick_interval
-
-        # 垂直网格线
-        y = y_start - (y_start % tick_interval)
-        while y < y_end:
-            y_int = int(y)
-            painter.drawLine(QPoint(x_start, y_int), QPoint(x_end, y_int))
-            y += tick_interval
-
-        # 绘制X轴和刻度
-        painter.setPen(QPen(Qt.black, 2))  # 恢复主坐标轴的画笔
-        painter.drawLine(QPoint(x_start, 0), QPoint(x_end, 0))
-        x = x_start - (x_start % tick_interval)
-        while x < x_end:
-            x_int = int(x)
-            painter.drawLine(QPoint(x_int, -5), QPoint(x_int, 5))
-            painter.drawText(x_int + 5, 15, str(x_int))
-            x += tick_interval
-
-        # 绘制Y轴和刻度
-        painter.drawLine(QPoint(0, y_start), QPoint(0, y_end))
-        y = y_start - (y_start % tick_interval)
-        while y < y_end:
-            y_int = int(y)
-            painter.drawLine(QPoint(-5, y_int), QPoint(5, y_int))
-            painter.drawText(15, y_int + 15, str(-y_int))
-            y += tick_interval
-
-        painter.restore()
-    
-    # def drawForeground(self, painter, rect):
-    #     """绘制无限延伸的X和Y坐标轴及100的整数倍刻度，同时绘制网格线"""
-    #     painter.save()
-    #     pen = QPen(Qt.black, 2)
-    #     painter.setPen(pen)
-
-    #     # 获取当前场景的可见区域
-    #     view_rect = self.mapToScene(self.viewport().rect()).boundingRect()
-
-    #     # 获取当前缩放因子
-    #     scale_x = self.transform().m11()  # x轴缩放因子
-    #     scale_y = self.transform().m22()  # y轴缩放因子
-
-    #     # 设置刻度间隔为100的整数倍，调整最小刻度间隔
-    #     base_tick_interval = 100  # 刻度间隔为100的倍数
-    #     tick_interval_x = max(base_tick_interval, int(view_rect.width() / 10 * scale_x))
-    #     tick_interval_y = max(base_tick_interval, int(view_rect.height() / 10 * scale_y))
-
-    #     # 向上调整刻度间隔为100的倍数
-    #     tick_interval_x = base_tick_interval * ((tick_interval_x + base_tick_interval - 1) // base_tick_interval)
-    #     tick_interval_y = base_tick_interval * ((tick_interval_y + base_tick_interval - 1) // base_tick_interval)
-
-    #     # 创建网格线的画笔，设置为灰色并使用虚线样式
-    #     grid_pen = QPen(Qt.lightGray, 1, Qt.DotLine)  # 轻灰色虚线
-    #     painter.setPen(grid_pen)
-
-    #     # 绘制网格线（水平和垂直）
-    #     x_start = int(view_rect.left())
-    #     x_end = int(view_rect.right())
-    #     y_start = int(view_rect.top())
-    #     y_end = int(view_rect.bottom())
-
-    #     # 水平网格线
-    #     x = x_start - (x_start % tick_interval_x)
-    #     while x < x_end:
-    #         x_int = int(x)
-    #         painter.drawLine(QPoint(x_int, y_start), QPoint(x_int, y_end))
-    #         x += tick_interval_x
-
-    #     # 垂直网格线
-    #     y = y_start - (y_start % tick_interval_y)
-    #     while y < y_end:
-    #         y_int = int(y)
-    #         painter.drawLine(QPoint(x_start, y_int), QPoint(x_end, y_int))
-    #         y += tick_interval_y
-
-    #     # 绘制X轴和刻度
-    #     painter.setPen(QPen(Qt.black, 2))  # 恢复主坐标轴的画笔
-    #     painter.drawLine(QPoint(x_start, 0), QPoint(x_end, 0))
-    #     x = x_start - (x_start % tick_interval_x)
-    #     while x < x_end:
-    #         x_int = int(x)
-    #         painter.drawLine(QPoint(x_int, -5), QPoint(x_int, 5))
-    #         painter.drawText(x_int + 5, 15, str(x_int))
-    #         x += tick_interval_x
-
-    #     # 绘制Y轴和刻度
-    #     painter.drawLine(QPoint(0, y_start), QPoint(0, y_end))
-    #     y = y_start - (y_start % tick_interval_y)
-    #     while y < y_end:
-    #         y_int = int(y)
-    #         painter.drawLine(QPoint(-5, y_int), QPoint(5, y_int))
-    #         painter.drawText(15, y_int + 15, str(-y_int))
-    #         y += tick_interval_y
-
-    #     painter.restore()
-
-
 
     def wheelEvent(self, event):
         """鼠标滚轮缩放"""

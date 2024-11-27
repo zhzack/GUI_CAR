@@ -21,9 +21,9 @@ for i in range(0,10000000000):
     # client_socket.send(json.dumps(data).encode('utf-8'))
     client_socket.send(data.encode('utf-8'))
 
-    x+= random.randint(-10, 10)
-    y+= random.randint(-10, 10)
-    time.sleep(0.1)
+    x+= random.randint(-100, 100)
+    y+= random.randint(-100, 100)
+    time.sleep(0.01)
 
 # 关闭连接
 client_socket.close()
