@@ -3,13 +3,12 @@ from PyQt5.QtWidgets import QGraphicsView, QLabel
 from PyQt5.QtGui import QPen, QBrush, QColor, QPainter
 from PyQt5.QtCore import Qt, QPointF, QPoint
 
-from PyQt5.QtWidgets import QGraphicsPolygonItem, QGraphicsEllipseItem, QGraphicsLineItem
+from PyQt5.QtWidgets import QGraphicsEllipseItem, QGraphicsLineItem
 from PyQt5.QtCore import Qt, QPointF
-from PyQt5.QtGui import QPolygonF, QPen, QBrush, QColor, QPixmap
+from PyQt5.QtGui import QPen, QBrush, QColor
 from PyQt5.QtCore import Qt, QRect
 
 from fence_tool import FenceTool
-import os
 
 lineLen = 10
 
@@ -24,7 +23,7 @@ class CarCanvas(QGraphicsView):
         self.setDragMode(QGraphicsView.ScrollHandDrag)
         self.setTransformationAnchor(QGraphicsView.AnchorUnderMouse)
         self.setResizeAnchor(QGraphicsView.AnchorUnderMouse)
-        self.queue=None
+        self.queue = None
         self.fence_mode_active = False
         self.mouse_move_active = True
         self.highlighted = False
@@ -44,15 +43,17 @@ class CarCanvas(QGraphicsView):
 
         self.lines = {}  # 存储线段对象，不同输入的轨迹保存
 
+        self.center = QPointF(90, -220)
+
         # 存储多个多边形和圆形区域
+        self.circles = [
+            # 圆心坐标和半径
+            [500, 800],
+            [800, 1500]
+        ]
         self.polygon_fences = []
-        self.circle_fences = []
         self.concentric_circles = []
         self.key_item = None
-
-        # 添加多个多边形和圆形区域
-        self.add_circles()
-
         # 创建浮动展示台
         self.float_widget = QLabel("", self)
 
@@ -112,38 +113,27 @@ class CarCanvas(QGraphicsView):
             self.fence_tool.show_coordinates(pos)  # 显示坐标
         if self.mouse_move_active:
             pos = self.mapToScene(event.pos())
-            parsed_data={}
+            parsed_data = {}
             parsed_data['鼠标'] = {'x': pos.x(), 'y': pos.y()}
             # print(parsed_data)
             self.queue.put([parsed_data])
 
-    def add_circles(self):
-        """添加多个圆形区域"""
-        # circles = [
-        #     [300, 200, 400],  # 圆心坐标和半径
-        #     [500, 400, 600],
-        #     [700, 600, 800],
-        #     [900, 800, 1000]
-        # ]
-        circles = [
-            # 圆心坐标和半径
-            [650, 500, 800],
-            [1500, 800, 1500]
-        ]
 
-        # for i in range(0, len(circles)):
-        center = QPointF(90, -220)
 
-        for circle in circles:
-            radius = (circle[2]+circle[1])/2
-            circle_item = QGraphicsEllipseItem(
-                center.x() - radius, center.y() - radius, 2 * radius, 2 * radius)
-            circle_item.setPen(QPen(self.color_1, (circle[2]-circle[1])))
-            circle_item.setBrush(QBrush(Qt.transparent))
-
-            self.scene().addItem(circle_item)
-            self.circle_fences.append(
-                (circle_item, center, circle[1], circle[2]))
+    def check_concentric_circles(self, position):
+        # 计算钥匙到圆心的距离
+        distance_to_center = ((position.x() - self.center.x())
+                              ** 2 + (position.y() - self.center.y())**2)**0.5
+        # 初始化一个标志来追踪是否已高亮圆环
+        for min, max in self.circles:
+            if min < distance_to_center < max:
+                radius = (min+max)/2
+                circle_item = QGraphicsEllipseItem(
+                    self.center.x() - radius, self.center.y() - radius, 2 * radius, 2 * radius)
+                circle_item.setPen(QPen(self.color_1, (max-min)))
+                circle_item.setBrush(QBrush(Qt.transparent))
+                self.scene().addItem(circle_item)
+                return circle_item
 
     def set_key_position(self, object):
         path_key = ''
@@ -153,25 +143,74 @@ class CarCanvas(QGraphicsView):
             for key, value in object.items():
                 print(f"Key: {key}, Value: {value}")
                 path_key = key
+                temp_key_obj = {}
                 if key not in self.lines:
-                    self.lines[key] = {}
-                    self.lines[key]['points'] = []
-                    self.lines[key]['last_position'] = None  # 上一个点的位置
-                    self.lines[key]['items'] = []  # 钥匙标志对象
-                    self.lines[key]['item'] = None
-
+                    temp_key_obj['points'] = []
+                    temp_key_obj['last_position'] = None  # 上一个点的位置
+                    temp_key_obj['items'] = []  # 钥匙标志对象
+                    temp_key_obj['item'] = None
+                    temp_key_obj['temp_line'] = None
+                    temp_key_obj['fences'] = []
                     # 创建随机颜色
-                    self.lines[key]['color'] = QColor(random.randint(
+                    temp_key_obj['color'] = QColor(random.randint(
                         0, 255), random.randint(0, 255), random.randint(0, 255))
 
-                # self.lines[key]['points'].append((value['x'], value['y']))
-                # self.lines[key]['last_position']=(value['x'], value['y'])
+                    self.lines[key] = temp_key_obj
+                else:
+                    temp_key_obj = self.lines[key]
+
                 x = value['x']
                 y = value['y']
                 new_position = QPointF(x, y)
-                self.fence_tool.highlight_fence_by_point(new_position)
-                last_position = self.lines[key]['last_position']
-                self.lines[key]['points'].append(new_position)
+
+                if temp_key_obj['temp_line']:
+                    self.scene().removeItem(temp_key_obj['temp_line'])
+                # 绘制从上一个点到当前鼠标位置的线
+                temp_key_obj['temp_line'] = self.scene().addLine(0, -200,
+                                                                 x, y, QPen(Qt.gray, 3))
+
+                # 清除上一个点的高亮
+                if temp_key_obj['fences'] != None:
+                    for fence in temp_key_obj['fences']:
+                        if fence is not None:
+                            self.scene().removeItem(fence)
+                temp_key_obj['fences'] = self.fence_tool.highlight_fence_by_point(
+                    new_position)
+                # 检查钥匙是否进入同心圆的圆环区域
+                temp_key_obj['fences'].append(self.check_concentric_circles(
+                    new_position))
+
+                if temp_key_obj['last_position']:
+
+                    line_item = QGraphicsLineItem(temp_key_obj['last_position'].x(), temp_key_obj['last_position'].y(),
+                                                  new_position.x(), new_position.y())
+                    line_item.setPen(
+                        QPen(temp_key_obj['color'], 5))  # 设置线段颜色和宽度
+                    self.scene().addItem(line_item)
+                    temp_key_obj['items'].append(line_item)
+
+                    # 检查列表长度，超过50时删除第一个
+                    if len(temp_key_obj['items']) > lineLen:
+                        first_line = temp_key_obj['items'].pop(0)
+                        self.scene().removeItem(first_line)
+
+                # 移动钥匙
+                if temp_key_obj['item'] is None:
+                    temp_key_obj['item'] = self.scene().addRect(
+                        x - 7.5, y - 7.5, 15, 15, QPen(temp_key_obj['color']), QBrush(temp_key_obj['color']))
+                else:
+                    temp_key_obj['item'].setRect(x - 7.5, y - 7.5, 15, 15)
+
+                temp_key_obj['last_position'] = new_position
+
+                # print(int(self.width()/2),int(self.height()/2))
+                # 确保钥匙在可见范围内
+                # self.ensureVisible(self.key_item, int(
+                #     self.width()/2)-40, int(self.height()/2)-40)
+
+                # temp_key_obj['last_position'] = temp_key_obj['last_position']
+                temp_key_obj['points'].append(new_position)
+                self.lines[key] = temp_key_obj
         except Exception as e:
             print(e)
             return
@@ -180,75 +219,19 @@ class CarCanvas(QGraphicsView):
         # self.lines[{path_key}]['path'].append((value['x'], value['y']))
         # print(self.lines[path_key])
         """更新钥匙位置并检查是否进入多边形或圆形区域"""
-        # for key in self.lines:
-        #     print(key)
-        self.coord_label.setText(
-            f"""
-            <div style='font-size: 28px;'>
-                <span style='color: green;'>真实坐标点: ({x:.2f}, {-y:.2f})</span><br>
-                <span style='color: red;'>UWB钥匙坐标点: ({x:.2f}, {-y:.2f})</span><br>
-                <span style='color: purple;'>蓝牙定位区域</span><br>
-            </div>
-            """
-        )
-        if last_position:
 
-            line_item = QGraphicsLineItem(last_position.x(), last_position.y(),
-                                          new_position.x(), new_position.y())
-            line_item.setPen(QPen(self.lines[key]['color'], 5))  # 设置线段颜色和宽度
-            self.scene().addItem(line_item)
-            self.lines[key]['items'].append(line_item)
-
-            # 检查列表长度，超过50时删除第一个
-            if len(self.lines[key]['items']) > lineLen:
-                first_line = self.lines[key]['items'].pop(0)
-                self.scene().removeItem(first_line)
-                first_line = self.lines[key]['items'].pop(0)
-                self.scene().removeItem(first_line)
-
-        # 移动钥匙
-        if self.lines[key]['item'] is None:
-            self.lines[key]['item'] = self.scene().addRect(
-                x - 7.5, y - 7.5, 15, 15, QPen(self.lines[key]['color']), QBrush(self.lines[key]['color']))
-        else:
-            self.lines[key]['item'].setRect(x - 7.5, y - 7.5, 15, 15)
-
-        # 检查钥匙是否进入同心圆的圆环区域
-        self.check_concentric_circles(new_position)
-
-        self.lines[key]['last_position'] = new_position
-
-        # print(int(self.width()/2),int(self.height()/2))
-        # 确保钥匙在可见范围内
-        # self.ensureVisible(self.key_item, int(
-        #     self.width()/2)-40, int(self.height()/2)-40)
-
-    def check_concentric_circles(self, position):
-        if self.highlighted:
+        if path_key == 'BLE':
+            self.coord_label.setText(
+                f"""
+                <div style='font-size: 28px;'>
+                    <span style='color: green;'>真实坐标点: ({x:.2f}, {-y:.2f})</span><br>
+                    <span style='color: red;'>UWB钥匙坐标点: ({x:.2f}, {-y:.2f})</span><br>
+                    <span style='color: purple;'>蓝牙定位区域</span><br>
+                    <span style='color: red;'>{path_key} : current{x}, current2 : {y})</span><br>
+                </div>
+                """
+            )
             return
-        """检查钥匙是否在同心圆的圆环或范围之外"""
-        # 计算钥匙到圆心的距离
-        center = QPoint(90, -220)  # 所有同心圆的中心相同
-        distance_to_center = ((position.x() - center.x())
-                              ** 2 + (position.y() - center.y())**2)**0.5
-
-        # 初始化一个标志来追踪是否已高亮圆环
-        # highlighted = False
-        for circle_item, _, min, max in self.circle_fences:
-
-            if min < distance_to_center < max:
-                # highlighted = True
-                if min == 0:
-                    # print(1)
-                    circle_item.setBrush(QBrush(self.color_1))  # 高亮为黄色
-                    # circle_item.setPen(QPen(Qt.green,200))
-                else:
-                    circle_item.setPen(QPen(self.color_1, (max-min)))
-            else:
-                if min == 0:
-                    circle_item.setBrush(QBrush(Qt.transparent))
-                else:
-                    circle_item.setPen(QPen(Qt.transparent))
 
     def wheelEvent(self, event):
         """鼠标滚轮缩放"""

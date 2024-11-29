@@ -1,10 +1,9 @@
 from PyQt5.QtCore import Qt, QPointF
-from PyQt5.QtGui import QPen, QPainter
-from PyQt5.QtWidgets import QGraphicsTextItem, QGraphicsPolygonItem, QGraphicsLineItem
+from PyQt5.QtGui import QPen
+from PyQt5.QtWidgets import QGraphicsTextItem, QGraphicsPolygonItem
 from shapely.geometry import Polygon
-from PyQt5.QtGui import QPainterPath, QPolygonF
-from PyQt5.QtGui import QPainterPath, QPen, QBrush, QColor
-from PyQt5.QtWidgets import QGraphicsPathItem
+from PyQt5.QtGui import QPolygonF
+from PyQt5.QtGui import QPen, QBrush, QColor
 from PyQt5.QtWidgets import QInputDialog, QDialog
 
 from datetime import datetime
@@ -77,8 +76,6 @@ class FenceTool:
         except json.JSONDecodeError:
             print(f"文件 {self.fence_path} 内容格式错误，加载失败。")
             return []  # 如果 JSON 格式错误，返回空的围栏列表
-
-
 
     def start(self):
         """开始电子围栏添加，重置已有的点和临时线"""
@@ -200,19 +197,23 @@ class FenceTool:
     def highlight_fence_by_point(self, point):
         """通过坐标点判断并高亮该点所在的围栏"""
         # 清除场景中的所有已绘制的围栏
-        self.clear_all_fences()
+        # self.clear_all_fences()
+        fences = []
 
         # 遍历所有围栏，找到包含点的围栏并高亮
         for fence_name, points in self.fences:
+            temp_item = None
             # 判断点是否在围栏（多边形）内
             if self.is_point_in_polygon(point, points):
                 # 高亮围栏
-                self.draw_fence_polygon(points, color=Qt.red, fill_color=QColor(
+                temp_item = self.draw_fence_polygon(points, color=Qt.red, fill_color=QColor(
                     255, 0, 0, 50), border_width=0)
-            else:
-                # 普通围栏，不高亮
-                self.draw_fence_polygon(
-                    points, color=Qt.blue, fill_color=Qt.transparent, border_width=0)
+            # else:
+            #     # 普通围栏，不高亮
+            #     temp_item = self.draw_fence_polygon(
+            #         points, color=Qt.blue, fill_color=Qt.transparent, border_width=0)
+            fences.append(temp_item)
+        return fences
 
     def clear_all_fences(self):
         """清除所有已绘制的围栏线条和区域"""
@@ -221,7 +222,6 @@ class FenceTool:
                 self.scene.removeItem(item)  # 移除围栏的多边形项
             # elif isinstance(item, QGraphicsLineItem):
             #     self.scene.removeItem(item)  # 移除围栏的线条项
-
 
     def update_temp_line(self, current_pos):
         """绘制临时线，从上一个点到当前鼠标位置"""
