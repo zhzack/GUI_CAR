@@ -9,6 +9,7 @@ from PyQt5.QtGui import QPen, QBrush, QColor
 from PyQt5.QtCore import Qt, QRect
 
 from fence_tool import FenceTool
+from float_list import CustomFloatList
 
 lineLen = 10
 
@@ -54,27 +55,15 @@ class CarCanvas(QGraphicsView):
         self.polygon_fences = []
         self.concentric_circles = []
         self.key_item = None
-        # 创建浮动展示台
-        self.float_widget = QLabel("", self)
 
-        self.float_widget.setStyleSheet(
-            "QLabel { background-color : rgba(255, 0, 255, 38); padding: 10px; font-size: 18px; }")
-        self.float_widget.setFixedSize(500, 150)  # 设置固定大小，确保有高度
+        # 初始化浮动窗口
+        self.floatList = CustomFloatList(scene, self)  # 父对象为视图
+        # self.floatList.move(self.width() - self.floatList.width() - 10, 10)  # 右上角
+        # self.floatList.show()
+        # 显示窗口
+        # self.floatList.resize(800, 600)
+        # self.floatList.show()
 
-        self.coord_label = self.float_widget
-
-        # 更新浮动展示台的位置
-        self.update_float_position()
-
-    def resizeEvent(self, event):
-        self.update_float_position()
-
-    def update_float_position(self):
-        # 计算浮动展示台的位置，固定在右上角
-        x = self.width() - self.float_widget.width() - 15  # 右边距10
-        y = 0  # 上边距10
-        self.float_widget.setGeometry(
-            QRect(x, y, self.float_widget.width(), self.float_widget.height()))
 
     def set_fence_mode(self, active):
         """启用或禁用电子围栏添加模式"""
@@ -221,16 +210,7 @@ class CarCanvas(QGraphicsView):
         """更新钥匙位置并检查是否进入多边形或圆形区域"""
 
         if path_key == 'BLE':
-            self.coord_label.setText(
-                f"""
-                <div style='font-size: 28px;'>
-                    <span style='color: green;'>真实坐标点: ({x:.2f}, {-y:.2f})</span><br>
-                    <span style='color: red;'>UWB钥匙坐标点: ({x:.2f}, {-y:.2f})</span><br>
-                    <span style='color: purple;'>蓝牙定位区域</span><br>
-                    <span style='color: red;'>{path_key} : current{x}, current2 : {y})</span><br>
-                </div>
-                """
-            )
+            
             return
 
     def wheelEvent(self, event):
