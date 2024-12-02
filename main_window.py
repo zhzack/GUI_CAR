@@ -77,7 +77,7 @@ class MainWindow(QMainWindow):
         # 创建场景和画布
         self.scene = QGraphicsScene(self)
         # 初始化电子围栏工具
-        self.fence_tool = FenceTool(self.scene)
+        self.fence_tool = FenceTool(self.scene,self)
         self.canvas = CarCanvas(self.scene, self)
         self.canvas.queue = queue
 
@@ -422,10 +422,11 @@ class MainWindow(QMainWindow):
 
     def update_key_position(self):
         """更新钥匙位置"""
-        # if  self.queue.qsize()>40000:
         while not self.queue.empty():
             object = self.queue.get()
-
             for value in object:
+                if 'BLE' in value:
+                    self.canvas.set_ble_area(value)
                 # print(f"Value: {value}")
-                self.canvas.set_key_position(value)
+                else:
+                    self.canvas.set_key_position(value)

@@ -40,17 +40,19 @@ class CarCanvas(QGraphicsView):
 
         self.lines = {}  # 存储线段对象，不同输入的轨迹保存
 
-        self.center = QPointF(90, -220)
-
         # 存储多个多边形和圆形区域
         self.circles = [
             # 圆心坐标和半径
-            [500, 800],
+            # [500, 800],
             [800, 1500]
         ]
+        self.center = QPointF(90, -220)
+
         self.polygon_fences = []
         self.concentric_circles = []
         self.key_item = None
+
+        self.ble_fences = {}
 
         # 初始化浮动窗口
         self.floatList = CustomFloatList(scene, self)  # 父对象为视图
@@ -97,7 +99,7 @@ class CarCanvas(QGraphicsView):
             # print(parsed_data)
             self.queue.put([parsed_data])
 
-    def check_concentric_circles(self, position):
+    def check_concentric_circles(self, position, scene):
         # 计算钥匙到圆心的距离
         distance_to_center = ((position.x() - self.center.x())
                               ** 2 + (position.y() - self.center.y())**2)**0.5
@@ -109,38 +111,65 @@ class CarCanvas(QGraphicsView):
                     self.center.x() - radius, self.center.y() - radius, 2 * radius, 2 * radius)
                 circle_item.setPen(QPen(QColor(255, 0, 0, 60), (max-min)))
                 circle_item.setBrush(QBrush(Qt.transparent))
-                self.scene().addItem(circle_item)
+                scene.addItem(circle_item)
                 return circle_item
 
     def set_ble_area(self, object):
         temp_key_obj = {}
-        ble1 = 0
-        ble2 = 0
+        ble = 0
         for key, value in object.items():
-            if key not in self.lines:
-                temp_key_obj['fences'] = []
+            if key not in self.ble_fences:
+                temp_key_obj['fences'] = None
+                temp_key_obj['cir_fences'] = None
                 # 创建随机颜色
                 temp_key_obj['color'] = QColor(random.randint(
                     100, 255), random.randint(100, 255), random.randint(100, 255))
                 temp_key_obj['list_text_item'] = None
 
-                self.lines[key] = temp_key_obj
+                self.ble_fences[key] = temp_key_obj
             else:
-                temp_key_obj = self.lines[key]
-            ble1 = value['x']
-            ble2 = value['y']
+                temp_key_obj = self.ble_fences[key]
 
-        text = self.fence_tool.check_position(ble1)
+            ble = value['x']
 
-        if temp_key_obj['list_text_item'] == None:
-            temp_key_obj['list_text_item'] = self.floatList.add_item(
-                text, temp_key_obj['color'])
-        else:
-            self.floatList.updateItemByIndex(
-                temp_key_obj['list_text_item'], text)
+            results_desc, fences = self.fence_tool.check_position(ble)
+
+            # # 清除蓝牙高亮
+            if temp_key_obj['fences'] != None:
+                self.fence_tool.scene.removeItem(temp_key_obj['fences'])
+            if temp_key_obj['cir_fences'] != None:
+                self.scene().removeItem(temp_key_obj['cir_fences'])
+
+                temp_key_obj['cir_fences'] = None
+            # 设置高亮
+            for name in fences:
+                if name != None:
+                    temp_key_obj['fences'] = self.fence_tool.highlight_fence_by_name(
+                        name)
+
+                    if name == 0x2:
+                        min = 800
+                        max = 1500
+                        radius = (min+max)/2
+                        circle_item = QGraphicsEllipseItem(
+                            self.center.x() - radius, self.center.y() - radius, 2 * radius, 2 * radius)
+                        circle_item.setPen(
+                            QPen(QColor(255, 0, 0, 60), (max-min)))
+                        circle_item.setBrush(QBrush(Qt.transparent))
+                        self.scene().addItem(circle_item)
+                        temp_key_obj['cir_fences'] = circle_item
+
+            # 创建文字列表
+            if temp_key_obj['list_text_item'] == None:
+                temp_key_obj['list_text_item'] = self.floatList.add_item(
+                    results_desc, temp_key_obj['color'])
+            else:
+                self.floatList.updateItemByIndex(
+                    temp_key_obj['list_text_item'], f'{results_desc}')
+
+            self.ble_fences[key] = temp_key_obj
 
     def set_key_position(self, object):
-        path_key = ''
         x = 0
         y = 0
         try:
@@ -194,8 +223,8 @@ class CarCanvas(QGraphicsView):
                 temp_key_obj['fences'] = self.fence_tool.highlight_fence_by_point(
                     new_position)
                 # 检查钥匙是否进入同心圆的圆环区域
-                temp_key_obj['fences'].append(self.check_concentric_circles(
-                    new_position))
+                # temp_key_obj['fences'].append(self.check_concentric_circles(
+                #     new_position))
 
                 if temp_key_obj['last_position']:
 

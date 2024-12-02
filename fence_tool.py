@@ -6,6 +6,7 @@ from PyQt5.QtGui import QPolygonF
 from PyQt5.QtGui import QPen, QBrush, QColor
 from PyQt5.QtWidgets import QInputDialog, QDialog
 from PyQt5.QtWidgets import QApplication, QDialog, QVBoxLayout, QFormLayout, QLineEdit, QLabel, QDialogButtonBox, QInputDialog
+from PyQt5.QtWidgets import QGraphicsEllipseItem, QGraphicsLineItem
 
 
 from datetime import datetime
@@ -16,8 +17,9 @@ import json
 
 
 class FenceTool:
-    def __init__(self, scene):
+    def __init__(self, scene, parent):
         self.scene = scene
+        self.parent=parent
         self.fences = []  # 存储多个围栏
         self.points = []  # 当前围栏的点
         # 是否开启临时线
@@ -33,10 +35,34 @@ class FenceTool:
         self.fence_path = os.path.join(
             self.current_path, "config", "fence.json")
 
+        # 存储多个多边形和圆形区域
+        self.circles = [
+            # 圆心坐标和半径
+            # [500, 800],
+            [800, 1500]
+        ]
+        self.center = QPointF(90, -220)
+
         # self.highlight_fence_by_name('2024-11-28_1')
 
         # 加载已有的围栏数据
         self.load_fences_from_file()
+
+    def check_concentric_circles(self, position,scene):
+        # 计算钥匙到圆心的距离
+        distance_to_center = ((position.x() - self.center.x())
+                              ** 2 + (position.y() - self.center.y())**2)**0.5
+        # 初始化一个标志来追踪是否已高亮圆环
+        for min, max in self.circles:
+            if min < distance_to_center < max:
+                radius = (min+max)/2
+                circle_item = QGraphicsEllipseItem(
+                    self.center.x() - radius, self.center.y() - radius, 2 * radius, 2 * radius)
+                circle_item.setPen(QPen(QColor(255, 0, 0, 60), (max-min)))
+                circle_item.setBrush(QBrush(Qt.transparent))
+                scene.addItem(circle_item)
+                return circle_item
+        
 
     def save_fences_to_file(self):
         """将所有围栏数据保存到 JSON 文件"""
@@ -203,20 +229,26 @@ class FenceTool:
     def highlight_fence_by_name(self, name):
         """通过围栏名称高亮显示围栏"""
         # 清除场景中的所有已绘制的围栏
-        self.clear_all_fences()
+        # self.clear_all_fences()
 
         # 遍历所有围栏，找到匹配的名称并高亮
         for fence_name, desc, points in self.fences:
-            fence_name = int(fence_name, 16)
+            try:
+                fence_name = int(fence_name, 16)
+            except Exception as e:
+                print(e)
+                return
+
             if fence_name == name:
-                # 高亮围栏，只显示填充颜色，没有边框
-                self.draw_fence_polygon(points, color=Qt.transparent, fill_color=QColor(
-                    255, 0, 0, 150), border_width=0)
                 print(desc)
-            else:
-                # 普通围栏，使用透明边框并无填充
-                self.draw_fence_polygon(
-                    points, color=Qt.transparent, fill_color=Qt.transparent, border_width=0)
+
+                # 高亮围栏，只显示填充颜色，没有边框
+                return self.draw_fence_polygon(points, color=Qt.transparent, fill_color=QColor(
+                    255, 0, 0, 60), border_width=0)
+            # else:
+            #     # 普通围栏，使用透明边框并无填充
+            #     self.draw_fence_polygon(
+            #         points, color=Qt.transparent, fill_color=Qt.transparent, border_width=0)
 
     def is_point_in_polygon(self, point, polygon_points):
         """判断点是否在围栏（多边形）内"""
@@ -264,24 +296,26 @@ class FenceTool:
             "车内": 0x20
         }
 
-        result = []
+        result = ''
         fences = []
 
         # 直接判断特殊状态，提前返回
         if flags == features["断连中"]:
-            return ["断连中"], [features["断连中"]]
+            return "断连中", [features["断连中"]]
         if flags == features["RKE"]:
-            return ["RKE"], [features["RKE"]]
+            return "RKE", [features["RKE"]]
 
         # 遍历功能字典，检查每个标志位
         for feature, value in features.items():
             if flags & value:  # 检查标志位是否被设置
-                result.append(feature)
+                result += feature
                 fences.append(value)
 
         return result, fences
 
     def clear_all_fences(self):
+        # print(self.scene)
+        # pass
         """清除所有已绘制的围栏线条和区域"""
         for item in self.scene.items():
             if isinstance(item, QGraphicsPolygonItem):
