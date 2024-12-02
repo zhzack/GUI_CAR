@@ -5,6 +5,8 @@ from shapely.geometry import Polygon
 from PyQt5.QtGui import QPolygonF
 from PyQt5.QtGui import QPen, QBrush, QColor
 from PyQt5.QtWidgets import QInputDialog, QDialog
+from PyQt5.QtWidgets import QApplication, QDialog, QVBoxLayout, QFormLayout, QLineEdit, QLabel, QDialogButtonBox, QInputDialog
+
 
 from datetime import datetime
 
@@ -40,21 +42,22 @@ class FenceTool:
         """将所有围栏数据保存到 JSON 文件"""
         # 将围栏的点转换成适合 JSON 存储的格式
         fences_data = []
-        for name, points in self.fences:
+        for name, desc, points in self.fences:
             # 将每个点转换为字典格式
             points_data = [{"x": point.x(), "y": point.y()}
                            for point in points]
-            fences_data.append({"name": name, "points": points_data})
+            fences_data.append(
+                {"name": name, "desc": desc, "points": points_data})
 
         # 将数据写入 JSON 文件
-        with open(self.fence_path, 'w') as file:
-            json.dump(fences_data, file, indent=4)
+        with open(self.fence_path, 'w', encoding='utf-8') as file:
+            json.dump(fences_data, file, indent=4, ensure_ascii=False)
 
     def load_fences_from_file(self):
         """从 JSON 文件加载围栏数据"""
         try:
             # 尝试读取文件
-            with open(self.fence_path, 'r') as file:
+            with open(self.fence_path, 'r', encoding='utf-8') as file:
                 # 检查文件是否为空
                 file_content = file.read().strip()
                 if not file_content:
@@ -67,9 +70,12 @@ class FenceTool:
             # 遍历文件中的围栏数据
             for fence_data in fences_data:
                 name = fence_data["name"]
+                desc = fence_data["desc"]
+                print(name)
+
                 points = [QPointF(point["x"], point["y"])
                           for point in fence_data["points"]]
-                self.fences.append((name, points))
+                self.fences.append((name, desc, points))
         except FileNotFoundError:
             print(f"文件 {self.fence_path} 未找到，加载失败。")
             return []  # 如果文件不存在，返回空的围栏列表
@@ -109,29 +115,57 @@ class FenceTool:
         if self.points:
             self.points.pop()  # 移除最后一个点
 
-    def get_fence_name(self, parent):
+    def get_fence_name(self, parent=None, default_name=""):
         """弹出对话框获取电子围栏名称"""
         base_name = datetime.now().strftime("%Y-%m-%d")  # 当前日期
         index = len(self.fences) + 1  # 序号累加
         default_name = f"{base_name}_{index}"
-
-        dialog = QInputDialog(parent)
+        # 创建 QDialog 对象
+        dialog = QDialog(parent)
         dialog.setWindowTitle("命名电子围栏")
-        dialog.setLabelText("请输入电子围栏名称:")
-        dialog.setTextValue(default_name)
-        dialog.setFixedSize(400, 100)  # 设置输入框的固定大小
 
+        # 创建布局
+        layout = QVBoxLayout()
+
+        # 使用 QFormLayout 来管理标签和输入框
+        form_layout = QFormLayout()
+
+        # 第一个输入框：电子围栏名称
+        input_name = QLineEdit(default_name)
+        form_layout.addRow("请输入电子围栏名称:", input_name)
+
+        # 第二个输入框：电子围栏描述
+        input_desc = QLineEdit()
+        form_layout.addRow("请输入电子围栏描述:", input_desc)
+
+        # 将 form_layout 添加到主布局中
+        layout.addLayout(form_layout)
+
+        # 创建按钮框
+        buttons = QDialogButtonBox(
+            QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        layout.addWidget(buttons)
+
+        # 按钮点击事件
+        buttons.accepted.connect(dialog.accept)
+        buttons.rejected.connect(dialog.reject)
+
+        dialog.setLayout(layout)
+
+        # 显示对话框并获取输入值
         if dialog.exec_() == QDialog.Accepted:
-            name = dialog.textValue()
-            return name
-
-        return default_name  # 如果没有输入，则使用默认名称
+            name = input_name.text()
+            desc = input_desc.text()
+            return (name, desc)
+        return (None, None)
 
     def finish_fence(self, parent):
         """完成当前围栏并保存"""
         if len(self.points) >= 3:
-            name = self.get_fence_name(parent)
-            self.fences.append((name, self.points))
+            name, desc = self.get_fence_name(parent)
+            if name == None:
+                return
+            self.fences.append((name, desc, self.points))
             # 绘制起始点和结束点的连线
             start_point = self.points[0]  # 获取起始点
             end_point = self.points[-1]    # 获取结束点
@@ -172,11 +206,13 @@ class FenceTool:
         self.clear_all_fences()
 
         # 遍历所有围栏，找到匹配的名称并高亮
-        for fence_name, points in self.fences:
+        for fence_name, desc, points in self.fences:
+            fence_name = int(fence_name, 16)
             if fence_name == name:
                 # 高亮围栏，只显示填充颜色，没有边框
                 self.draw_fence_polygon(points, color=Qt.transparent, fill_color=QColor(
                     255, 0, 0, 150), border_width=0)
+                print(desc)
             else:
                 # 普通围栏，使用透明边框并无填充
                 self.draw_fence_polygon(
@@ -201,19 +237,49 @@ class FenceTool:
         fences = []
 
         # 遍历所有围栏，找到包含点的围栏并高亮
-        for fence_name, points in self.fences:
+        for fence_name, desc, points in self.fences:
             temp_item = None
             # 判断点是否在围栏（多边形）内
             if self.is_point_in_polygon(point, points):
                 # 高亮围栏
                 temp_item = self.draw_fence_polygon(points, color=Qt.red, fill_color=QColor(
-                    255, 0, 0, 50), border_width=0)
+                    255, 0, 0, 60), border_width=0)
+                print(desc)
             # else:
             #     # 普通围栏，不高亮
             #     temp_item = self.draw_fence_polygon(
             #         points, color=Qt.blue, fill_color=Qt.transparent, border_width=0)
             fences.append(temp_item)
         return fences
+
+    def check_position(self, flags):
+        # 功能定义：通过字典管理功能和对应的十六进制值
+        features = {
+            "断连中": 0x0,
+            "RKE": 0x1,
+            "迎宾 W": 0x2,
+            "车左": 0x4,
+            "车右": 0x8,
+            "车后": 0x10,
+            "车内": 0x20
+        }
+
+        result = []
+        fences = []
+
+        # 直接判断特殊状态，提前返回
+        if flags == features["断连中"]:
+            return ["断连中"], [features["断连中"]]
+        if flags == features["RKE"]:
+            return ["RKE"], [features["RKE"]]
+
+        # 遍历功能字典，检查每个标志位
+        for feature, value in features.items():
+            if flags & value:  # 检查标志位是否被设置
+                result.append(feature)
+                fences.append(value)
+
+        return result, fences
 
     def clear_all_fences(self):
         """清除所有已绘制的围栏线条和区域"""

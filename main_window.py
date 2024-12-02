@@ -1,37 +1,29 @@
-from PyQt5.QtWidgets import QApplication, QMainWindow, QGraphicsView, QGraphicsScene, QGraphicsPixmapItem, QVBoxLayout, QWidget
-from PyQt5.QtGui import QPixmap, QPainter, QPen, QBrush
-from PyQt5.QtCore import Qt, QPointF, QTimer
-from multiprocessing import Process, Queue
+from PyQt5.QtWidgets import QMainWindow, QGraphicsScene, QGraphicsPixmapItem, QVBoxLayout, QWidget
+from PyQt5.QtGui import QPixmap, QPen, QBrush
+from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtGui import QPen, QColor
-from PyQt5.QtWidgets import QGraphicsView, QGraphicsScene, QGraphicsEllipseItem, QLabel, QVBoxLayout, QWidget
-from PyQt5.QtGui import QPen, QBrush, QColor, QPainter
-from PyQt5.QtCore import Qt, QPointF
+from PyQt5.QtWidgets import QGraphicsScene, QGraphicsEllipseItem, QVBoxLayout, QWidget
+from PyQt5.QtGui import QPen, QBrush, QColor
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QAction, QGraphicsSceneMouseEvent
+from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QAction
 from fence_tool import FenceTool
 from PyQt5.QtWidgets import QPushButton
-from PyQt5.QtCore import Qt, QRect
+from PyQt5.QtCore import Qt
 from car_canvas import CarCanvas
-from PyQt5.QtWidgets import QMenu
 import os
 import json
 
 from PyQt5.QtWidgets import (
-    QApplication,
     QMainWindow,
-    QTextEdit,
-    QLabel,
+    QDesktopWidget,
     QVBoxLayout,
     QWidget,
-    QMessageBox,
     QAction,
     QFileDialog,
-    QGridLayout,
-    QInputDialog,
     QDialog,
 )
 from PyQt5.QtWidgets import (
-    QApplication,
     QDialog,
     QFormLayout,
     QLineEdit,
@@ -46,9 +38,7 @@ from PyQt5.QtWidgets import (
     QLineEdit,
     QDialogButtonBox,
     QVBoxLayout,
-    QToolBar,
 )
-from PyQt5.QtCore import QThread, pyqtSignal
 
 from mqtt_client import MQTTClient
 
@@ -89,7 +79,7 @@ class MainWindow(QMainWindow):
         # 初始化电子围栏工具
         self.fence_tool = FenceTool(self.scene)
         self.canvas = CarCanvas(self.scene, self)
-        self.canvas.queue=queue
+        self.canvas.queue = queue
 
         # 保存任务轨迹
         self.points = []
@@ -124,7 +114,22 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(container)
 
         # 设置默认窗口大小
-        self.resize(2560, 1440)
+        # self.resize(2560, 1440)
+        # 获取屏幕的尺寸
+        screen = QDesktopWidget().screenGeometry()
+
+        # 获取窗口的尺寸
+        window_size = self.geometry()
+
+        # 计算窗口居中位置
+        x = (screen.width() - window_size.width()) // 2
+        y = (screen.height() - window_size.height()) // 2
+
+        # 移动窗口到居中位置
+        self.move(x, y)
+
+        # 窗口最大化显示
+        self.showMaximized()
 
         # 使用定时器定期检查队列是否有新位置
         self.timer = QTimer(self)
@@ -136,7 +141,7 @@ class MainWindow(QMainWindow):
 
         self.canvas.setMouseTracking(True)
         # 主布局
-        self.layout = QVBoxLayout(self)
+        # self.layout = QVBoxLayout(self)
         self.show_coordinate_system = True  # 控制坐标系显示的变量
 
         # 绘制坐标系
@@ -414,7 +419,6 @@ class MainWindow(QMainWindow):
     #         self.fence_tool.update_temp_line(pos)
     #         self.fence_tool.show_coordinates(pos)
     #         print(pos)
-    
 
     def update_key_position(self):
         """更新钥匙位置"""
