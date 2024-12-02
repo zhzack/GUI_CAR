@@ -17,13 +17,13 @@ for i in range(0,10000000000):
     }
     
     data=f'car,{y},{x},1 UWB1,{x},{y},1 UWB2,{-x},{y},0 BLE,{x},{-y},0 '
-    data=f'car1,{y},{x},1 UWB11,{x},{y},0 UWB2,{-x},{y},0 BLE,{x},{-y},0 '
+    data=f'car1,{y},{x},1 UWB11,{x},{y},1 UWB2,{-x},{y},1 BLE,{x},{-y},0 '
     # client_socket.send(json.dumps(data).encode('utf-8'))
     client_socket.send(data.encode('utf-8'))
 
     x+= random.randint(-100, 100)
     y+= random.randint(-100, 100)
-    time.sleep(0.1)
+    time.sleep(0.001)
 
 # 关闭连接
 client_socket.close()

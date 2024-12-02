@@ -64,7 +64,6 @@ class CarCanvas(QGraphicsView):
         # self.floatList.resize(800, 600)
         # self.floatList.show()
 
-
     def set_fence_mode(self, active):
         """启用或禁用电子围栏添加模式"""
         self.fence_mode_active = active
@@ -107,8 +106,6 @@ class CarCanvas(QGraphicsView):
             # print(parsed_data)
             self.queue.put([parsed_data])
 
-
-
     def check_concentric_circles(self, position):
         # 计算钥匙到圆心的距离
         distance_to_center = ((position.x() - self.center.x())
@@ -130,8 +127,7 @@ class CarCanvas(QGraphicsView):
         y = 0
         try:
             for key, value in object.items():
-                print(f"Key: {key}, Value: {value}")
-                path_key = key
+                # print(f"Key: {key}, Value: {value}")
                 temp_key_obj = {}
                 if key not in self.lines:
                     temp_key_obj['points'] = []
@@ -142,7 +138,8 @@ class CarCanvas(QGraphicsView):
                     temp_key_obj['fences'] = []
                     # 创建随机颜色
                     temp_key_obj['color'] = QColor(random.randint(
-                        0, 255), random.randint(0, 255), random.randint(0, 255))
+                        100, 255), random.randint(100, 255), random.randint(100, 255))
+                    temp_key_obj['list_text_item'] = None
 
                     self.lines[key] = temp_key_obj
                 else:
@@ -151,6 +148,16 @@ class CarCanvas(QGraphicsView):
                 x = value['x']
                 y = value['y']
                 new_position = QPointF(x, y)
+
+                if key != 'BLE':
+                    text = f'{key}: x:{x:.2f},y:{y:.2f}'
+                    if temp_key_obj['list_text_item'] == None:
+                        temp_key_obj['list_text_item'] = self.floatList.add_item(
+                            text, temp_key_obj['color'])
+                    else:
+                        self.floatList.updateItemByIndex(
+                            temp_key_obj['list_text_item'], text)
+                    # return
 
                 if temp_key_obj['temp_line']:
                     self.scene().removeItem(temp_key_obj['temp_line'])
@@ -204,14 +211,6 @@ class CarCanvas(QGraphicsView):
             print(e)
             return
             # pass
-
-        # self.lines[{path_key}]['path'].append((value['x'], value['y']))
-        # print(self.lines[path_key])
-        """更新钥匙位置并检查是否进入多边形或圆形区域"""
-
-        if path_key == 'BLE':
-            
-            return
 
     def wheelEvent(self, event):
         """鼠标滚轮缩放"""
