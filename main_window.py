@@ -425,8 +425,10 @@ class MainWindow(QMainWindow):
         while not self.queue.empty():
             object = self.queue.get()
             for value in object:
-                if 'BLE' in value:
-                    self.canvas.set_ble_area(value)
                 # print(f"Value: {value}")
+                if 'BLE' in value:
+                    pass
+                    self.canvas.set_ble_area(value)
+                
                 else:
                     self.canvas.set_key_position(value)

@@ -19,7 +19,7 @@ import json
 class FenceTool:
     def __init__(self, scene, parent):
         self.scene = scene
-        self.parent=parent
+        self.parent = parent
         self.fences = []  # 存储多个围栏
         self.points = []  # 当前围栏的点
         # 是否开启临时线
@@ -48,7 +48,7 @@ class FenceTool:
         # 加载已有的围栏数据
         self.load_fences_from_file()
 
-    def check_concentric_circles(self, position,scene):
+    def check_concentric_circles(self, position, scene):
         # 计算钥匙到圆心的距离
         distance_to_center = ((position.x() - self.center.x())
                               ** 2 + (position.y() - self.center.y())**2)**0.5
@@ -62,18 +62,18 @@ class FenceTool:
                 circle_item.setBrush(QBrush(Qt.transparent))
                 scene.addItem(circle_item)
                 return circle_item
-        
 
     def save_fences_to_file(self):
         """将所有围栏数据保存到 JSON 文件"""
         # 将围栏的点转换成适合 JSON 存储的格式
         fences_data = []
-        for name, desc, points in self.fences:
-            # 将每个点转换为字典格式
-            points_data = [{"x": point.x(), "y": point.y()}
-                           for point in points]
-            fences_data.append(
-                {"name": name, "desc": desc, "points": points_data})
+        for fence in self.fences:
+            # # 将每个点转换为字典格式
+            # points_data = [{"x": point.x(), "y": point.y()}
+            #                for point in points]
+            # fences_data.append(
+            #     {"name": name, "desc": desc, "points": points_data})
+            fences_data.append(fence)
 
         # 将数据写入 JSON 文件
         with open(self.fence_path, 'w', encoding='utf-8') as file:
@@ -97,11 +97,12 @@ class FenceTool:
             for fence_data in fences_data:
                 name = fence_data["name"]
                 desc = fence_data["desc"]
-                print(name)
+                # print(name)
 
                 points = [QPointF(point["x"], point["y"])
                           for point in fence_data["points"]]
-                self.fences.append((name, desc, points))
+                # self.fences.append((name, desc, points))
+                self.fences.append(fence_data)
         except FileNotFoundError:
             print(f"文件 {self.fence_path} 未找到，加载失败。")
             return []  # 如果文件不存在，返回空的围栏列表
@@ -191,7 +192,9 @@ class FenceTool:
             name, desc = self.get_fence_name(parent)
             if name == None:
                 return
-            self.fences.append((name, desc, self.points))
+            # self.fences.append((name, desc, self.points))
+            self.fences.append(
+                {'name': name, 'desc': desc, 'points': self.points})
             # 绘制起始点和结束点的连线
             start_point = self.points[0]  # 获取起始点
             end_point = self.points[-1]    # 获取结束点
@@ -214,7 +217,7 @@ class FenceTool:
 
         # 将围栏的点添加到多边形中
         for point in points:
-            polygon.append(QPointF(point.x(), point.y()))
+            polygon.append(QPointF(point['x'], point['y']))
 
         # 如果 border_width 为 0，则不绘制边框
         if border_width > 0:
@@ -226,13 +229,28 @@ class FenceTool:
 
         return polygon_item
 
+    def find_fences(self, fenceNameList):
+        # 将 self.fences 转换为字典，'name' 为键，字典本身为值
+        # print(self.fences)
+        fences_dict = {fence['name']: fence for fence in self.fences}
+        # 遍历 keys_to_find 中的每个值
+        for key in fenceNameList:
+            # 从 fences_dict 中直接查找对应的字典
+            if key in fences_dict:
+                print(f"找到与 '{key}' 匹配的字典: {fences_dict[key]}")
+        pass
+
     def highlight_fence_by_name(self, name):
         """通过围栏名称高亮显示围栏"""
         # 清除场景中的所有已绘制的围栏
-        # self.clear_all_fences()
+        self.clear_all_fences()
 
         # 遍历所有围栏，找到匹配的名称并高亮
-        for fence_name, desc, points in self.fences:
+        for fence in self.fences:
+            fence_name = fence['name']
+            desc = fence['desc']
+            points = fence['points']
+
             try:
                 fence_name = int(fence_name, 16)
             except Exception as e:
@@ -240,8 +258,6 @@ class FenceTool:
                 return
 
             if fence_name == name:
-                print(desc)
-
                 # 高亮围栏，只显示填充颜色，没有边框
                 return self.draw_fence_polygon(points, color=Qt.transparent, fill_color=QColor(
                     255, 0, 0, 60), border_width=0)
@@ -269,7 +285,10 @@ class FenceTool:
         fences = []
 
         # 遍历所有围栏，找到包含点的围栏并高亮
-        for fence_name, desc, points in self.fences:
+        for fence in self.fences:
+            fence_name = fence['name']
+            desc = fence['desc']
+            points = ['points']
             temp_item = None
             # 判断点是否在围栏（多边形）内
             if self.is_point_in_polygon(point, points):
