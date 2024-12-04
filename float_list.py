@@ -10,7 +10,7 @@ class CustomFloatList(QGraphicsView):
     def __init__(self, scene, parent=None):
         super().__init__(parent)
         self.scene = scene
-        self.W = 450
+        self.W = 550
         self.H = 500
 
         # self.move(-int(parent.width()/2), int(parent.height()/2))

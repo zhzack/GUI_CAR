@@ -270,7 +270,7 @@ class MQTTClient:
     def handle_robot_heart_beat(self, msg):
         msg_object = self.merge_data(msg)
         # print(msg_object["local_x"], msg_object["local_y"], 0, 0)
-        x = float(msg_object["local_x"])*100
+        x = float(msg_object["local_x"])*100+270
         y = float(msg_object["local_y"])*100
         cc = [{'car': {'x': x, 'y': y}}]
         self.queue.put(cc)

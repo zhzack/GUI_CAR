@@ -28,7 +28,7 @@ for i in range(0, 10000000000):
     }
 
     ble=list[(int(i) % (len(list)))]
-    ble=list[2]
+    # ble=list[2]
 
     data = f'car,{y},{x},1 UWB1,{x},{y},1 UWB2,{-x},{y},0 BLE,{x},{-y},0 '
     data = f'car1,{y},{x},1 UWB1,{x},{

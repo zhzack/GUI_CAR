@@ -272,7 +272,7 @@ class FenceTool:
 
         # 将围栏的点添加到多边形中
         for pt in polygon_points:
-            polygon.append(QPointF(pt.x(), pt.y()))
+            polygon.append(QPointF(pt['x'], pt['y']))
 
         # 使用QPolygonF的containsPoint方法判断点是否在多边形内
         # Qt.OddEvenFill用于判断点在多边形内
@@ -283,25 +283,26 @@ class FenceTool:
         # 清除场景中的所有已绘制的围栏
         # self.clear_all_fences()
         fences = []
-
+        desc=''
         # 遍历所有围栏，找到包含点的围栏并高亮
         for fence in self.fences:
-            fence_name = fence['name']
-            desc = fence['desc']
-            points = ['points']
-            temp_item = None
-            # 判断点是否在围栏（多边形）内
-            if self.is_point_in_polygon(point, points):
-                # 高亮围栏
-                temp_item = self.draw_fence_polygon(points, color=Qt.red, fill_color=QColor(
-                    255, 0, 0, 60), border_width=0)
-                print(desc)
-            # else:
-            #     # 普通围栏，不高亮
-            #     temp_item = self.draw_fence_polygon(
-            #         points, color=Qt.blue, fill_color=Qt.transparent, border_width=0)
-            fences.append(temp_item)
-        return fences
+            if fence['name'] == '0x2000':
+                fence_name = fence['name']
+                
+                points = fence['points']
+                temp_item = None
+                # 判断点是否在围栏（多边形）内
+                if self.is_point_in_polygon(point, points):
+                    # 高亮围栏
+                    temp_item = self.draw_fence_polygon(points, color=Qt.red, fill_color=QColor(
+                        255, 0, 0, 60), border_width=0)
+                    desc = fence['desc']
+                # else:
+                #     # 普通围栏，不高亮
+                #     temp_item = self.draw_fence_polygon(
+                #         points, color=Qt.blue, fill_color=Qt.transparent, border_width=0)
+                    fences.append(temp_item)
+        return fences, desc
 
     def check_position(self, flags):
         # 功能定义：通过字典管理功能和对应的十六进制值
