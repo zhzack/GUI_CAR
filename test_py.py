@@ -39,7 +39,7 @@ for i in range(0, 10000000000):
 
     x += random.randint(-100, 100)
     y += random.randint(-100, 100)
-    time.sleep(0.1)
+    time.sleep(1)
 
 # 关闭连接
 client_socket.close()

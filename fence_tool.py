@@ -283,19 +283,19 @@ class FenceTool:
         # 清除场景中的所有已绘制的围栏
         # self.clear_all_fences()
         fences = []
-        desc=''
+        desc = ''
         # 遍历所有围栏，找到包含点的围栏并高亮
         for fence in self.fences:
             if fence['name'] == '0x2000':
                 fence_name = fence['name']
-                
+
                 points = fence['points']
                 temp_item = None
                 # 判断点是否在围栏（多边形）内
                 if self.is_point_in_polygon(point, points):
                     # 高亮围栏
                     temp_item = self.draw_fence_polygon(points, color=Qt.red, fill_color=QColor(
-                        255, 0, 0, 60), border_width=0)
+                        0, 0, 255,  80), border_width=0)
                     desc = fence['desc']
                 # else:
                 #     # 普通围栏，不高亮

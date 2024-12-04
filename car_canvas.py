@@ -1,5 +1,5 @@
 import random
-from PyQt5.QtWidgets import QGraphicsView, QLabel
+from PyQt5.QtWidgets import QGraphicsView, QLabel, QVBoxLayout
 from PyQt5.QtGui import QPen, QBrush, QColor, QPainter
 from PyQt5.QtCore import Qt, QPointF, QPoint
 
@@ -36,7 +36,7 @@ class CarCanvas(QGraphicsView):
 
         # 允许显示超出场景范围的内容
         self.setViewportUpdateMode(QGraphicsView.FullViewportUpdate)
-        self.setSceneRect(-2000, -2000, 4000, 4000)  # 调整场景边界大小
+        # self.setSceneRect(-6000, -6000, 6000, 6000)  # 调整场景边界大小
 
         self.lines = {}  # 存储线段对象，不同输入的轨迹保存
 
@@ -55,7 +55,29 @@ class CarCanvas(QGraphicsView):
         self.ble_fences = {}
 
         # 初始化浮动窗口
-        self.floatList = CustomFloatList(scene, self)  # 父对象为视图
+        self.floatList = CustomFloatList(scene, "小车和UWB位置坐标", self)  # 父对象为视图
+        self.floatListBLE = CustomFloatList(
+            scene, "蓝牙定位结果（粉色范围）", self)  # 父对象为视图
+
+    # def setup_layout(self, item, pos):
+        """设置 CarCanvas 的布局，包括浮动窗口"""
+        # 创建 QVBoxLayout 管理 CarCanvas 的控件
+        layout = QVBoxLayout(self)  # 这里使用 CarCanvas 自己的布局
+
+        # 将 CarCanvas 添加到布局
+        layout.addWidget(self)  # 添加 CarCanvas 作为布局中的第一个控件
+
+        # 将浮动窗口添加到布局并设置对齐方式
+        # layout.addWidget(self.floatList)  # 将 floatList 添加到布局中
+        # layout.setAlignment(self.floatList, Qt.AlignLeft | Qt.AlignTop)  #
+
+        layout.addWidget(self.floatListBLE)  # 将 floatList 添加到布局中
+        layout.setAlignment(self.floatListBLE, Qt.AlignRight |
+                            Qt.AlignTop)  # 将浮动窗口放置在右上角
+
+        self.setLayout(layout)
+
+        self.parent.setLayout(layout)
 
     def set_fence_mode(self, active):
         """启用或禁用电子围栏添加模式"""
@@ -159,14 +181,23 @@ class CarCanvas(QGraphicsView):
                         circle_item.setBrush(QBrush(Qt.transparent))
                         self.scene().addItem(circle_item)
                         temp_key_obj['cir_fences'] = circle_item
+                        temp_key_obj['last_text'] = ''
 
             # 创建文字列表
             if temp_key_obj['list_text_item'] == None:
-                temp_key_obj['list_text_item'] = self.floatList.add_item(
+                self.floatListBLE.add_item('')
+
+                temp_key_obj['list_text_item'] = self.floatListBLE.add_item(
                     results_desc, temp_key_obj['color'])
+
+                temp_key_obj['last_text'] = results_desc
             else:
-                self.floatList.updateItemByIndex(
+                if temp_key_obj['last_text'] != '' and temp_key_obj['last_text'] != results_desc:
+                    self.floatListBLE.start_blink(
+                        temp_key_obj['list_text_item'])
+                self.floatListBLE.updateItemByIndex(
                     temp_key_obj['list_text_item'], f'蓝牙：{results_desc}')
+                temp_key_obj['last_text'] = results_desc
 
             self.ble_fences[key] = temp_key_obj
 
@@ -203,7 +234,7 @@ class CarCanvas(QGraphicsView):
                 x = value['x']
                 y = value['y']
                 new_position = QPointF(x, y)
-                
+
                 # 清除上一个点的高亮
                 if temp_key_obj['fences'] != []:
                     for fence in temp_key_obj['fences']:
@@ -221,9 +252,11 @@ class CarCanvas(QGraphicsView):
                 if key == '鼠标':
                     y1 = -y
                 text = f'{key}: x:{x1:.2f},y:{y1:.2f}'
-                if temp_desc!='':
-                    text+=f' : {temp_desc}'
+                if temp_desc != '':
+                    text += f' : {temp_desc}'
                 if temp_key_obj['list_text_item'] == None:
+                    self.floatList.add_item('')
+
                     temp_key_obj['list_text_item'] = self.floatList.add_item(
                         text, temp_key_obj['color'])
                 else:
@@ -237,7 +270,6 @@ class CarCanvas(QGraphicsView):
                                                                  x, y, QPen(Qt.gray, 3))
                 # self.fence_tool.find_fences(['0x2','0x4'])
 
-                
                 if temp_key_obj['last_position']:
 
                     line_item = QGraphicsLineItem(temp_key_obj['last_position'].x(), temp_key_obj['last_position'].y(),
