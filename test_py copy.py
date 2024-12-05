@@ -1,50 +1,101 @@
-import math
+from PyQt5.QtCore import Qt, QTimer
+from PyQt5.QtWidgets import QApplication, QMainWindow, QLabel, QPushButton, QVBoxLayout, QWidget, QHBoxLayout
+from PyQt5.QtGui import QIcon
 
-def calculate_angle_and_direction(x1, y1, x2, y2, x3, y3, x4, y4):
-    # 计算向量 AB 和 CD
-    AB_x = x2 - x1
-    AB_y = y2 - y1
-    CD_x = x4 - x3
-    CD_y = y4 - y3
+class CarKeyApp(QMainWindow):
+    def __init__(self):
+        super().__init__()
 
-    # 计算向量 AB 和 CD 的点积
-    dot_product = AB_x * CD_x + AB_y * CD_y
+        # 初始化主界面
+        self.setWindowTitle("汽车钥匙功能展示")
+        self.setGeometry(200, 200, 400, 300)
+        self.setStyleSheet("background-color: #f0f0f0;")
+        
+        # 创建窗口容器
+        container = QWidget(self)
+        self.setCentralWidget(container)
 
-    # 计算向量 AB 和 CD 的模长
-    AB_magnitude = math.sqrt(AB_x**2 + AB_y**2)
-    CD_magnitude = math.sqrt(CD_x**2 + CD_y**2)
+        # 设置布局
+        layout = QVBoxLayout(container)
 
-    # 计算夹角的余弦值
-    cos_theta = dot_product / (AB_magnitude * CD_magnitude)
+        # 车图标显示区域
+        self.car_icon = QLabel(self)
+        self.car_icon.setAlignment(Qt.AlignCenter)
+        self.car_icon.setPixmap(QIcon("car_image.png").pixmap(100, 100))  # 假设有一张汽车图标
+        layout.addWidget(self.car_icon)
 
-    # 计算夹角（以弧度表示）
-    theta_rad = math.acos(cos_theta)
+        # 创建按钮
+        button_layout = QHBoxLayout()
 
-    # 将弧度转换为角度
-    theta_deg = math.degrees(theta_rad)
+        self.lock_button = QPushButton("锁车", self)
+        self.unlock_button = QPushButton("解锁", self)
+        self.start_button = QPushButton("启动", self)
+        self.window_button = QPushButton("车窗", self)
 
-    # 计算叉积来判断顺时针还是逆时针
-    cross_product = AB_x * CD_y - AB_y * CD_x
+        self.lock_button.clicked.connect(self.lock_car)
+        self.unlock_button.clicked.connect(self.unlock_car)
+        self.start_button.clicked.connect(self.toggle_start_stop)
+        self.window_button.clicked.connect(self.toggle_window)
 
-    # 判断方向
-    if cross_product > 0:
-        direction = "逆时针"
-    elif cross_product < 0:
-        direction = "顺时针"
-    else:
-        # 叉积为零时，表示直线平行，仍然返回方向
-        direction = "平行，方向不可判定"
+        button_layout.addWidget(self.lock_button)
+        button_layout.addWidget(self.unlock_button)
+        button_layout.addWidget(self.start_button)
+        button_layout.addWidget(self.window_button)
 
-    return theta_deg, direction
+        layout.addLayout(button_layout)
 
-# 示例调用
-x1, y1 = 1, -1  # 点 A
-x2, y2 = 1, 5  # 点 B
-x3, y3 = 5, 5  # 点 C
-x4, y4 = 6, -1  # 点 D
-# x3, y3 = -5, 5  # 点 C
-# x4, y4 = -5, -1  # 点 D
+        # 状态显示
+        self.status_label = QLabel("钥匙电池：正常", self)
+        layout.addWidget(self.status_label)
 
-angle, direction = calculate_angle_and_direction(x1, y1, x2, y2, x3, y3, x4, y4)
-print(f"两条直线的夹角是: {angle:.2f}°")
-print(f"CD 在 AB 的方向是: {direction}")
+        # 电池状态定时更新
+        self.battery_timer = QTimer(self)
+        self.battery_timer.timeout.connect(self.update_battery_status)
+        self.battery_timer.start(5000)  # 每5秒更新一次电池状态
+
+        # 控制状态
+        self.car_locked = False
+        self.car_started = False
+        self.window_open = False
+
+    def lock_car(self):
+        """锁车功能"""
+        self.car_locked = True
+        self.car_icon.setPixmap(QIcon("car_locked_image.png").pixmap(100, 100))  # 使用锁定的汽车图标
+        self.status_label.setText("车门已锁定")
+
+    def unlock_car(self):
+        """解锁车功能"""
+        self.car_locked = False
+        self.car_icon.setPixmap(QIcon("car_unlocked_image.png").pixmap(100, 100))  # 使用解锁的汽车图标
+        self.status_label.setText("车门已解锁")
+
+    def toggle_start_stop(self):
+        """启动/熄火功能"""
+        if self.car_started:
+            self.car_started = False
+            self.status_label.setText("汽车已熄火")
+        else:
+            self.car_started = True
+            self.status_label.setText("汽车已启动")
+
+    def toggle_window(self):
+        """车窗控制功能"""
+        if self.window_open:
+            self.window_open = False
+            self.status_label.setText("车窗已关闭")
+        else:
+            self.window_open = True
+            self.status_label.setText("车窗已打开")
+
+    def update_battery_status(self):
+        """模拟电池状态变化"""
+        import random
+        battery_status = random.choice(["正常", "电量低", "电量不足"])
+        self.status_label.setText(f"钥匙电池：{battery_status}")
+
+if __name__ == "__main__":
+    app = QApplication([])
+    window = CarKeyApp()
+    window.show()
+    app.exec_()

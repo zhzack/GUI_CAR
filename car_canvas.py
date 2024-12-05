@@ -7,6 +7,8 @@ from PyQt5.QtWidgets import QGraphicsEllipseItem, QGraphicsLineItem
 from PyQt5.QtCore import Qt, QPointF
 from PyQt5.QtGui import QPen, QBrush, QColor
 from PyQt5.QtCore import Qt, QRect
+from PyQt5.QtCore import QTimer, Qt
+
 
 from fence_tool import FenceTool
 from float_list import CustomFloatList
@@ -62,22 +64,22 @@ class CarCanvas(QGraphicsView):
     # def setup_layout(self, item, pos):
         """设置 CarCanvas 的布局，包括浮动窗口"""
         # 创建 QVBoxLayout 管理 CarCanvas 的控件
-        layout = QVBoxLayout(self)  # 这里使用 CarCanvas 自己的布局
+        self.layout = QVBoxLayout(self)  # 这里使用 CarCanvas 自己的布局
 
         # 将 CarCanvas 添加到布局
-        layout.addWidget(self)  # 添加 CarCanvas 作为布局中的第一个控件
+        self.layout.addWidget(self)  # 添加 CarCanvas 作为布局中的第一个控件
 
         # 将浮动窗口添加到布局并设置对齐方式
         # layout.addWidget(self.floatList)  # 将 floatList 添加到布局中
         # layout.setAlignment(self.floatList, Qt.AlignLeft | Qt.AlignTop)  #
 
-        layout.addWidget(self.floatListBLE)  # 将 floatList 添加到布局中
-        layout.setAlignment(self.floatListBLE, Qt.AlignRight |
-                            Qt.AlignTop)  # 将浮动窗口放置在右上角
+        self.layout.addWidget(self.floatListBLE)  # 将 floatList 添加到布局中
+        self.layout.setAlignment(self.floatListBLE, Qt.AlignRight |
+                                 Qt.AlignTop)  # 将浮动窗口放置在右上角
 
-        self.setLayout(layout)
+        self.setLayout(self.layout)
 
-        self.parent.setLayout(layout)
+        self.parent.setLayout(self.layout)
 
     def set_fence_mode(self, active):
         """启用或禁用电子围栏添加模式"""
@@ -136,6 +138,35 @@ class CarCanvas(QGraphicsView):
                 scene.addItem(circle_item)
                 return circle_item
 
+    def addLabel(self, results_desc):
+        # 创建 QLabel 控件
+        temp_label_widget = QLabel(results_desc, self)
+
+        # 设置标签文本样式（可选）
+        temp_label_widget.setStyleSheet(
+            "font-size: 88px; color: #fe5700; background-color: #01c8ac; padding: 15px;")
+
+        # 设置标签的对齐方式（例如，居中）
+        temp_label_widget.setAlignment(Qt.AlignCenter)
+
+        # 将 floatList 添加到布局中
+        self.layout.addWidget(temp_label_widget)
+        self.layout.setAlignment(
+            # 将浮动窗口放置在右上角
+            temp_label_widget, Qt.AlignCenter | Qt.AlignTop)
+        temp_label_widget.move(1000,1000)
+        # 创建一个定时器（QTimer）
+        self.timer = QTimer(self)
+        self.timer.setSingleShot(True)  # 设置为单次触发
+        self.timer.timeout.connect(lambda: self.delete_label(temp_label_widget))  # 传递标签作为参数
+        self.timer.start(1000)  # 设置定时器在 500 毫秒后触发
+
+        return 
+    def delete_label(self, label):
+        """删除传入的标签并销毁"""
+        label.deleteLater()  # 删除标签
+        print("Label deleted!")
+
     def set_ble_area(self, object):
         temp_key_obj = {}
         ble = 0
@@ -148,6 +179,7 @@ class CarCanvas(QGraphicsView):
                 #     100, 255), random.randint(100, 255), random.randint(100, 255))
                 temp_key_obj['color'] = QColor(255, 0, 0)
                 temp_key_obj['list_text_item'] = None
+                temp_key_obj['label'] = None
 
                 self.ble_fences[key] = temp_key_obj
             else:
@@ -156,6 +188,29 @@ class CarCanvas(QGraphicsView):
             ble = value['x']
 
             results_desc, fences = self.fence_tool.check_position(ble)
+
+            # 创建文字列表
+            if temp_key_obj['list_text_item'] == None:
+                self.floatListBLE.add_item('')
+
+                temp_key_obj['list_text_item'] = self.floatListBLE.add_item(
+                    results_desc, temp_key_obj['color'])
+                temp_key_obj['label'] = self.addLabel(results_desc)
+
+            else:
+                if temp_key_obj['last_text'] != '' and temp_key_obj['last_text'] != results_desc:
+                    self.floatListBLE.start_blink(
+                        temp_key_obj['list_text_item'])
+                    if temp_key_obj['label'] != None:
+                        print(temp_key_obj['label'])
+                        self.layout.removeWidget(temp_key_obj['label'])
+                        temp_key_obj['label'] = None
+                    temp_key_obj['label'] = self.addLabel(results_desc)
+
+                self.floatListBLE.updateItemByIndex(
+                    temp_key_obj['list_text_item'], f'蓝牙：{results_desc}')
+
+            temp_key_obj['last_text'] = results_desc
 
             # # 清除蓝牙高亮
             if temp_key_obj['fences'] != None:
@@ -182,22 +237,6 @@ class CarCanvas(QGraphicsView):
                         self.scene().addItem(circle_item)
                         temp_key_obj['cir_fences'] = circle_item
                         temp_key_obj['last_text'] = ''
-
-            # 创建文字列表
-            if temp_key_obj['list_text_item'] == None:
-                self.floatListBLE.add_item('')
-
-                temp_key_obj['list_text_item'] = self.floatListBLE.add_item(
-                    results_desc, temp_key_obj['color'])
-
-                temp_key_obj['last_text'] = results_desc
-            else:
-                if temp_key_obj['last_text'] != '' and temp_key_obj['last_text'] != results_desc:
-                    self.floatListBLE.start_blink(
-                        temp_key_obj['list_text_item'])
-                self.floatListBLE.updateItemByIndex(
-                    temp_key_obj['list_text_item'], f'蓝牙：{results_desc}')
-                temp_key_obj['last_text'] = results_desc
 
             self.ble_fences[key] = temp_key_obj
 
