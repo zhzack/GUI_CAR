@@ -31,6 +31,9 @@ class MQTTClient:
         self.client = mqtt_client.Client(
             mqtt_client.CallbackAPIVersion.VERSION1, self.client_id
         )
+
+        self.subscribe(self.robot_topics + list(self.res_topics.values()))
+
         self.on_connect_callback = None
         self.on_message_callback = None
 
@@ -116,16 +119,18 @@ class MQTTClient:
 
     def on_connect(self, client, userdata, flags, rc):
         status = "连接到MQTT Broker!" if rc == 0 else f"连接失败，返回码 {rc}"
+        print(status)
         if self.on_connect_callback:
             self.on_connect_callback(status)
 
     def subscribe(self, topics):
+        print(topics)
         for topic in topics:
             self.client.subscribe(topic)
         self.client.on_message = self.on_message
 
     def on_message(self, client, userdata, msg):
-        # print(msg)
+        print(msg)
         self.on_message_received(msg)
         if self.on_message_callback:
             self.on_message_callback(msg)
@@ -133,9 +138,6 @@ class MQTTClient:
     def set_on_connect_callback(self, callback):
         print(f'mqtt连接状态:{callback}')
         self.on_connect_callback = (callback)
-
-    def set_on_message_callback(self, callback):
-        self.on_message_callback = callback
 
     def publish(self, topic, message):
         print(self.is_connected())
@@ -212,20 +214,8 @@ class MQTTClient:
             self.connect()
         return self.client.is_connected()
 
-    def run(self, robot_topics):
-        self.connect()
-        self.start_connection_check()  # 启动定时检查线程
-        self.subscribe(robot_topics)
-        # while True:
-        #     time.sleep(5)
-        #     task_set_ = user_data["task_set"]
-        #     task_set_["timestamp"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        #     self.pub_send_task_file(
-        #         f"{os.path.dirname(os.path.realpath(__file__))}/CreatJsonforCirclePath/CirclePath_Rad2m.json", user_data
-        #     )
-
     def on_message_received(self, msg):
-        # print(msg.topic)
+        print(msg.topic)
         if msg.topic in self.robot_topics:
             if msg.topic == self.robot_topics[0]:
                 self.handle_robot_heart_beat(msg)
@@ -334,41 +324,3 @@ class MQTTClient:
         except json.JSONDecodeError:
             print(f"Received invalid JSON from `{
                   msg.topic}`: {msg.payload.decode()}")
-
-# 使用示例（假设其他必要的代码如用户数据和主题已定义）：
-
-# if __name__ == "__main__":
-#     current_path = os.path.dirname(os.path.realpath(__file__))
-#     config_path = os.path.join(current_path, "config", "config.json")
-#     default_config_path = os.path.join(current_path, "config", "default_config.json")
-
-#     mqtt_client = MQTTClient(config_path, default_config_path)
-
-#     def on_connect_status(status):
-#         print(status)
-
-#     def on_message_received(msg):
-#         print(f"收到消息: {msg.topic} {msg.payload.decode()}")
-
-#     mqtt_client.set_on_connect_callback(on_connect_status)
-#     mqtt_client.set_on_message_callback(on_message_received)
-
-#     user_data = {
-#         "task_set": {"task": "example_task"},
-#         "control": {},
-#         "arm_set": {},
-#         "send_task_file": {},
-#         "setting": {},
-#         "request_task_file": {},
-#     }
-
-#     robot_topics = ["/sy/robot/heart_beat", "/sy/robot/message"]
-#     res_topics = {
-#         "task_set": "/sy/res/user/task_set",
-#         "control": "/sy/res/user/control",
-#         "setting": "/sy/res/user/setting",
-#         "send_task_file": "/sy/res/user/send_task_file",
-#         "request_task_file": "/sy/res/user/request_task_file",
-#     }
-
-#     mqtt_client.run(user_data, robot_topics, res_topics)

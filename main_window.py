@@ -50,34 +50,20 @@ class MainWindow(QMainWindow):
         super(MainWindow, self).__init__()
         self.setWindowTitle("汽车和钥匙位置")
         self.queue = queue  # 获取共享队列
-
         self.current_path = os.path.dirname(os.path.realpath(__file__))
-
-        self.mqtt_client = MQTTClient(self.queue)
-        # self.mqtt_client.set_on_connect_callback(self.on_connect_status)
-        # self.mqtt_client.set_on_message_callback(self.on_message_received)
-        self.config = self.mqtt_client.config
-        self.robot_topics = self.config.get("robot_topics", [])
-        self.res_topics = self.config.get("res_topics", {})
         # print(self.robot_topics, self.res_topics)
         self.mqtt_res_obj = {}
+        
+        self.is_matt_connect = True
 
-        self.mqtt_client.connect()
-        self.mqtt_client.subscribe(
-            self.robot_topics + list(self.res_topics.values()))
-
-        # 是否开启mqtt
-        # self.mqtt_client.run(self.mqtt_client.robot_topics +
-        #                      list(self.mqtt_client.res_topics.values()))
-
-        # self.timer = QTimer(self)
-        # self.timer.timeout.connect(self.check_connection_status)
-        # self.timer.start(1000)  # 每秒检查一次连接状态
+        if self.is_matt_connect:
+            self.mqtt_client = MQTTClient(self.queue)
+            self.mqtt_client.connect()
 
         # 创建场景和画布
         self.scene = QGraphicsScene(self)
         # 初始化电子围栏工具
-        self.fence_tool = FenceTool(self.scene,self)
+        self.fence_tool = FenceTool(self.scene, self)
         self.canvas = CarCanvas(self.scene, self)
         self.canvas.queue = queue
 
@@ -429,6 +415,6 @@ class MainWindow(QMainWindow):
                 if 'BLE' in value:
                     pass
                     self.canvas.set_ble_area(value)
-                
+
                 else:
                     self.canvas.set_key_position(value)
