@@ -1,5 +1,6 @@
 import time
 
+
 class ServoController:
     def __init__(self, serial_manager):
         """
@@ -14,7 +15,7 @@ class ServoController:
         :param command: 指令字符串
         """
         full_command = f"#{command}!"
-        print(f"发送指令: {full_command}")
+        # print(f"发送指令: {full_command}")
         self.serial_manager.send_data(full_command)
         time.sleep(0.1)
 
@@ -30,7 +31,7 @@ class ServoController:
         time_str = f"{time_ms:04d}"
         command = f"{servo_id_str}P{pwm_str}T{time_str}"
         self.send_command(command)
-    
+
     def set_angle(self, servo_id, angle, time_ms=0):
         """
         设置舵机的角度
@@ -38,12 +39,15 @@ class ServoController:
         :param angle: 角度（0-180°）
         :param time_ms: 运行时间（可选，单位：毫秒，默认 0）
         """
-        if not (0 <= angle <= 180):
+        max_angle = 360
+        if not (0 <= angle <= max_angle):
             raise ValueError("角度必须在 0 到 180 之间")
 
         # 根据角度计算 PWM 值
-        pwm = int(500 + (angle * (2500 - 500) / 180))
-        
+        pwm = int(500 + (angle * (2500 - 500) / max_angle))
+
+        print(f'pwm:{pwm};angle:{angle};')
+
         # 调用 set_pwm 设置 PWM 和时间
         self.set_pwm(servo_id, pwm, time_ms)
 
@@ -96,6 +100,23 @@ class ServoController:
         command = f"{servo_id_str}PMOD{mode}"
         self.send_command(command)
 
+    def get_angle_from_pwm(self, pwm_value):
+        """
+        根据 PWM 值计算当前角度
+        :param pwm_value: 当前 PWM 值
+        :return: 计算得到的角度（0°到180°）
+        """
+        # 假设舵机的 PWM 范围是 500 - 2500，对应的角度范围是 0° - 180°
+        min_pwm = 500
+        max_pwm = 2500
+        min_angle = 0
+        max_angle = 360
+
+        # 计算角度
+        angle = (pwm_value - min_pwm) / (max_pwm -
+                                         min_pwm) * (max_angle - min_angle)
+        return angle
+
     def get_position(self, servo_id):
         """
         获取舵机的当前位置
@@ -105,8 +126,24 @@ class ServoController:
         command = f"{servo_id_str}PRAD"
         self.send_command(command)
         response = self.serial_manager.receive_data()
-        print(f"舵机当前位置: {response}")
         return response
+
+    def get_current_angle(self, servo_id):
+        """
+        获取舵机当前的角度
+        :param servo_id: 舵机的 ID
+        :return: 当前角度值
+        """
+        # 获取舵机当前位置的 PWM 值
+        response = self.get_position(servo_id)
+
+        # 假设返回的 response 是 "P1500!" 形式的字符串
+        if response.startswith("P"):
+            pwm_value = int(response[1:5])  # 获取 PWM 值，假设为四位数
+            angle = self.get_angle_from_pwm(pwm_value)  # 根据 PWM 计算角度
+            return angle
+        else:
+            return None
 
     def set_baudrate(self, servo_id, baudrate):
         """
@@ -199,7 +236,6 @@ class ServoController:
         command = f"{servo_id_str}PRTE"
         self.send_command(command)
         response = self.serial_manager.receive_data()
-        print(f"舵机温度与电压: {response}")
         return response
 
     def pause_servo(self, servo_id):

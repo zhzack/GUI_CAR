@@ -1,11 +1,21 @@
 import serial
 import serial.tools.list_ports
+import threading
+import time
+
 
 class SerialManager:
     def __init__(self, default_baudrate=115200):
         self.port = None
         self.baudrate = default_baudrate
         self.serial_conn = None
+
+        # 创建线程
+        thread = threading.Thread(target=self.receive_data_while)
+
+        # 启动线程
+        # thread.start()
+
 
     def scan_ports(self):
         """
@@ -77,3 +87,8 @@ class SerialManager:
         if self.serial_conn and self.serial_conn.is_open:
             return self.serial_conn.readline().decode('utf-8').strip()
         return ""
+
+    def receive_data_while(self):
+        while True:
+            print(self.receive_data())
+            time.sleep(0.2)
