@@ -46,7 +46,7 @@ class ServoController:
         # 根据角度计算 PWM 值
         pwm = int(500 + (angle * (2500 - 500) / max_angle))
 
-        print(f'pwm:{pwm};angle:{angle};')
+        # print(f'pwm:{pwm};angle:{angle};')
 
         # 调用 set_pwm 设置 PWM 和时间
         self.set_pwm(servo_id, pwm, time_ms)

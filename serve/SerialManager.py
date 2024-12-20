@@ -2,20 +2,21 @@ import serial
 import serial.tools.list_ports
 import threading
 import time
+from communication_interface import CommunicationInterface  # 导入抽象接口类
 
 
-class SerialManager:
+class SerialManager(CommunicationInterface):
     def __init__(self, default_baudrate=115200):
         self.port = None
         self.baudrate = default_baudrate
         self.serial_conn = None
 
+        # 创建停止标志
+        self.stop_flag = False
         # 创建线程
-        thread = threading.Thread(target=self.receive_data_while)
-
+        self.thread = threading.Thread(target=self.receive_data_while)
         # 启动线程
-        # thread.start()
-
+        self.thread.start()
 
     def scan_ports(self):
         """
@@ -24,6 +25,11 @@ class SerialManager:
         ports = serial.tools.list_ports.comports()
         available_ports = [port.device for port in ports]
         return available_ports
+
+    def stop_thread(self):
+        """设置停止标志，停止线程循环"""
+        self.stop_flag = True
+        self.thread.join()
 
     def match_port_by_keyword(self, keyword):
         """
@@ -68,6 +74,8 @@ class SerialManager:
         if self.serial_conn and self.serial_conn.is_open:
             self.serial_conn.close()
             print("串口连接已关闭")
+        # 在主程序退出时，停止接收线程
+        self.stop_thread()
 
     def send_data(self, data):
         """
@@ -75,7 +83,7 @@ class SerialManager:
         :param data: 需要发送的字符串
         """
         if self.serial_conn and self.serial_conn.is_open:
-            self.serial_conn.write(data.encode('utf-8'))
+            self.serial_conn.write(f'{data}\r\n'.encode('utf-8'))
         else:
             raise ConnectionError("串口未打开")
 
@@ -89,6 +97,12 @@ class SerialManager:
         return ""
 
     def receive_data_while(self):
-        while True:
+        """持续接收串口数据"""
+        while not self.stop_flag:
             print(self.receive_data())
-            time.sleep(0.2)
+            time.sleep(0.05)
+
+    def close(self):
+        """关闭串口"""
+        self.disconnect()
+        
