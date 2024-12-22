@@ -93,16 +93,21 @@ class SerialManager(CommunicationInterface):
         :return: 返回的数据字符串
         """
         if self.serial_conn and self.serial_conn.is_open:
-            return self.serial_conn.readline().decode('utf-8').strip()
+            try:
+                return self.serial_conn.readline().decode('utf-8').strip()
+            except UnicodeDecodeError as e:
+                print(f"Decode error: {e}")
+                return None  # 或返回原始数据，例如 self.serial_conn.readline()
         return ""
 
     def receive_data_while(self):
         """持续接收串口数据"""
         while not self.stop_flag:
-            print(self.receive_data())
+            receive_data = self.receive_data()
+            if self.receive_data() != "":
+                print(receive_data)
             time.sleep(0.05)
 
     def close(self):
         """关闭串口"""
         self.disconnect()
-        

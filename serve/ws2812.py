@@ -7,7 +7,7 @@ class Ws2812:
         # print(f"设置角度: {angle}°")
         led_index = self.angle_to_led_index(angle)
         # print(led_index)
-        self.serial_manager.send_data(f'{led_index}')
+        self.serial_manager.send_data(f'{led_index}+')
 
     def angle_to_led_index(self, angle, leds_per_strip=144, num_strips=18):
         total_leds = leds_per_strip * num_strips
