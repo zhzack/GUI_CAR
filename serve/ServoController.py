@@ -15,7 +15,6 @@ class ServoController:
         :param command: 指令字符串
         """
         full_command = f"#{command}!"
-        # print(f"发送指令: {full_command}")
         self.serial_manager.send_data(full_command)
         time.sleep(0.1)
 

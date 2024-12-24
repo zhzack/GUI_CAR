@@ -6,17 +6,28 @@ from communication_interface import CommunicationInterface  # 导入抽象接口
 
 
 class SerialManager(CommunicationInterface):
-    def __init__(self, default_baudrate=115200):
+    def __init__(self, port_by_keyword='6', baudrate=115200):
         self.port = None
-        self.baudrate = default_baudrate
+        self.baudrate = baudrate
         self.serial_conn = None
-
         # 创建停止标志
         self.stop_flag = False
         # 创建线程
         self.thread = threading.Thread(target=self.receive_data_while)
         # 启动线程
         self.thread.start()
+        # 扫描可用端口
+        ports = self.scan_ports()
+        print("可用端口列表:", ports)
+        # 匹配端口
+        port_name = self.match_port_by_keyword(port_by_keyword)
+        if port_name:
+            self.set_port(port_name)
+        else:
+            raise SystemExit("未找到匹配的串口")
+
+        # 连接到串口
+        self.connect()
 
     def scan_ports(self):
         """

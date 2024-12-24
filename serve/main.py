@@ -1,5 +1,5 @@
 from SerialManager import SerialManager
-from TCPServerManager import TCPServerManager
+from TCPServerManager import TCPServer
 from ServoController import ServoController
 from ws2812 import Ws2812
 import time
@@ -16,23 +16,13 @@ def set_angle(angle):
 
 if __name__ == "__main__":
     # 创建串口管理实例
-    serial_manager = SerialManager(default_baudrate=115200)
-    # 扫描可用端口
-    ports = serial_manager.scan_ports()
-    print("可用端口列表:", ports)
-    # 匹配端口
-    port_name = serial_manager.match_port_by_keyword("6")
-    if port_name:
-        serial_manager.set_port(port_name)
-    else:
-        raise SystemExit("未找到匹配的串口")
-
-    # 连接到串口
-    serial_manager.connect()
+    # manager = SerialManager(port_by_keyword='3',baudrate=115200)
+    manager = TCPServer(host='0.0.0.0', port=80)
     
-    ws2812 = Ws2812(serial_manager)
+    
+    ws2812 = Ws2812(manager)
     # 创建舵机控制实例
-    servo = ServoController(serial_manager)
+    servo = ServoController(manager)
     servo_id = 0
     time_ms = 5
     angle = 0
@@ -47,7 +37,7 @@ if __name__ == "__main__":
         while True:
             set_angle(angle)
             angle = (angle+10) % 360
-            # time.sleep(0.5)
+            time.sleep(0.1)
 
         # # 示例操作：设置 PWM 和时间
         # servo.set_pwm(servo_id, pwm=2500, time_ms=1000)
@@ -64,5 +54,5 @@ if __name__ == "__main__":
 
     finally:
         # 断开串口连接
-        serial_manager.disconnect()
+        manager.disconnect()
        

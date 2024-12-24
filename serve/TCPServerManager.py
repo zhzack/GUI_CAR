@@ -1,145 +1,101 @@
 import socket
 import threading
-import time
+from abc import ABC, abstractmethod
 from communication_interface import CommunicationInterface  # 导入抽象接口类
 
 
-class TCPServerManager(CommunicationInterface):
-    def __init__(self, host='0.0.0.0', port=8888):
+class TCPServer(CommunicationInterface):
+    def __init__(self, host='0.0.0.0', port=80):
         self.host = host
         self.port = port
-        self.server_socket = None
-        self.client_sockets = []  # 存储所有的客户端连接
-        self.stop_flag = False  # 控制服务器停止的标志
-        self.thread = None  # 接受客户端连接的线程
-
-    def start(self):
-        """启动 TCP 服务端"""
         self.server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.server_socket.bind((self.host, self.port))
-        self.server_socket.listen(5)  # 最大允许 5 个连接
-        print(f"服务器启动，监听 {self.host}:{self.port}...")
+        self.server_socket.listen(5)
+        self.clients = []  # 存储所有已连接的客户端
+        self.running = True
 
-        # 启动接受客户端连接的线程
-        self.thread = threading.Thread(target=self.accept_connections)
-        self.thread.start()
+        self.lock = threading.Lock()  # 用于线程安全
+        print(f"Server started on {self.host}:{self.port}")
 
-    def stop(self):
-        """停止服务器，关闭所有连接"""
-        print("正在关闭服务器...")
-        self.stop_flag = True
-        if self.thread:
-            self.thread.join()  # 等待接受连接的线程结束
-        for client_socket in self.client_sockets:
-            self.close_connection(client_socket)
-        if self.server_socket:
-            self.server_socket.close()
-        print("服务器已关闭")
+        # 启动接受连接的线程
+        self.accept_thread = threading.Thread(
+            target=self._accept_clients, daemon=True)
+        self.accept_thread.start()
 
-    def accept_connections(self):
-        """接受客户端连接并创建新的线程处理每个客户端"""
-        while not self.stop_flag:
+    def _accept_clients(self):
+        while self.running:
             try:
                 client_socket, client_address = self.server_socket.accept()
-                print(f"新的客户端连接：{client_address}")
-                self.client_sockets.append(client_socket)
+                print(f"Client connected: {client_address}")
 
-                # 启动一个新的线程来处理该客户端
-                client_thread = threading.Thread(
-                    target=self.handle_client, args=(client_socket, client_address))
-                client_thread.daemon = True
-                client_thread.start()
-            except Exception as e:
-                if not self.stop_flag:
-                    print(f"接受客户端连接时发生错误: {e}")
+                with self.lock:
+                    self.clients.append(client_socket)
 
-    def handle_client(self, client_socket, client_address):
-        """处理客户端的连接"""
-        try:
-            while not self.stop_flag:
-                data = self.receive_data(client_socket)
+                threading.Thread(target=self._handle_client, args=(
+                    client_socket,), daemon=True).start()
+            except socket.error as e:
+                print(f"Error accepting clients: {e}")
+
+    def _handle_client(self, client_socket):
+        while self.running:
+            try:
+                data = client_socket.recv(1024)
                 if not data:
-                    break  # 如果没有数据，表示连接关闭
+                    break
 
-                print(f"收到来自 {client_address} 的数据: {data}")
-                # 返回给客户端
-                # self.send_data(client_socket, f'数据接收成功: {data}')
-                self.send_data( f'数据接收成功: {data}')
-
-                # 可以在这里将接收到的数据广播给其他客户端
-                self.broadcast(data, client_socket)
-
-        except Exception as e:
-            print(f"与 {client_address} 的连接发生错误: {e}")
-        finally:
-            self.close_connection(client_socket)
-
-    # def send_data(self, client_socket, data):
-    #     """实现 CommunicationInterface 中的 send_data 方法"""
-    #     try:
-    #         client_socket.sendall(f'{data}\r\n'.encode('utf-8'))
-    #         print(f"发送到 {client_socket.getpeername()}: {data}")
-    #     except Exception as e:
-    #         print(f"发送到客户端失败: {e}")
-    #         self.close_connection(client_socket)
-
-    def receive_data(self, client_socket):
-        """实现 CommunicationInterface 中的 receive_data 方法"""
-        try:
-            data = client_socket.recv(1024)  # 接收最大1024字节的数据
-            return data.decode('utf-8').strip() if data else None
-        except Exception as e:
-            print(f"接收来自 {client_socket.getpeername()} 的数据失败: {e}")
-            self.close_connection(client_socket)
-            return None
-
-    def close_connection(self, client_socket):
-        """关闭与客户端的连接"""
-        try:
-            if client_socket in self.client_sockets:
-                self.client_sockets.remove(client_socket)
-            client_socket.close()
-            print(f"与 {client_socket.getpeername()} 的连接已关闭")
-
-        except Exception as e:
-            print(f"关闭与客户端连接失败: {e}")
-
-    def broadcast(self, message, sender_socket):
-        """广播消息给所有客户端"""
-        for client_socket in self.client_sockets:
-            if client_socket != sender_socket:  # 不发送给发送者
+                # 尝试解码，如果失败则处理异常
                 try:
-                    self.send_data( message)
-                except Exception as e:
-                    print(f"发送到 {client_socket.getpeername()} 失败: {e}")
-                    self.close_connection(client_socket)
+                    print(f"Received: {data.decode('utf-8')
+                                       } from {client_socket.getpeername()}")
+                except UnicodeDecodeError:
+                    print(
+                        f"Received non-UTF-8 data from {client_socket.getpeername()}")
 
-    def send_data(self, message):
-        """广播消息给所有客户端"""
-        sender_socket = None
-        for client_socket in self.client_sockets:
-            if client_socket != sender_socket:  # 不发送给发送者
+            except socket.error:
+                break
+
+        with self.lock:
+            if client_socket in self.clients:
+                self.clients.remove(client_socket)
+                print(f"Client disconnected: {client_socket.getpeername()}")
+        client_socket.close()
+
+    def send_data(self, data: str):
+        with self.lock:
+            for client in self.clients:
                 try:
-                    self.send_data( message)
-                except Exception as e:
-                    print(f"发送到 {client_socket.getpeername()} 失败: {e}")
-                    self.close_connection(client_socket)
+                    client.sendall(data.encode('utf-8'))
+                    print(data)
+
+                except socket.error as e:
+                    print(f"Error sending to {client.getpeername()}: {e}")
+
+    def receive_data(self):
+        # 这里在 _handle_client 方法中处理接收到的消息
+        pass  # 此方法实际不需要实现，消息已经在后台处理
 
     def close(self):
-        """关闭服务端"""
-        self.stop()
+        print("Closing server...")
+        self.running = False
+        with self.lock:
+            for client in self.clients:
+                try:
+                    client.close()
+                except socket.error as e:
+                    print(f"Error closing client socket: {e}")
+            self.clients.clear()
+        self.server_socket.close()
+        print("Server closed.")
 
 
+# 示例用法
 if __name__ == "__main__":
-    # 创建 TCP 服务器并启动
-    server = TCPServerManager()
-    server.start()
-    index = 0
+    server = TCPServer(host='0.0.0.0', port=80)
     try:
         while True:
-            time.sleep(0.01)  # 保持服务器运行
-            message = f"{index}"
-            server.broadcast(message, None)
-            index = index+1
-    except KeyboardInterrupt:
-        server.stop()  # 手动停止服务器
+            msg = input("Enter message to broadcast (type 'exit' to stop): ")
+            if msg.lower() == 'exit':
+                break
+            server.send_data(msg)
+    finally:
+        server.close()
