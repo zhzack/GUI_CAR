@@ -20,7 +20,7 @@ if __name__ == "__main__":
     manager = TCPServer(host='192.168.234.13', port=80)
 
     ws2812 = Ws2812(manager)
-    ws2812.num_strips = 1
+    ws2812.num_strips = 3
     # 创建舵机控制实例
     servo = ServoController(manager)
     servo_id = 0
@@ -36,7 +36,7 @@ if __name__ == "__main__":
     try:
         while True:
             set_angle(angle)
-            angle = (angle+20) % 360
+            angle = (angle+2) % 360
             # time.sleep(0.1)
 
         # # 示例操作：设置 PWM 和时间

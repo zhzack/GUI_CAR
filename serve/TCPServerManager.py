@@ -1,10 +1,10 @@
 import socket
 import threading
 from abc import ABC, abstractmethod
-from communication_interface import CommunicationInterface  # 导入抽象接口类
+# from communication_interface import CommunicationInterface  # 导入抽象接口类
 
 
-class TCPServer(CommunicationInterface):
+class TCPServer():
     def __init__(self, host='0.0.0.0', port=80):
         self.host = host
         self.port = port
@@ -65,7 +65,7 @@ class TCPServer(CommunicationInterface):
             for client in self.clients:
                 try:
                     client.sendall(data.encode('utf-8'))
-                    print(data)
+                    # print(data)
 
                 except socket.error as e:
                     print(f"Error sending to {client.getpeername()}: {e}")

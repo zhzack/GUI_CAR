@@ -2,10 +2,10 @@ import serial
 import serial.tools.list_ports
 import threading
 import time
-from communication_interface import CommunicationInterface  # 导入抽象接口类
+# from communication_interface import CommunicationInterface  # 导入抽象接口类
 
 
-class SerialManager(CommunicationInterface):
+class SerialManager():
     def __init__(self, port_by_keyword='6', baudrate=115200):
         self.port = None
         self.baudrate = baudrate

@@ -74,7 +74,7 @@ if __name__ == '__main__':
     trajectory_process.start()
 
     # 创建线程来实时绘制图表
-    plot_process = Process(target=plot_data_from_queue, args=(pdoa_queue,))
+    # plot_process = Process(target=plot_data_from_queue, args=(pdoa_queue,))
     # plot_process.start()
 
     # 创建 TCP 服务进程

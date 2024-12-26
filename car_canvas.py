@@ -9,9 +9,18 @@ from PyQt5.QtGui import QPen, QBrush, QColor
 from PyQt5.QtCore import Qt, QRect
 from PyQt5.QtCore import QTimer, Qt
 
+import math
+
 
 from fence_tool import FenceTool
 from float_list import CustomFloatList
+
+# from serve.communication_interface import CommunicationInterface
+from serve.SerialManager import SerialManager
+from serve.TCPServerManager import TCPServer
+from serve.ServoController import ServoController
+from serve.ws2812 import Ws2812
+import time
 
 lineLen = 10
 
@@ -31,6 +40,11 @@ class CarCanvas(QGraphicsView):
         self.highlighted = False
 
         self.fence_tool = parent.fence_tool
+
+        self.manager = None
+        self.ws2812 = None
+        self.servo = None
+        self.init_servo_ws2812()
 
         self.last_fence = None  # 钥匙上一个所在的区域
         self.fence_cont = 0
@@ -80,6 +94,33 @@ class CarCanvas(QGraphicsView):
         self.setLayout(self.layout)
 
         self.parent.setLayout(self.layout)
+
+    def init_servo_ws2812(self):
+        # 创建串口管理实例
+        # self.manager = SerialManager(port_by_keyword='20',baudrate=115200)
+        self.manager = TCPServer(host='192.168.234.13', port=80)
+
+        self.ws2812 = Ws2812(self.manager)
+        self.ws2812.num_strips = 3
+        # 创建舵机控制实例
+        self.servo = ServoController(self.manager)
+        servo_id = 0
+        time_ms = 5
+        angle = 0
+        # pos = servo.get_position(servo_id)
+        # print(pos)
+        self.servo.set_angle(servo_id, angle, time_ms)
+        time.sleep(2)
+
+    def set_angle(self, angle):
+        servo_id = 0
+        time_ms = 5
+        self.ws2812.set_led_angle(angle)
+        # time.sleep(0.01)
+        self.servo.set_angle(servo_id, angle, time_ms)
+        # time.sleep(0.01)  # 延迟 1 秒
+        # pos = servo.get_position(servo_id)
+        # print(pos)
 
     def set_fence_mode(self, active):
         """启用或禁用电子围栏添加模式"""
@@ -154,14 +195,16 @@ class CarCanvas(QGraphicsView):
         self.layout.setAlignment(
             # 将浮动窗口放置在右上角
             temp_label_widget, Qt.AlignCenter | Qt.AlignTop)
-        temp_label_widget.move(1000,1000)
+        temp_label_widget.move(1000, 1000)
         # 创建一个定时器（QTimer）
         self.timer = QTimer(self)
         self.timer.setSingleShot(True)  # 设置为单次触发
-        self.timer.timeout.connect(lambda: self.delete_label(temp_label_widget))  # 传递标签作为参数
+        self.timer.timeout.connect(
+            lambda: self.delete_label(temp_label_widget))  # 传递标签作为参数
         self.timer.start(1000)  # 设置定时器在 500 毫秒后触发
 
-        return 
+        return
+
     def delete_label(self, label):
         """删除传入的标签并销毁"""
         label.deleteLater()  # 删除标签
@@ -240,9 +283,23 @@ class CarCanvas(QGraphicsView):
 
             self.ble_fences[key] = temp_key_obj
 
+    def calculate_angle(self, x2, y2):
+        x1 = 0
+        y1 = 0
+        # 使用 atan2 计算角度，返回值是弧度
+        angle_rad = math.atan2(y2 - y1, x2 - x1)
+
+        # 将角度转换为度数
+        angle_deg = math.degrees(angle_rad)
+        if angle_deg < 0:
+            angle_deg += 360
+
+        return angle_deg
+
     def set_key_position(self, object):
         x = 0
         y = 0
+
         try:
             for key, value in object.items():
                 # print(f"Key: {key}, Value: {value}")
@@ -272,6 +329,8 @@ class CarCanvas(QGraphicsView):
 
                 x = value['x']
                 y = value['y']
+                angle = self.calculate_angle(x, y)
+                self.set_angle(angle)
                 new_position = QPointF(x, y)
 
                 # 清除上一个点的高亮
