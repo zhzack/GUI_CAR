@@ -17,10 +17,10 @@ def set_angle(angle):
 if __name__ == "__main__":
     # 创建串口管理实例
     # manager = SerialManager(port_by_keyword='3',baudrate=115200)
-    manager = TCPServer(host='0.0.0.0', port=80)
-    
-    
+    manager = TCPServer(host='192.168.234.13', port=80)
+
     ws2812 = Ws2812(manager)
+    ws2812.num_strips = 1
     # 创建舵机控制实例
     servo = ServoController(manager)
     servo_id = 0
@@ -36,8 +36,8 @@ if __name__ == "__main__":
     try:
         while True:
             set_angle(angle)
-            angle = (angle+10) % 360
-            time.sleep(0.1)
+            angle = (angle+20) % 360
+            # time.sleep(0.1)
 
         # # 示例操作：设置 PWM 和时间
         # servo.set_pwm(servo_id, pwm=2500, time_ms=1000)
@@ -55,4 +55,3 @@ if __name__ == "__main__":
     finally:
         # 断开串口连接
         manager.disconnect()
-       
