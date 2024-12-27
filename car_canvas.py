@@ -98,10 +98,10 @@ class CarCanvas(QGraphicsView):
     def init_servo_ws2812(self):
         # 创建串口管理实例
         # self.manager = SerialManager(port_by_keyword='20',baudrate=115200)
-        self.manager = TCPServer(host='192.168.234.13', port=80)
+        self.manager = TCPServer(host='192.168.47.13', port=80)
 
         self.ws2812 = Ws2812(self.manager)
-        self.ws2812.num_strips = 3
+        self.ws2812.num_strips = 15
         # 创建舵机控制实例
         self.servo = ServoController(self.manager)
         servo_id = 0
@@ -284,8 +284,8 @@ class CarCanvas(QGraphicsView):
             self.ble_fences[key] = temp_key_obj
 
     def calculate_angle(self, x2, y2):
-        x1 = 0
-        y1 = 0
+        x1 = 90
+        y1 = -210
         # 使用 atan2 计算角度，返回值是弧度
         angle_rad = math.atan2(y2 - y1, x2 - x1)
 
@@ -329,8 +329,10 @@ class CarCanvas(QGraphicsView):
 
                 x = value['x']
                 y = value['y']
-                angle = self.calculate_angle(x, y)
-                self.set_angle(angle)
+                if key == 'UWB1':
+                    print(x, y)
+                    angle = self.calculate_angle(-x, y)
+                    self.set_angle(angle)
                 new_position = QPointF(x, y)
 
                 # 清除上一个点的高亮
