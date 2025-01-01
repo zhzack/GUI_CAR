@@ -8,6 +8,7 @@ class ServoController:
         :param serial_manager: 串口管理实例
         """
         self.serial_manager = serial_manager
+        self.last_pwm = -1
 
     def send_command(self, command):
         """
@@ -17,6 +18,34 @@ class ServoController:
         full_command = f"#{command}!"
         self.serial_manager.send_data(full_command)
         time.sleep(0.1)
+
+    def check_pwm(self, pwm):
+        min = 1000
+        max = 2000
+        if self.last_pwm != -1:
+            servo_id_str = f"{0:03d}"
+            pwm_str = f"{pwm:04d}"
+            time_str = f"{1:04d}"
+            if pwm < min and self.last_pwm > max:
+                self.set_mode(0, 7)
+                command = f"{servo_id_str}P{pwm_str}T{time_str}"
+                self.send_command(command)
+                time.sleep(0.01)
+                self.stop_servo(0)
+                time.sleep(0.01)
+                self.half_reset(0)
+                time.sleep(0.01)
+                self.stop_servo(0)
+                time.sleep(0.1)
+                print("sdfsd")
+                # pass
+            # elif pwm > max and self.last_pwm < min:
+            #     self.set_mode(0, 8)
+            #     self.set_angle(0, 360)
+            #     self.stop_servo(0)
+            #     self.half_reset(0)
+            #     self.stop_servo(0)
+            #     time.sleep(0.1)
 
     def set_pwm(self, servo_id, pwm, time_ms):
         """
@@ -28,6 +57,8 @@ class ServoController:
         servo_id_str = f"{servo_id:03d}"
         pwm_str = f"{pwm:04d}"
         time_str = f"{time_ms:04d}"
+        self.check_pwm(pwm)
+        self.last_pwm = pwm
         command = f"{servo_id_str}P{pwm_str}T{time_str}"
         self.send_command(command)
 
@@ -35,7 +66,7 @@ class ServoController:
         """
         设置舵机的角度
         :param servo_id: 舵机的 ID（3 位）
-        :param angle: 角度（0-180°）
+        :param angle: 角度（0-360°）
         :param time_ms: 运行时间（可选，单位：毫秒，默认 0）
         """
         max_angle = 360

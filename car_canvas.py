@@ -36,7 +36,7 @@ class CarCanvas(QGraphicsView):
         self.setResizeAnchor(QGraphicsView.AnchorUnderMouse)
         self.queue = None
         self.fence_mode_active = False
-        self.mouse_move_active = False
+        self.mouse_move_active = True
         self.highlighted = False
 
         self.fence_tool = parent.fence_tool
@@ -97,8 +97,8 @@ class CarCanvas(QGraphicsView):
 
     def init_servo_ws2812(self):
         # 创建串口管理实例
-        # self.manager = SerialManager(port_by_keyword='20',baudrate=115200)
-        self.manager = TCPServer(host='192.168.47.13', port=80)
+        self.manager = SerialManager(port_by_keyword='9',baudrate=115200)
+        # self.manager = TCPServer(host='192.168.47.13', port=80)
 
         self.ws2812 = Ws2812(self.manager)
         self.ws2812.num_strips = 15
@@ -109,13 +109,14 @@ class CarCanvas(QGraphicsView):
         angle = 0
         # pos = servo.get_position(servo_id)
         # print(pos)
-        self.servo.set_angle(servo_id, angle, time_ms)
-        time.sleep(2)
+        self.servo.half_reset(0)
+        # time.sleep(2)
+        #  self.half_reset(0)
 
     def set_angle(self, angle):
         servo_id = 0
         time_ms = 5
-        self.ws2812.set_led_angle(angle)
+        # self.ws2812.set_led_angle(angle)
         # time.sleep(0.01)
         self.servo.set_angle(servo_id, angle, time_ms)
         # time.sleep(0.01)  # 延迟 1 秒
@@ -329,8 +330,8 @@ class CarCanvas(QGraphicsView):
 
                 x = value['x']
                 y = value['y']
-                if key == 'UWB1':
-                    print(x, y)
+                if key != 'UWB1':
+                    # print(x, y)
                     angle = self.calculate_angle(-x, y)
                     self.set_angle(angle)
                 new_position = QPointF(x, y)
