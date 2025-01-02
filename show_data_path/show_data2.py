@@ -3,8 +3,10 @@ import pandas as pd
 import numpy as np
 from matplotlib.colors import Normalize
 from matplotlib.cm import ScalarMappable
+import os
 
 # 假设数据已加载到 DataFrame 中
+current_path = os.path.dirname(os.path.realpath(__file__))
 data = pd.read_csv('第一次大采集车外.csv')
 
 # 确定 uwb_fob_location_distance 的最大和最小值
