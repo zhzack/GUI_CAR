@@ -37,6 +37,7 @@ class CarCanvas(QGraphicsView):
         self.queue = None
         self.fence_mode_active = False
         self.mouse_move_active = True
+        self.mouse_move_active = True
         self.highlighted = False
 
         self.fence_tool = parent.fence_tool
@@ -109,13 +110,14 @@ class CarCanvas(QGraphicsView):
         angle = 0
         # pos = servo.get_position(servo_id)
         # print(pos)
-        self.servo.set_angle(servo_id, angle, time_ms)
-        time.sleep(2)
+        self.servo.half_reset(0)
+        # time.sleep(2)
+        #  self.half_reset(0)
 
     def set_angle(self, angle):
         servo_id = 0
         time_ms = 5
-        self.ws2812.set_led_angle(angle)
+        # self.ws2812.set_led_angle(angle)
         # time.sleep(0.01)
         self.servo.set_angle(servo_id, angle, time_ms)
         # time.sleep(0.01)  # 延迟 1 秒
