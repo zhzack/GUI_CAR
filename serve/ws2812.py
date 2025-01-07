@@ -6,7 +6,7 @@ class Ws2812:
         self.serial_manager = serial_manager
         self.leds_per_strip = 144
         self.num_strips = 18
-        self.led_index_offset = 144
+        self.led_index_offset = 144*(-3)
 
         self.led_num = self.leds_per_strip*self.num_strips
         self.points = []  # 不规则轨迹的点

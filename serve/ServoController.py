@@ -57,7 +57,7 @@ class ServoController:
         servo_id_str = f"{servo_id:03d}"
         pwm_str = f"{pwm:04d}"
         time_str = f"{time_ms:04d}"
-        self.check_pwm(pwm)
+        # self.check_pwm(pwm)
         self.last_pwm = pwm
         command = f"{servo_id_str}P{pwm_str}T{time_str}"
         self.send_command(command)

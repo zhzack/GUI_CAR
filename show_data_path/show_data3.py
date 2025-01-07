@@ -16,8 +16,8 @@ file_name = '1126SroundVehicle_+X276_+Y0.csv'
 str_uwb_distance = 'UWB_Simple::Anchor5UwbTx::Dis_5'
 str_Carsts_X = 'UWB_Simple::CarSts::Carsts_X'
 str_Carsts_Y = 'UWB_Simple::CarSts::Carsts_Y'
-# path = ''
-# file_name = '第一次大采集车外.csv'
+path = ''
+file_name = '第一次大采集车外.csv'
 if path != '':
     current_path = os.path.join(current_path, path, file_name)
 else:
