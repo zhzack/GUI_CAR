@@ -86,12 +86,14 @@ def handle_client(client_socket, queue):
                 parsed_data = {}
                 # 第一个元素作为主键（比如 'BLE'）
                 key = parts[0]
+                
+                print(parts)
 
                 # 其他元素转换为数字，映射到 'x' 和 'y'
                 x, y ,isTrue= map(int, parts[1:4])  # 假设只有 x, y 两个值
                 if isTrue:
                     # 构造字典
-                    parsed_data[key] = {'x': x, 'y': -y}
+                    parsed_data[key] = {'x': x, 'y': y}
                     # print(parsed_data)
                     queue.put([parsed_data])
             # 解析数据

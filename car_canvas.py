@@ -22,7 +22,7 @@ from serve.ServoController import ServoController
 from serve.ws2812 import Ws2812
 import time
 
-lineLen = 10
+lineLen = 10000
 
 
 class CarCanvas(QGraphicsView):
@@ -45,6 +45,10 @@ class CarCanvas(QGraphicsView):
         self.manager = None
         self.ws2812 = None
         self.servo = None
+        self.total_angle = 0
+        self.previous_angle = 0
+        self.last_send_angle = 0
+        self.last_time = 0
         self.init_servo_ws2812()
 
         self.last_fence = None  # 钥匙上一个所在的区域
@@ -99,7 +103,8 @@ class CarCanvas(QGraphicsView):
     def init_servo_ws2812(self):
         # 创建串口管理实例
         # self.manager = SerialManager(port_by_keyword='7',baudrate=115200)
-        self.manager = TCPServer(host='192.168.208.13', port=80)
+        # self.manager = TCPServer(host='192.168.208.13', port=80)
+        self.manager = TCPServer(host='0.0.0.0', port=8888)
 
         self.ws2812 = Ws2812(self.manager)
         self.ws2812.num_strips = 15
@@ -115,11 +120,50 @@ class CarCanvas(QGraphicsView):
         #  self.half_reset(0)
 
     def set_angle(self, angle):
+        print(f"angle:{angle}")
+        temp_angle = self.total_angle
+        current_time = int(time.time() * 1000)
+        if current_time-self.last_time < 500:
+            # print("输出过快了")
+            # return
+            pass
+        self.last_time = current_time
+
         servo_id = 0
         time_ms = 5
-        self.ws2812.set_led_angle(angle)
-        # time.sleep(0.01)
-        self.servo.set_angle(servo_id, angle, time_ms)
+        previous_angle = self.previous_angle
+        total_angle = self.total_angle
+
+        current_angle = angle
+        # 当前角度与前一个角度的差值
+        if previous_angle==0:
+            total_angle=current_angle
+        else:
+            
+            diff = current_angle - previous_angle
+
+            # 如果差值大于 180，说明跨过 360°，需要调整
+            if diff > 180:
+                diff -= 360
+            # 如果差值小于 -180，说明跨过 0°，需要调整
+            elif diff < -180:
+                diff += 360
+
+            # 累加调整后的差值
+            total_angle += diff
+
+        self.total_angle = total_angle
+        # 更新上一个角度值
+        self.previous_angle = current_angle
+
+        print(self.total_angle)
+        if abs(self.last_send_angle-self.total_angle) > 5:
+            self.manager.send_data(f'#{int(self.total_angle)}!')
+            self.last_send_angle = self.total_angle
+
+        # self.ws2812.set_led_angle(angle)
+        # # time.sleep(0.01)
+        # self.servo.set_angle(servo_id, angle, time_ms)
         # time.sleep(0.01)  # 延迟 1 秒
         # pos = servo.get_position(servo_id)
         # print(pos)
@@ -287,13 +331,14 @@ class CarCanvas(QGraphicsView):
 
     def calculate_angle(self, x2, y2):
         x1 = 90
-        y1 = -210
+        y1 = 210
         # 使用 atan2 计算角度，返回值是弧度
-        angle_rad = math.atan2(y2 - y1, x2 - x1)
-
+        angle_rad = math.atan2(y2 - y1,x2 - x1)
+        print(f"{angle_rad}")
         # 将角度转换为度数
         angle_deg = math.degrees(angle_rad)
-        if angle_deg < 0:
+        print(f"{angle_deg}")
+        if angle_deg<0:
             angle_deg += 360
 
         return angle_deg
@@ -331,10 +376,7 @@ class CarCanvas(QGraphicsView):
 
                 x = value['x']
                 y = value['y']
-                if key != 'UWB1':
-                    # print(x, y)
-                    angle = self.calculate_angle(-x, y)
-                    self.set_angle(angle)
+
                 new_position = QPointF(x, y)
 
                 # 清除上一个点的高亮
@@ -364,6 +406,10 @@ class CarCanvas(QGraphicsView):
                 else:
                     self.floatList.updateItemByIndex(
                         temp_key_obj['list_text_item'], text)
+                if key != 'UWB1':
+                    print(x, y)
+                    angle = self.calculate_angle(x, y)
+                    self.set_angle(angle)
 
                 if temp_key_obj['temp_line']:
                     self.scene().removeItem(temp_key_obj['temp_line'])

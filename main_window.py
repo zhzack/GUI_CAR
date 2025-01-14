@@ -59,6 +59,7 @@ class MainWindow(QMainWindow):
         if self.is_matt_connect:
             self.mqtt_client = MQTTClient(self.queue)
             self.mqtt_client.connect()
+            self.mqtt_client.subscribe(self.mqtt_client.robot_topics + list(self.mqtt_client.res_topics.values()))
 
         # 创建场景和画布
         self.scene = QGraphicsScene(self)

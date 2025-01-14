@@ -32,7 +32,7 @@ class MQTTClient:
             mqtt_client.CallbackAPIVersion.VERSION1, self.client_id
         )
 
-        self.subscribe(self.robot_topics + list(self.res_topics.values()))
+        # self.subscribe(self.robot_topics + list(self.res_topics.values()))
 
         self.on_connect_callback = None
         self.on_message_callback = None
@@ -107,6 +107,7 @@ class MQTTClient:
             print(f"保存配置文件出错: {e}")
 
     def connect(self):
+        
         self.client.username_pw_set(self.username, self.password)
         self.client.on_connect = self.on_connect
         try:
@@ -254,15 +255,14 @@ class MQTTClient:
             "topic": msg.topic,
         }
 
-        # print(msg_object)
         return msg_object
 
     def handle_robot_heart_beat(self, msg):
         msg_object = self.merge_data(msg)
-        # print(msg_object["local_x"], msg_object["local_y"], 0, 0)
-        x = float(msg_object["local_x"])*100+270
+        x = float(msg_object["local_x"])*100-350
         y = float(msg_object["local_y"])*100
-        cc = [{'car': {'x': x, 'y': y}}]
+        cc = [{'car': {'x': -x, 'y': y}}]
+        print(cc)
         self.queue.put(cc)
 
         # self.plot_mqtt.update_plot(msg_object["local_x"], msg_object["local_y"])
