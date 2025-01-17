@@ -12,6 +12,7 @@ import signal
 import time
 
 
+
 def kill_process_using_port(port):
     try:
         # 使用 netstat 命令查找占用端口的 PID
@@ -65,6 +66,8 @@ def tcp_server(queue, port=8080):
 
 def handle_client(client_socket, queue):
     buffer = b''
+    FlagFristFalse=0
+    
     try:
         while True:
             # 接收客户端发送的数据（最多 1024 字节）
@@ -93,9 +96,18 @@ def handle_client(client_socket, queue):
                 x, y ,isTrue= map(int, parts[1:4])  # 假设只有 x, y 两个值
                 if isTrue:
                     # 构造字典
-                    parsed_data[key] = {'x': x, 'y': y}
-                    # print(parsed_data)
+                    parsed_data[key] = {'x': x, 'y': -y,'StopFlag':1}
                     queue.put([parsed_data])
+                    # print(parsed_data)
+                    
+                else:
+                    if FlagFristFalse==0:
+                        parsed_data[key] = {'x': x, 'y': -y,'StopFlag':0}
+                        FlagFristFalse=1
+                        queue.put([parsed_data])
+                    # else:
+                        
+                
             # 解析数据
             # try:
             #     # 假设数据是 JSON 格式

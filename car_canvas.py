@@ -136,10 +136,10 @@ class CarCanvas(QGraphicsView):
 
         current_angle = angle
         # 当前角度与前一个角度的差值
-        if previous_angle==0:
-            total_angle=current_angle
+        if previous_angle == 0:
+            total_angle = current_angle
         else:
-            
+
             diff = current_angle - previous_angle
 
             # 如果差值大于 180，说明跨过 360°，需要调整
@@ -333,12 +333,12 @@ class CarCanvas(QGraphicsView):
         x1 = 90
         y1 = 210
         # 使用 atan2 计算角度，返回值是弧度
-        angle_rad = math.atan2(y2 - y1,x2 - x1)
+        angle_rad = math.atan2(y2 - y1, x2 - x1)
         print(f"{angle_rad}")
         # 将角度转换为度数
         angle_deg = math.degrees(angle_rad)
         print(f"{angle_deg}")
-        if angle_deg<0:
+        if angle_deg < 0:
             angle_deg += 360
 
         return angle_deg
@@ -376,79 +376,88 @@ class CarCanvas(QGraphicsView):
 
                 x = value['x']
                 y = value['y']
+                StopFlag = value['StopFlag']
 
-                new_position = QPointF(x, y)
+                if StopFlag == 1:
+                    new_position = QPointF(x, y)
 
-                # 清除上一个点的高亮
-                if temp_key_obj['fences'] != []:
-                    for fence in temp_key_obj['fences']:
-                        if fence != None:
-                            self.scene().removeItem(fence)
-                temp_key_obj['fences'], temp_desc = self.fence_tool.highlight_fence_by_point(
-                    new_position)
+                    # 清除上一个点的高亮
+                    if temp_key_obj['fences'] != []:
+                        for fence in temp_key_obj['fences']:
+                            if fence != None:
+                                self.scene().removeItem(fence)
+                    temp_key_obj['fences'], temp_desc = self.fence_tool.highlight_fence_by_point(
+                        new_position)
 
-                # 检查钥匙是否进入同心圆的圆环区域
-                # temp_key_obj['fences'].append(self.check_concentric_circles(
-                #     new_position))
+                    # 检查钥匙是否进入同心圆的圆环区域
+                    # temp_key_obj['fences'].append(self.check_concentric_circles(
+                    #     new_position))
 
-                x1 = x
-                y1 = y
-                if key == '鼠标':
-                    y1 = -y
-                text = f'{key}: x:{x1:.2f},y:{y1:.2f}'
-                if temp_desc != '':
-                    text += f' : {temp_desc}'
-                if temp_key_obj['list_text_item'] == None:
-                    self.floatList.add_item('')
+                    x1 = x
+                    y1 = y
+                    if key == '鼠标':
+                        y1 = -y
+                    text = f'{key}: x:{x1:.2f},y:{y1:.2f}'
+                    if temp_desc != '':
+                        text += f' : {temp_desc}'
+                    if temp_key_obj['list_text_item'] == None:
+                        self.floatList.add_item('')
 
-                    temp_key_obj['list_text_item'] = self.floatList.add_item(
-                        text, temp_key_obj['color'])
+                        temp_key_obj['list_text_item'] = self.floatList.add_item(
+                            text, temp_key_obj['color'])
+                    else:
+                        self.floatList.updateItemByIndex(
+                            temp_key_obj['list_text_item'], text)
+                    if key != 'UWB1':
+                        print(x, y)
+                        angle = self.calculate_angle(x, -y)
+                        self.set_angle(angle)
+
+                    if temp_key_obj['temp_line']:
+                        self.scene().removeItem(temp_key_obj['temp_line'])
+                    # 绘制从主驾车门到当前点位置的线
+                    temp_key_obj['temp_line'] = self.scene().addLine(0, -200,
+                                                                     x, y, QPen(Qt.gray, 3))
+                    # self.fence_tool.find_fences(['0x2','0x4'])
+
+                    if temp_key_obj['last_position']:
+
+                        line_item = QGraphicsLineItem(temp_key_obj['last_position'].x(), temp_key_obj['last_position'].y(),
+                                                      new_position.x(), new_position.y())
+                        line_item.setPen(
+                            QPen(temp_key_obj['color'], 5))  # 设置线段颜色和宽度
+                        self.scene().addItem(line_item)
+                        temp_key_obj['items'].append(line_item)
+
+                        # 检查列表长度，超过50时删除第一个
+                        if len(temp_key_obj['items']) > lineLen:
+                            first_line = temp_key_obj['items'].pop(0)
+                            self.scene().removeItem(first_line)
+
+                    # 移动钥匙
+                    if temp_key_obj['item'] is None:
+                        temp_key_obj['item'] = self.scene().addRect(
+                            x - 7.5, y - 7.5, 15, 15, QPen(temp_key_obj['color']), QBrush(temp_key_obj['color']))
+                    else:
+                        temp_key_obj['item'].setRect(x - 7.5, y - 7.5, 15, 15)
+
+                    temp_key_obj['last_position'] = new_position
+
+                    # print(int(self.width()/2),int(self.height()/2))
+                    # 确保钥匙在可见范围内
+                    # self.ensureVisible(self.key_item, int(
+                    #     self.width()/2)-40, int(self.height()/2)-40)
+
+                    # temp_key_obj['last_position'] = temp_key_obj['last_position']
+                    temp_key_obj['points'].append(new_position)
+                    self.lines[key] = temp_key_obj
+
                 else:
-                    self.floatList.updateItemByIndex(
-                        temp_key_obj['list_text_item'], text)
-                if key != 'UWB1':
-                    print(x, y)
-                    angle = self.calculate_angle(x, y)
-                    self.set_angle(angle)
+                    # self.set_angle(0)
+                    self.total_angle = 0
+                    self.previous_angle = 0
+                    self.manager.send_data(f'#{int(self.total_angle)}!')
 
-                if temp_key_obj['temp_line']:
-                    self.scene().removeItem(temp_key_obj['temp_line'])
-                # 绘制从主驾车门到当前点位置的线
-                temp_key_obj['temp_line'] = self.scene().addLine(0, -200,
-                                                                 x, y, QPen(Qt.gray, 3))
-                # self.fence_tool.find_fences(['0x2','0x4'])
-
-                if temp_key_obj['last_position']:
-
-                    line_item = QGraphicsLineItem(temp_key_obj['last_position'].x(), temp_key_obj['last_position'].y(),
-                                                  new_position.x(), new_position.y())
-                    line_item.setPen(
-                        QPen(temp_key_obj['color'], 5))  # 设置线段颜色和宽度
-                    self.scene().addItem(line_item)
-                    temp_key_obj['items'].append(line_item)
-
-                    # 检查列表长度，超过50时删除第一个
-                    if len(temp_key_obj['items']) > lineLen:
-                        first_line = temp_key_obj['items'].pop(0)
-                        self.scene().removeItem(first_line)
-
-                # 移动钥匙
-                if temp_key_obj['item'] is None:
-                    temp_key_obj['item'] = self.scene().addRect(
-                        x - 7.5, y - 7.5, 15, 15, QPen(temp_key_obj['color']), QBrush(temp_key_obj['color']))
-                else:
-                    temp_key_obj['item'].setRect(x - 7.5, y - 7.5, 15, 15)
-
-                temp_key_obj['last_position'] = new_position
-
-                # print(int(self.width()/2),int(self.height()/2))
-                # 确保钥匙在可见范围内
-                # self.ensureVisible(self.key_item, int(
-                #     self.width()/2)-40, int(self.height()/2)-40)
-
-                # temp_key_obj['last_position'] = temp_key_obj['last_position']
-                temp_key_obj['points'].append(new_position)
-                self.lines[key] = temp_key_obj
         except Exception as e:
             print(e)
             return
