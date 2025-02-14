@@ -20,6 +20,9 @@ from serve.SerialManager import SerialManager
 from serve.TCPServerManager import TCPServer
 from serve.ServoController import ServoController
 from serve.ws2812 import Ws2812
+from VectorDisplay import VectorDisplay
+import tkinter as tk
+from PyQt5.QtCore import QProcess
 import time
 
 lineLen = 10000
@@ -74,6 +77,7 @@ class CarCanvas(QGraphicsView):
         self.key_item = None
 
         self.ble_fences = {}
+        
 
         # 初始化浮动窗口
         self.floatList = CustomFloatList(scene, "小车和UWB位置坐标", self)  # 父对象为视图
@@ -206,7 +210,8 @@ class CarCanvas(QGraphicsView):
         if self.mouse_move_active:
             pos = self.mapToScene(event.pos())
             parsed_data = {}
-            parsed_data['鼠标'] = {'x': pos.x(), 'y': pos.y()}
+            parsed_data['鼠标'] = {
+                'x': pos.x(), 'y': pos.y(), 'StopFlag': True}
             # print(parsed_data)
             self.queue.put([parsed_data])
 
@@ -369,6 +374,11 @@ class CarCanvas(QGraphicsView):
                             100, 255), random.randint(100, 255), random.randint(100, 255))
 
                     temp_key_obj['list_text_item'] = None
+                    
+                    temp_key_obj['app']=VectorDisplay()
+                    
+                    temp_key_obj['process'] = QProcess(self)  # 创建 QProcess 实例
+                    temp_key_obj['process'].start("python", ["VectorDisplay.py"])  # 启动 Tkinter 窗口
 
                     self.lines[key] = temp_key_obj
                 else:
@@ -377,6 +387,10 @@ class CarCanvas(QGraphicsView):
                 x = value['x']
                 y = value['y']
                 StopFlag = value['StopFlag']
+                coord_str = f"{int(x)} {int(y)}\n"
+                self.lines[key]['process'].write(coord_str.encode())
+                # self.lines[key]['process'].write(b"100 50\n")
+                
 
                 if StopFlag == 1:
                     new_position = QPointF(x, y)

@@ -2,7 +2,7 @@ import tkinter as tk
 import math
 import sys
 
-class VectorDisplay(tk.Tk):  # 修改为继承 Tk，而非 Toplevel
+class VectorDisplay(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title("矢量方向显示器")
@@ -32,6 +32,9 @@ class VectorDisplay(tk.Tk):  # 修改为继承 Tk，而非 Toplevel
         self.distance_label = tk.Label(info_frame, text="距离: 0.00", font=("微软雅黑", 12), bg="#e0e0e0", width=15)
         self.distance_label.pack(side=tk.LEFT, padx=5)
 
+        # 启动线程，等待接收坐标输入
+        self.after(100, self.listen_for_coordinates)
+
     def _draw_reference(self):
         """绘制参考坐标系"""
         self.canvas.create_oval(self.center-3, self.center-3, self.center+3, self.center+3, fill="red")
@@ -57,6 +60,14 @@ class VectorDisplay(tk.Tk):  # 修改为继承 Tk，而非 Toplevel
 
         self.coord_label.config(text=f"坐标: ({x:.2f}, {y:.2f})")
         self.distance_label.config(text=f"距离: {distance:.2f}")
+
+    def listen_for_coordinates(self):
+        """从标准输入接收坐标"""
+        if sys.stdin:
+            coords = sys.stdin.readline().strip()
+            if coords:
+                x, y = map(int, coords.split())
+                self.set_coordinate(x, y)
 
 if __name__ == "__main__":
     app = VectorDisplay()
