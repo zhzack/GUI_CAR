@@ -108,7 +108,7 @@ class CarCanvas(QGraphicsView):
         # 创建串口管理实例
         # self.manager = SerialManager(port_by_keyword='7',baudrate=115200)
         # self.manager = TCPServer(host='192.168.208.13', port=80)
-        self.manager = TCPServer(host='0.0.0.0', port=8888)
+        self.manager = TCPServer(host='0.0.0.0', port=80)
 
         self.ws2812 = Ws2812(self.manager)
         self.ws2812.num_strips = 15
@@ -165,7 +165,7 @@ class CarCanvas(QGraphicsView):
             self.manager.send_data(f'#{int(self.total_angle)}!')
             self.last_send_angle = self.total_angle
 
-        # self.ws2812.set_led_angle(angle)
+        self.ws2812.set_led_angle(angle)
         # # time.sleep(0.01)
         # self.servo.set_angle(servo_id, angle, time_ms)
         # time.sleep(0.01)  # 延迟 1 秒
@@ -375,10 +375,10 @@ class CarCanvas(QGraphicsView):
 
                     temp_key_obj['list_text_item'] = None
                     
-                    temp_key_obj['app']=VectorDisplay()
+                    # temp_key_obj['app']=VectorDisplay()
                     
-                    temp_key_obj['process'] = QProcess(self)  # 创建 QProcess 实例
-                    temp_key_obj['process'].start("python", ["VectorDisplay.py"])  # 启动 Tkinter 窗口
+                    # temp_key_obj['process'] = QProcess(self)  # 创建 QProcess 实例
+                    # temp_key_obj['process'].start("python", ["VectorDisplay.py"])  # 启动 Tkinter 窗口
 
                     self.lines[key] = temp_key_obj
                 else:
@@ -387,8 +387,9 @@ class CarCanvas(QGraphicsView):
                 x = value['x']
                 y = value['y']
                 StopFlag = value['StopFlag']
-                coord_str = f"{int(x)} {int(y)}\n"
-                self.lines[key]['process'].write(coord_str.encode())
+                
+                # coord_str = f"{int(x)} {int(y)}\n"
+                # self.lines[key]['process'].write(coord_str.encode())
                 # self.lines[key]['process'].write(b"100 50\n")
                 
 

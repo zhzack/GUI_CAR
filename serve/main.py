@@ -17,7 +17,7 @@ def set_angle(angle):
 if __name__ == "__main__":
     # 创建串口管理实例
     # manager = SerialManager(port_by_keyword='3',baudrate=115200)
-    manager = TCPServer(host='192.168.234.13', port=80)
+    manager = TCPServer(host='172.20.10.2', port=80)
 
     ws2812 = Ws2812(manager)
     ws2812.num_strips = 3

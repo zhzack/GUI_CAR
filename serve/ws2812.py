@@ -5,7 +5,7 @@ class Ws2812:
     def __init__(self, serial_manager):
         self.serial_manager = serial_manager
         self.leds_per_strip = 144
-        self.num_strips = 18
+        self.num_strips = 15
         self.led_index_offset = 144*(-3)
 
         self.led_num = self.leds_per_strip*self.num_strips
@@ -16,8 +16,10 @@ class Ws2812:
 
     def set_points_path(self, points):
         # self.points = points
-        self.points = [(125, 250), (125, -250), (-125, -250),
-                       (-125, 250), (125, 250)]
+        x=10
+        
+        self.points = [(125, 250+x), (125+x, -250), (-125, -250-x),
+                       (-125-x, 250), (125, 250+x)]
         self.lights = self.distribute_lights()  # 预计算灯的位置和角度
 
     def calculate_segment_length(self, start, end):
