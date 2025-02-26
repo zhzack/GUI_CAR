@@ -94,7 +94,7 @@ class SerialManager():
         :param data: 需要发送的字符串
         """
         if self.serial_conn and self.serial_conn.is_open:
-            self.serial_conn.write(f'{data}\r\n'.encode('utf-8'))
+            self.serial_conn.write(f'{data}'.encode('utf-8'))
         else:
             raise ConnectionError("串口未打开")
 

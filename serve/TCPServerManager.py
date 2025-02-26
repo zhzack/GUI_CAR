@@ -65,7 +65,7 @@ class TCPServer():
             for client in self.clients:
                 try:
                     client.sendall(data.encode('utf-8'))
-                    # print(data)
+                    print(f'串口向8266发:{data}')
 
                 except socket.error as e:
                     print(f"Error sending to {client.getpeername()}: {e}")

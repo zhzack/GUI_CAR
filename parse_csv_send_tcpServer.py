@@ -45,8 +45,8 @@ def main():
     client_socket = connect_to_server(host, port)
 
     # 读取 CSV 文件数据
-    csv_file = 'data.csv'  # 替换为实际 CSV 文件路径
-    data = read_csv(csv_file)
+    csv_file = 'data'  # 替换为实际 CSV 文件路径
+    data = read_csv(f'{csv_file}.csv')
 
     # 获取数据的总长度
     total_lines = len(data)
@@ -56,7 +56,7 @@ def main():
         start_time = time.time()
 
         # 依次发送 CSV 文件中的每一行数据
-        key = "ggg"
+        key = csv_file
         for index, (time_value, x, y) in enumerate(data):
             # 计算时间间隔
             elapsed_time = time.time() - start_time
