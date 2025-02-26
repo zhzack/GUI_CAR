@@ -1,5 +1,5 @@
 from flask import Flask, render_template, jsonify, request
-
+import random
 app = Flask(__name__)
 
 # 默认角度
@@ -12,7 +12,10 @@ def index():
 @app.route('/get_angle', methods=['GET'])
 def get_angle():
     global current_angle
-    return jsonify({'angle': current_angle})
+    # 生成一个0到360之间的随机角度
+    current_angle = random.randint(0, 360)
+    current_distance = random.randint(10, 100)  # 随机距离
+    return jsonify({'angle': current_angle, 'distance': current_distance})
 
 @app.route('/set_angle', methods=['POST'])
 def set_angle():

@@ -1,24 +1,28 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>动态圆弧</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 </head>
+
 <body>
 
-<div class="container">
-    <canvas id="myArcChart" width="400" height="400"></canvas>
-</div>
-
-<button onclick="setAngle(0)">设置角度 0</button>
-<button onclick="setAngle(90)">设置角度 90</button>
-<button onclick="setAngle(180)">设置角度 180</button>
-<button onclick="setAngle(270)">设置角度 270</button>
-<button onclick="setAngle(360)">设置角度 360</button>
-
-<script src="{{ url_for('static', filename='js/script.js') }}"></script>
+    <div class="container">
+        <canvas id="myArcChart" width="400" height="400"></canvas>
+        <div class="center-text" id="centerLabel">距离: 0米</div>
+        <!-- 车的位置标注 -->
+        <div id="carPosition" class="car-position">
+            <p>您的爱车在：<span id="carLocation">左前方</span></p>
+        </div>
+    </div>
+    <!-- 在 HTML 中引入插件 -->
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
 </body>
+
 </html>
