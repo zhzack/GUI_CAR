@@ -1,5 +1,6 @@
 let currentAngle = 0;
 let currentDistance = 0;
+const arcLen = 40;
 const ctx = document.getElementById('myArcChart').getContext('2d');
 
 
@@ -14,6 +15,7 @@ const myArcChart = new Chart(ctx, {
             backgroundColor: ['#76C7C0', '#E0E0E0'], // 圆弧颜色和剩余颜色
             borderWidth: 0,
             borderRadius: 35, // 设置圆弧的圆角大小
+
         }]
     },
     options: {
@@ -21,12 +23,20 @@ const myArcChart = new Chart(ctx, {
         cutout: '70%', // 设置圆环的内圆比例
         rotation: 0, // 圆环起始点旋转至顶部
         circumference: 360, // 设置圆环完整度
-
+        plugins: {
+            legend: {
+                display: false, // 隐藏图例
+            },
+            tooltip: {
+                enabled: false, // 隐藏工具提示
+            }
+        }
     }
 });
 
 // 更新车辆的位置标注
 function updateCarPosition(angle) {
+    angle -= arcLen / 2
     let position = '';
 
     if (angle >= 0 && angle < 90) {
@@ -55,8 +65,8 @@ function getAngle() {
 
 // 更新圆环图的角度
 function updateChart() {
-    myArcChart.data.datasets[0].data = [40, 330];
-    myArcChart.options.rotation = currentAngle - 20
+    myArcChart.data.datasets[0].data = [arcLen, 360 - arcLen];
+    myArcChart.options.rotation = currentAngle - arcLen / 2
     myArcChart.update();
 }
 
@@ -93,7 +103,7 @@ function updateAngleFromServer() {
             document.getElementById('centerLabel').textContent = `距离: ${currentDistance}米`;
             myArcChart.data.datasets[0].data = [40, 360 - 40];  // 更新数据
             myArcChart.options.rotation = currentAngle - 20;  // 根据角度更新旋转角度
-            
+
             myArcChart.update();  // 更新图表
             // 更新方向标注
             updateCarPosition(currentAngle);
@@ -102,7 +112,7 @@ function updateAngleFromServer() {
 }
 
 // 每5秒自动请求后台获取角度并更新图表
-setInterval(updateAngleFromServer, 500);
+// setInterval(updateAngleFromServer, 5000);
 
 // 页面加载时，第一次请求角度
 document.addEventListener('DOMContentLoaded', function () {

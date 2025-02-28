@@ -20,6 +20,11 @@
         <div id="carPosition" class="car-position">
             <p>您的爱车在：<span id="carLocation">左前方</span></p>
         </div>
+        <button onclick="setAngle(0)">设置角度 0</button>
+        <button onclick="setAngle(90)">设置角度 90</button>
+        <button onclick="setAngle(180)">设置角度 180</button>
+        <button onclick="setAngle(270)">设置角度 270</button>
+        <button onclick="setAngle(360)">设置角度 360</button>
     </div>
     <!-- 在 HTML 中引入插件 -->
     <script src="{{ url_for('static', filename='js/script.js') }}"></script>
