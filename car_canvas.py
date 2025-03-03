@@ -10,6 +10,8 @@ from PyQt5.QtCore import Qt, QRect
 from PyQt5.QtCore import QTimer, Qt
 
 import math
+import requests
+
 # from lightCalculator import LightCalculator
 import lightCalculator
 
@@ -40,6 +42,7 @@ class CarCanvas(QGraphicsView):
         self.setTransformationAnchor(QGraphicsView.AnchorUnderMouse)
         self.setResizeAnchor(QGraphicsView.AnchorUnderMouse)
         self.queue = None
+        self.data_queue = None
         self.fence_mode_active = False
         self.mouse_move_active = False
         # self.mouse_move_active = True
@@ -122,7 +125,7 @@ class CarCanvas(QGraphicsView):
         angle = 0
         # pos = servo.get_position(servo_id)
         # print(pos)
-        self.servo.half_reset(0)
+        # self.servo.half_reset(0)
         # time.sleep(2)
         #  self.half_reset(0)
 
@@ -350,6 +353,19 @@ class CarCanvas(QGraphicsView):
             angle_deg += 360
 
         return angle_deg
+    def calculate_angle_1(self, x2, y2):
+        x1 = 90
+        y1 = 210
+        # 使用 atan2 计算角度，返回值是弧度
+        angle_rad = math.atan2(-(y2 - y1), -(x2 - x1))
+        print(f"{angle_rad}")
+        # 将角度转换为度数
+        angle_deg = math.degrees(angle_rad)
+        print(f"{angle_deg}")
+        if angle_deg < 0:
+            angle_deg += 360
+
+        return angle_deg
 
     def set_key_position(self, object):
         x = 0
@@ -426,15 +442,19 @@ class CarCanvas(QGraphicsView):
                         self.floatList.updateItemByIndex(
                             temp_key_obj['list_text_item'], text)
                     if key != 'UWB1':
-                        print(x, y)
+                        # 由于pyqt坐标系y轴相反，特将y转为负值，但计算角度时还原成原始值
                         start, end = lightCalculator.calculate_start_end_input_xy(
-                            x, y)
-                        
+                            x, -y)
                         angle = self.calculate_angle(x, -y)
                         self.set_angle(angle)
+                        angle = self.calculate_angle_1(x, -y)
+                        distance = math.sqrt(x**2 + y**2)
+                        
+                        self.data_queue.put(
+                            {"x": x, "y": y, "angle": 360-angle, "distance": distance})
+
                         # num = self.lightCa.calculate_num_led(x, y)
-                        print(f'{start}')
-                        self.manager.send_data(f'{start},{end}+')
+                        # self.manager.send_data(f'{start},{end}+')
 
                     if temp_key_obj['temp_line']:
                         self.scene().removeItem(temp_key_obj['temp_line'])

@@ -46,20 +46,22 @@ JsonforCPath = 'CreatJsonforCirclePath'
 
 
 class MainWindow(QMainWindow):
-    def __init__(self, queue):
+    def __init__(self, queue, data_queue):
         super(MainWindow, self).__init__()
         self.setWindowTitle("汽车和钥匙位置")
         self.queue = queue  # 获取共享队列
+        self.data_queue = data_queue
         self.current_path = os.path.dirname(os.path.realpath(__file__))
         # print(self.robot_topics, self.res_topics)
         self.mqtt_res_obj = {}
-        
+
         self.is_matt_connect = True
 
         if self.is_matt_connect:
             self.mqtt_client = MQTTClient(self.queue)
             self.mqtt_client.connect()
-            self.mqtt_client.subscribe(self.mqtt_client.robot_topics + list(self.mqtt_client.res_topics.values()))
+            self.mqtt_client.subscribe(
+                self.mqtt_client.robot_topics + list(self.mqtt_client.res_topics.values()))
 
         # 创建场景和画布
         self.scene = QGraphicsScene(self)
@@ -67,6 +69,7 @@ class MainWindow(QMainWindow):
         self.fence_tool = FenceTool(self.scene, self)
         self.canvas = CarCanvas(self.scene, self)
         self.canvas.queue = queue
+        self.canvas.data_queue=data_queue
 
         # 保存任务轨迹
         self.points = []

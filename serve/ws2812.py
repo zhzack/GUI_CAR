@@ -6,9 +6,9 @@ class Ws2812:
         self.serial_manager = serial_manager
         self.leds_per_strip = 144
         self.num_strips = 15
-        self.led_index_offset = 144*(-3)
+        self.led_index_offset = 144*(-8)+30
 
-        self.led_num = self.leds_per_strip*self.num_strips
+        self.led_num = 2194
         self.points = []  # 不规则轨迹的点
         self.leds_per_meter = 144  # 每米的灯数
         self.lights = None  # 预计算灯的位置和角度
@@ -97,7 +97,7 @@ class Ws2812:
         led_index = self.find_nearest_led(angle)
         led_index = (led_index+self.led_index_offset)%len(self.lights)
         # print(led_index)
-        self.serial_manager.send_data(f'{led_index}+')
+        self.serial_manager.send_data(f'{led_index},{(led_index+144)%len(self.lights)}+')
 
     def angle_to_led_index(self, angle):
         total_leds = self.leds_per_strip * self.num_strips

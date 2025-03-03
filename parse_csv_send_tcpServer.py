@@ -56,7 +56,7 @@ def main():
         start_time = time.time()
 
         # 依次发送 CSV 文件中的每一行数据
-        key = csv_file
+        key = csv_file+"kkk"
         for index, (time_value, x, y) in enumerate(data):
             # 计算时间间隔
             elapsed_time = time.time() - start_time
@@ -66,6 +66,8 @@ def main():
             # 每行发送数据
 
             isTrue = 1  # 假设 isTrue 为 1
+            # x = 0
+            # y = -400
             send_data(client_socket, key, x, y, isTrue)
         send_data(client_socket, key, 0, 0, 0)
     except KeyboardInterrupt:

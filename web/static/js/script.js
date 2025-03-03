@@ -1,6 +1,6 @@
 let currentAngle = 0;
 let currentDistance = 0;
-const arcLen = 40;
+const arcLen = 25;
 const ctx = document.getElementById('myArcChart').getContext('2d');
 
 
@@ -12,9 +12,9 @@ const myArcChart = new Chart(ctx, {
         datasets: [{
             label: 'Progress',
             data: [0, 360], // 初始为 0 的角度
-            backgroundColor: ['#76C7C0', '#E0E0E0'], // 圆弧颜色和剩余颜色
-            borderWidth: 0,
-            borderRadius: 35, // 设置圆弧的圆角大小
+            backgroundColor: ['#76C7C0', '#e51a54'], // 圆弧颜色和剩余颜色
+            borderWidth: 10,
+            borderRadius: 25, // 设置圆弧的圆角大小
 
         }]
     },
@@ -40,13 +40,13 @@ function updateCarPosition(angle) {
     let position = '';
 
     if (angle >= 0 && angle < 90) {
-        position = '左前方';
-    } else if (angle >= 90 && angle < 180) {
         position = '右前方';
+    } else if (angle >= 90 && angle < 180) {
+        position = '右后方';
     } else if (angle >= 180 && angle < 270) {
         position = '左后方';
     } else {
-        position = '右后方';
+        position = '左前方';
     }
 
     // 更新页面上的方向文字
@@ -100,19 +100,21 @@ function updateAngleFromServer() {
         .then(data => {
             currentAngle = data.angle;  // 获取后台返回的角度
             currentDistance = data.distance;// 获取后台返回的距离
-            document.getElementById('centerLabel').textContent = `距离: ${currentDistance}米`;
-            myArcChart.data.datasets[0].data = [40, 360 - 40];  // 更新数据
-            myArcChart.options.rotation = currentAngle - 20;  // 根据角度更新旋转角度
-
-            myArcChart.update();  // 更新图表
+            console.log("距离",currentDistance)
+            console.log("角度",currentAngle)
+            document.getElementById('centerLabel').textContent = `距离: ${currentDistance}米  `;
+            myArcChart.data.datasets[0].data = [arcLen, 360 - arcLen];  // 更新数据
+            myArcChart.options.rotation = currentAngle - arcLen;  // 根据角度更新旋转角度
             // 更新方向标注
             updateCarPosition(currentAngle);
+            myArcChart.update();  // 更新图表
+
         })
         .catch(error => console.error('Error fetching angle:', error));  // 错误处理
 }
 
 // 每5秒自动请求后台获取角度并更新图表
-// setInterval(updateAngleFromServer, 5000);
+setInterval(updateAngleFromServer, 200);
 
 // 页面加载时，第一次请求角度
 document.addEventListener('DOMContentLoaded', function () {

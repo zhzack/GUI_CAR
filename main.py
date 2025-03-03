@@ -6,6 +6,10 @@ import matplotlib.pyplot as plt
 import key_trajectory
 
 import tcp_server
+import math
+import requests
+import aiohttp
+import asyncio
 
 # 用于实时绘制折线图的线程
 
@@ -60,11 +64,60 @@ def plot_data_from_queue(pdoa_queue):
                 print(len(pdoa1_data))
 
 
+def calculate_angle(x2, y2):
+
+    x1 = 90
+    y1 = 210
+    # 使用 atan2 计算角度，返回值是弧度
+    angle_rad = math.atan2(y2 - y1, x2 - x1)
+    # 将角度转换为度数
+    angle_deg = math.degrees(angle_rad)
+    if angle_deg < 0:
+        angle_deg += 360
+    return angle_deg
+
+
+angle_pre = 0
+distance_pre = 0
+
+
+
+
+async def async_http_send(data_queue):
+    angle_pre = None
+    distance_pre = None
+    
+    async with aiohttp.ClientSession() as session:
+        while True:
+            if not data_queue.empty():
+                print(11)
+                obj = data_queue.get()
+                angle = obj['angle']
+                distance = obj['distance']
+                
+                if angle_pre != angle or distance != distance_pre:
+                    url = "http://localhost:5000/set_data"
+                    params = {"angle": angle, "distance": distance}
+                    
+                    try:
+                        async with session.get(url, params=params, timeout=2) as response:
+                            print(f"Response: {await response.text()}")
+                    except Exception as e:
+                        print(f"Request failed: {str(e)}")
+                    
+                    angle_pre = angle
+                    distance_pre = distance
+            await asyncio.sleep(0.01)  # 防止CPU满载
+
+
+
+
 if __name__ == '__main__':
     app = QApplication(sys.argv)
 
     # 创建一个队列用于跨进程通信
     queue = Queue()
+    data_queue = Queue()
     pdoa_queue = Queue()
 
     # 创建生成轨迹的子进程
@@ -73,6 +126,11 @@ if __name__ == '__main__':
     # trajectory_process = Process(target=key_trajectory.read_csv_and_put_in_queue, args=(queue,pdoa_queue))
     trajectory_process.start()
 
+    # http_send_data_process = Process(target=async_http_send, args=(data_queue,))
+    # http_send_data_process.start()
+    
+    # 启动异步任务（需要事件循环）
+    # asyncio.run(async_http_send(data_queue))
     # 创建线程来实时绘制图表
     # plot_process = Process(target=plot_data_from_queue, args=(pdoa_queue,))
     # plot_process.start()
@@ -82,7 +140,7 @@ if __name__ == '__main__':
     tcp_process.start()
 
     # 创建主窗口并传递队列
-    window = MainWindow(queue)
+    window = MainWindow(queue, data_queue)
     window.show()
 
     try:
