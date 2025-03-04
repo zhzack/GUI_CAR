@@ -90,23 +90,24 @@ def handle_client(client_socket, queue):
                 # 第一个元素作为主键（比如 'BLE'）
                 key = parts[0]
                 
-                print(parts)
+                # print(parts)
 
                 # 其他元素转换为数字，映射到 'x' 和 'y'
                 x, y ,isTrue= map(int, parts[1:4])  # 假设只有 x, y 两个值
                 if isTrue:
                     # 构造字典
                     parsed_data[key] = {'x': x, 'y': -y,'StopFlag':1}
-                    queue.put([parsed_data])
-                    # print(parsed_data)
                     
                 else:
                     if FlagFristFalse==0:
                         parsed_data[key] = {'x': x, 'y': -y,'StopFlag':0}
                         FlagFristFalse=1
-                        queue.put([parsed_data])
-                    # else:
                         
+                    # else:
+                if parsed_data!=None:
+                    queue.put([parsed_data]) 
+                    print(parsed_data)
+                    
                 
             # 解析数据
             # try:

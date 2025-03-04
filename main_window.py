@@ -69,7 +69,7 @@ class MainWindow(QMainWindow):
         self.fence_tool = FenceTool(self.scene, self)
         self.canvas = CarCanvas(self.scene, self)
         self.canvas.queue = queue
-        self.canvas.data_queue=data_queue
+        self.canvas.data_queue = data_queue
 
         # 保存任务轨迹
         self.points = []
@@ -284,8 +284,8 @@ class MainWindow(QMainWindow):
             self.data = json.load(file)
         #   用于存储添加的点
         for node in self.data["nodes"]:
-            y = -node["pos"]["x"] * 100+267  # 缩放位置
-            x = -node["pos"]["y"] * 100+145
+            y = -node["pos"]["x"] * 100  # 缩放位置
+            x = -node["pos"]["y"] * 100+300
 
             # x = -node["pos"]["y"] * 100+200  # 缩放位置
             # y = node["pos"]["x"] * 100-130
@@ -420,5 +420,6 @@ class MainWindow(QMainWindow):
                     pass
                     self.canvas.set_ble_area(value)
 
-                else:
+                elif 'UWB1' in value or 'car' in value:
+                # else:
                     self.canvas.set_key_position(value)

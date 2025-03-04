@@ -373,7 +373,7 @@ class CarCanvas(QGraphicsView):
 
         try:
             for key, value in object.items():
-                # print(f"Key: {key}, Value: {value}")
+                print(f"Key: {key}, Value: {value}")
                 temp_key_obj = {}
                 if key not in self.lines:
                     temp_key_obj['points'] = []
@@ -441,12 +441,12 @@ class CarCanvas(QGraphicsView):
                     else:
                         self.floatList.updateItemByIndex(
                             temp_key_obj['list_text_item'], text)
-                    if key != 'UWB1':
+                    if key == 'UWB1':
                         # 由于pyqt坐标系y轴相反，特将y转为负值，但计算角度时还原成原始值
                         start, end = lightCalculator.calculate_start_end_input_xy(
                             x, -y)
-                        angle = self.calculate_angle(x, -y)
-                        self.set_angle(angle)
+                        # angle = self.calculate_angle(x, -y)
+                        # self.set_angle(angle)
                         angle = self.calculate_angle_1(x, -y)
                         distance = math.sqrt(x**2 + y**2)
                         
@@ -454,7 +454,7 @@ class CarCanvas(QGraphicsView):
                             {"x": x, "y": y, "angle": 360-angle, "distance": distance})
 
                         # num = self.lightCa.calculate_num_led(x, y)
-                        # self.manager.send_data(f'{start},{end}+')
+                        self.manager.send_data(f'{start},{end}+')
 
                     if temp_key_obj['temp_line']:
                         self.scene().removeItem(temp_key_obj['temp_line'])

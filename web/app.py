@@ -28,8 +28,8 @@ def get_angle():
     global current_angle
     global current_distance
     # 生成一个0到360之间的随机角度
-    # current_angle = random.randint(0, 360)
-    # current_distance = random.randint(10, 100)  # 随机距离
+    current_angle = random.randint(0, 360)
+    current_distance = random.randint(10, 100)  # 随机距离
     return jsonify({'angle': current_angle, 'distance': current_distance})
 
 
