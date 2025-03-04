@@ -112,9 +112,9 @@ class CarCanvas(QGraphicsView):
 
     def init_servo_ws2812(self):
         # 创建串口管理实例
-        self.manager = SerialManager(port_by_keyword='CH', baudrate=115200)
+        # self.manager = SerialManager(port_by_keyword='CH', baudrate=115200)
         # self.manager = TCPServer(host='172.20.10.2', port=80)
-        # self.manager = TCPServer(host='0.0.0.0', port=80)
+        self.manager = TCPServer(host='0.0.0.0', port=80)
 
         self.ws2812 = Ws2812(self.manager)
         self.ws2812.num_strips = 15
@@ -358,10 +358,10 @@ class CarCanvas(QGraphicsView):
         y1 = 210
         # 使用 atan2 计算角度，返回值是弧度
         angle_rad = math.atan2(-(y2 - y1), -(x2 - x1))
-        print(f"{angle_rad}")
+        # print(f"{angle_rad}")
         # 将角度转换为度数
         angle_deg = math.degrees(angle_rad)
-        print(f"{angle_deg}")
+        # print(f"{angle_deg}")
         if angle_deg < 0:
             angle_deg += 360
 
@@ -373,7 +373,7 @@ class CarCanvas(QGraphicsView):
 
         try:
             for key, value in object.items():
-                print(f"Key: {key}, Value: {value}")
+                # print(f"Key: {key}, Value: {value}")
                 temp_key_obj = {}
                 if key not in self.lines:
                     temp_key_obj['points'] = []
@@ -441,7 +441,7 @@ class CarCanvas(QGraphicsView):
                     else:
                         self.floatList.updateItemByIndex(
                             temp_key_obj['list_text_item'], text)
-                    if key == 'UWB1':
+                    if key != 'UWB1':
                         # 由于pyqt坐标系y轴相反，特将y转为负值，但计算角度时还原成原始值
                         start, end = lightCalculator.calculate_start_end_input_xy(
                             x, -y)

@@ -77,39 +77,11 @@ def calculate_angle(x2, y2):
     return angle_deg
 
 
-angle_pre = 0
-distance_pre = 0
 
 
 
-
-async def async_http_send(data_queue):
-    angle_pre = None
-    distance_pre = None
+def fun(data_queue):
     
-    async with aiohttp.ClientSession() as session:
-        while True:
-            if not data_queue.empty():
-                print(11)
-                obj = data_queue.get()
-                angle = obj['angle']
-                distance = obj['distance']
-                
-                if angle_pre != angle or distance != distance_pre:
-                    url = "http://localhost:5000/set_data"
-                    params = {"angle": angle, "distance": distance}
-                    
-                    try:
-                        async with session.get(url, params=params, timeout=2) as response:
-                            print(f"Response: {await response.text()}")
-                    except Exception as e:
-                        print(f"Request failed: {str(e)}")
-                    
-                    angle_pre = angle
-                    distance_pre = distance
-            await asyncio.sleep(0.01)  # 防止CPU满载
-
-
 
 
 if __name__ == '__main__':
@@ -126,11 +98,12 @@ if __name__ == '__main__':
     # trajectory_process = Process(target=key_trajectory.read_csv_and_put_in_queue, args=(queue,pdoa_queue))
     trajectory_process.start()
 
-    # http_send_data_process = Process(target=async_http_send, args=(data_queue,))
-    # http_send_data_process.start()
-    
+    http_send_data_process = Process(target=fun, args=(data_queue,))
+    http_send_data_process.start()
+
     # 启动异步任务（需要事件循环）
-    # asyncio.run(async_http_send(data_queue))
+    #
+
     # 创建线程来实时绘制图表
     # plot_process = Process(target=plot_data_from_queue, args=(pdoa_queue,))
     # plot_process.start()
@@ -147,9 +120,12 @@ if __name__ == '__main__':
         sys.exit(app.exec_())
     finally:
         # 退出时终止子进程
-        # trajectory_process.terminate()
-        # trajectory_process.join()
+        trajectory_process.terminate()
+        trajectory_process.join()
         # plot_process.terminate()
         # plot_process.join()
+        http_send_data_process.terminate()
+        http_send_data_process.join()
+
         tcp_process.terminate()
         tcp_process.join()

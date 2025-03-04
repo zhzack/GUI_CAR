@@ -1,10 +1,111 @@
 from flask import Flask, render_template, jsonify, request
-import random
+import socket
+import threading
+
 app = Flask(__name__)
 
-# 默认角度
+# 共享变量
 current_angle = 0
 current_distance = 0
+
+# TCP 服务器配置
+TCP_HOST = '0.0.0.0'  # 监听所有 IP
+TCP_PORT = 5005       # 监听端口
+
+
+def handle_client(client_socket, addr):
+    """处理单个 TCP 客户端的长连接"""
+    global current_angle, current_distance
+    print(f"Connected to {addr}")
+
+    try:
+        while True:
+            data = client_socket.recv(1024).decode().strip()  # 接收数据
+            if not data:
+                print(f"Client {addr} disconnected")
+                break  # 客户端断开连接
+
+            print(f"Received from {addr}: {data}")
+            try:
+                angle, distance = map(float, data.split(','))  # 解析 "45,120"
+                if 0 <= angle <= 360:
+                    current_angle = angle
+                    current_distance = distance
+                    client_socket.sendall(b"Data received\n")
+                else:
+                    client_socket.sendall(b"Invalid angle\n")
+            except ValueError:
+                client_socket.sendall(b"Invalid format\n")
+    except Exception as e:
+        print(f"Error with client {addr}: {e}")
+    finally:
+        client_socket.close()
+
+
+def tcp_server():
+    """TCP 服务器，支持多个长连接客户端"""
+    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server.bind((TCP_HOST, TCP_PORT))
+    server.listen(5)
+    print(f"TCP Server listening on {TCP_HOST}:{TCP_PORT}")
+
+    while True:
+        client_socket, addr = server.accept()
+        threading.Thread(target=handle_client, args=(
+            client_socket, addr), daemon=True).start()
+
+
+app = Flask(__name__)
+
+# 共享变量
+current_angle = 0
+current_distance = 0
+
+# TCP 服务器配置
+TCP_HOST = '0.0.0.0'  # 监听所有 IP
+TCP_PORT = 5005       # 监听端口
+
+
+def handle_client(client_socket, addr):
+    """处理单个 TCP 客户端的长连接"""
+    global current_angle, current_distance
+    print(f"Connected to {addr}")
+
+    try:
+        while True:
+            data = client_socket.recv(1024).decode().strip()  # 接收数据
+            if not data:
+                print(f"Client {addr} disconnected")
+                break  # 客户端断开连接
+
+            print(f"Received from {addr}: {data}")
+            try:
+                angle, distance = map(float, data.split(','))  # 解析 "45,120"
+                if 0 <= angle <= 360:
+                    current_angle = angle
+                    current_distance = distance
+                    client_socket.sendall(b"Data received\n")
+                else:
+                    client_socket.sendall(b"Invalid angle\n")
+            except ValueError:
+                client_socket.sendall(b"Invalid format\n")
+    except Exception as e:
+        print(f"Error with client {addr}: {e}")
+    finally:
+        client_socket.close()
+
+
+def tcp_server():
+    """TCP 服务器，支持多个长连接客户端"""
+    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server.bind((TCP_HOST, TCP_PORT))
+    server.listen(5)
+    print(f"TCP Server listening on {TCP_HOST}:{TCP_PORT}")
+
+    while True:
+        client_socket, addr = server.accept()
+        threading.Thread(target=handle_client, args=(
+            client_socket, addr), daemon=True).start()
 
 
 @app.route('/')
@@ -12,29 +113,15 @@ def index():
     return render_template('index.html')
 
 
-@app.route('/set_data', methods=['GET'])
-def set_data():
-    global current_angle
-    global current_distance
-    current_angle = request.args.get("angle")
-    current_distance = request.args.get("distance")
-    print(current_angle)
-    print(current_distance)
-    return ( f"current_angle:{current_angle},current_distance:{current_distance}")
-
-
 @app.route('/get_angle', methods=['GET'])
 def get_angle():
-    global current_angle
-    global current_distance
-    # 生成一个0到360之间的随机角度
-    current_angle = random.randint(0, 360)
-    current_distance = random.randint(10, 100)  # 随机距离
+    """获取当前角度和距离"""
     return jsonify({'angle': current_angle, 'distance': current_distance})
 
 
 @app.route('/set_angle', methods=['POST'])
 def set_angle():
+    """手动设置角度"""
     global current_angle
     data = request.get_json()
     angle = data.get('angle')
@@ -46,4 +133,8 @@ def set_angle():
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    # 启动 TCP 服务器线程
+    threading.Thread(target=tcp_server, daemon=True).start()
+
+    # 启动 Flask 服务器
+    app.run(debug=True, host="0.0.0.0", port=5000)
