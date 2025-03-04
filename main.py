@@ -81,7 +81,7 @@ def calculate_angle(x2, y2):
 
 
 def fun(data_queue):
-    
+    pass
 
 
 if __name__ == '__main__':
