@@ -91,13 +91,13 @@ def tcp_client(data_queue, server_ip="127.0.0.1", server_port=5005, reconnect_de
                 if not data_queue.empty():
                     data = data_queue.get()
                     # 生成角度和距离数据
-                    angle = data['angle']  # 角度范围 [0, 360)
-                    distance = data['distance']  # 距离范围 [0, 100)
+                    angle = int(data['angle'])  # 角度范围 [0, 360)
+                    distance = int(data['distance'])  # 距离范围 [0, 100)
                     message = f"{angle},{distance}\n"
 
                     # 发送数据
                     client.sendall(message.encode())
-                    print(f"Sent: {message.strip()}")
+                    # print(f"Sent: {message.strip()}")
 
                     # # 接收服务器响应
                     # response = client.recv(1024).decode().strip()
