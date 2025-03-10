@@ -74,11 +74,11 @@ function updateCarPosition(angle) {
     document.getElementById('carLocation').textContent = position;
 }
 function updateData(data) {
-    currentAngle = (data.angle - 75 + 360) % 360;  // 获取后台返回的角度
+    currentAngle = (data.angle - 75 + 180 + 360) % 360;  // 获取后台返回的角度
     currentDistance = data.distance;// 获取后台返回的距离
     console.log("距离", currentDistance)
     console.log("角度", currentAngle)
-    document.getElementById('centerLabel').textContent = `距离: ${currentDistance}米  `;
+    document.getElementById('centerLabel').textContent = `距离: ${currentDistance/100}米  `;
     myArcChart.data.datasets[0].data = [arcLen, 360 - arcLen];  // 更新数据
     myArcChart.options.rotation = currentAngle - arcLen;  // 根据角度更新旋转角度
     // 更新方向标注
