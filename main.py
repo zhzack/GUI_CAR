@@ -7,9 +7,11 @@ import key_trajectory
 
 import tcp_server
 import math
+import socket
 import requests
 import aiohttp
 import asyncio
+import time
 
 # 用于实时绘制折线图的线程
 
@@ -77,11 +79,41 @@ def calculate_angle(x2, y2):
     return angle_deg
 
 
+def tcp_client(data_queue, server_ip="127.0.0.1", server_port=5005, reconnect_delay=5):
+    """TCP 客户端，支持自动重连"""
+    while True:
+        try:
+            print(f"Connecting to {server_ip}:{server_port}...")
+            client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            client.connect((server_ip, server_port))
+            print("Connected!")
+            while True:
+                if not data_queue.empty():
+                    data = data_queue.get()
+                    # 生成角度和距离数据
+                    angle = data['angle']  # 角度范围 [0, 360)
+                    distance = data['distance']  # 距离范围 [0, 100)
+                    message = f"{angle},{distance}\n"
 
+                    # 发送数据
+                    client.sendall(message.encode())
+                    print(f"Sent: {message.strip()}")
 
+                    # # 接收服务器响应
+                    # response = client.recv(1024).decode().strip()
+                    # print(f"Server: {response}")
 
-def fun(data_queue):
-    pass
+                    # time.sleep(0.2)  # 每 2 秒发送一次
+
+        except (socket.error, ConnectionResetError, BrokenPipeError) as e:
+            print(f"Connection lost: {e}")
+            print(f"Reconnecting in {reconnect_delay} seconds...")
+            time.sleep(reconnect_delay)  # 等待后重连
+        finally:
+            try:
+                client.close()
+            except:
+                pass
 
 
 if __name__ == '__main__':
@@ -98,7 +130,7 @@ if __name__ == '__main__':
     # trajectory_process = Process(target=key_trajectory.read_csv_and_put_in_queue, args=(queue,pdoa_queue))
     trajectory_process.start()
 
-    http_send_data_process = Process(target=fun, args=(data_queue,))
+    http_send_data_process = Process(target=tcp_client, args=(data_queue,))
     http_send_data_process.start()
 
     # 启动异步任务（需要事件循环）
