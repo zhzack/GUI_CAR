@@ -13,13 +13,16 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # 杀死占用端口的进程
+
+
 def kill_process_by_port(port):
     for conn in psutil.net_connections(kind='inet'):
         if conn.laddr.port == port:
             pid = conn.pid
             try:
                 proc = psutil.Process(pid)
-                logger.info(f"Found process {proc.name()} with PID {pid} occupying port {port}")
+                logger.info(f"Found process {proc.name()} with PID {
+                            pid} occupying port {port}")
                 proc.terminate()
                 proc.wait()
                 logger.info(f"Process with PID {pid} terminated.")
@@ -28,11 +31,12 @@ def kill_process_by_port(port):
                 logger.error(f"Error killing process: {e}")
     logger.info(f"No process found occupying port {port}.")
 
+
 # Flask 应用
 app = Flask(__name__)
 
 # 共享变量和锁
-current_angle = 0
+current_angle = 100
 current_distance = 0
 data_lock = Lock()
 
@@ -49,6 +53,8 @@ websocket_clients = set()
 loop = None
 
 # 更新共享数据
+
+
 def set_data(a, b):
     global current_angle, current_distance
     with data_lock:
@@ -56,6 +62,8 @@ def set_data(a, b):
         current_distance = b
 
 # WebSocket 处理器
+
+
 async def websocket_handler(websocket):
     logger.info(f"New WebSocket connection from {websocket.remote_address}")
     websocket_clients.add(websocket)
@@ -66,9 +74,12 @@ async def websocket_handler(websocket):
         logger.error(f"WebSocket error: {e}")
     finally:
         websocket_clients.remove(websocket)
-        logger.info(f"WebSocket connection closed for {websocket.remote_address}")
+        logger.info(f"WebSocket connection closed for {
+                    websocket.remote_address}")
 
 # 广播数据给所有 WebSocket 客户端
+
+
 async def broadcast_data():
     global current_angle, current_distance
     data = json.dumps({'angle': current_angle, 'distance': current_distance})
@@ -76,6 +87,8 @@ async def broadcast_data():
     await send_to_all_clients(data)
 
 # 处理 TCP 客户端连接
+
+
 def handle_client(client_socket, addr):
     global current_angle, current_distance, loop
     logger.info(f"Connected to {addr}")
@@ -89,10 +102,19 @@ def handle_client(client_socket, addr):
             logger.info(f"Received from {addr}: {data}")
             try:
                 angle, distance = map(float, data.split(','))
-                if 0 <= angle <= 360:
-                    set_data(angle, distance)
+
+                
+                if angle > 270:
+                    angle = 90-angle
+                else:
+                    angle=450-angle
+                angle = angle-75
+                
+                if -360 <= angle <= 360:
+                    set_data((angle), distance)
                     # 通过 WebSocket 广播数据
-                    future = asyncio.run_coroutine_threadsafe(broadcast_data(), loop)
+                    future = asyncio.run_coroutine_threadsafe(
+                        broadcast_data(), loop)
                     future.result()  # 等待任务完成
                     client_socket.sendall(b"Data received\n")
                 else:
@@ -106,6 +128,8 @@ def handle_client(client_socket, addr):
         logger.info(f"Connection to {addr} closed.")
 
 # 启动 TCP 服务器
+
+
 def tcp_server():
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     kill_process_by_port(TCP_PORT)
@@ -115,20 +139,27 @@ def tcp_server():
 
     while True:
         client_socket, addr = server.accept()
-        threading.Thread(target=handle_client, args=(client_socket, addr), daemon=True).start()
+        threading.Thread(target=handle_client, args=(
+            client_socket, addr), daemon=True).start()
 
 # 发送消息给所有 WebSocket 客户端
+
+
 async def send_to_all_clients(message):
     if websocket_clients:
         await asyncio.gather(*(client.send(message) for client in websocket_clients), return_exceptions=True)
 
 # 启动 WebSocket 服务器
+
+
 async def start_websocket_server():
     async with websockets.serve(websocket_handler, WS_HOST, WS_PORT):
         logger.info(f"WebSocket server started on ws://{WS_HOST}:{WS_PORT}")
         await asyncio.Future()  # 保持服务器运行
 
 # 运行 WebSocket 服务器的事件循环
+
+
 def run_websocket_server():
     global loop
     loop = asyncio.new_event_loop()
@@ -137,18 +168,23 @@ def run_websocket_server():
     loop.run_forever()
 
 # Flask 路由
+
+
 @app.route('/')
 def index():
     return render_template('index.html')
+
 
 @app.route('/get_angle', methods=['GET'])
 def get_angle():
     with data_lock:
         return jsonify({'angle': current_angle, 'distance': current_distance})
 
+
 if __name__ == '__main__':
     # 启动 WebSocket 服务器
-    websocket_thread = threading.Thread(target=run_websocket_server, daemon=True)
+    websocket_thread = threading.Thread(
+        target=run_websocket_server, daemon=True)
     websocket_thread.start()
 
     # 启动 TCP 服务器

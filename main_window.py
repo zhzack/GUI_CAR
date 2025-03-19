@@ -236,6 +236,7 @@ class MainWindow(QMainWindow):
             ],
             '设置': [
                 ('鼠标模拟位置', self.setMouseMoveActive),
+                ('清除运动轨迹', self.manual_input_fence),
                 ('设置选项2', self.manual_input_fence),
             ]
         }
@@ -257,6 +258,7 @@ class MainWindow(QMainWindow):
             ('上传任务文件', self.btn_pub_send_task_file),
             ('设置任务轨迹', self.btn_set_task_path),
             ('清除任务轨迹', self.btn_remove_task_path),
+            # ('清除行驶轨迹', self.btn_remove_move_path),
 
         ]
 

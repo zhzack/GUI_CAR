@@ -112,9 +112,9 @@ class CarCanvas(QGraphicsView):
 
     def init_servo_ws2812(self):
         # 创建串口管理实例
-        # self.manager = SerialManager(port_by_keyword='CH', baudrate=115200)
+        self.manager1 = SerialManager(port_by_keyword='CH', baudrate=115200)
         # self.manager = TCPServer(host='172.20.10.2', port=80)
-        self.manager = TCPServer(host='0.0.0.0', port=80)
+        self.manager = TCPServer(host='0.0.0.0', port=8888)
 
         self.ws2812 = Ws2812(self.manager)
         self.ws2812.num_strips = 15
@@ -168,12 +168,12 @@ class CarCanvas(QGraphicsView):
 
         print(self.total_angle)
         if abs(self.last_send_angle-self.total_angle) > 5:
-            # self.manager.send_data(f'#{int(self.total_angle)}!')
+            self.manager.send_data(f'#{int(self.total_angle)}!')
             self.last_send_angle = self.total_angle
 
-        self.ws2812.set_led_angle(angle)
-        # # time.sleep(0.01)
-        # self.servo.set_angle(servo_id, angle, time_ms)
+        # self.ws2812.set_led_angle(angle)
+        # time.sleep(0.01)
+        # self.servo.send_command(angle)
         # time.sleep(0.01)  # 延迟 1 秒
         # pos = servo.get_position(servo_id)
         # print(pos)
@@ -217,7 +217,7 @@ class CarCanvas(QGraphicsView):
             pos = self.mapToScene(event.pos())
             parsed_data = {}
             parsed_data['鼠标'] = {
-                'x': pos.x(), 'y': pos.y(), 'StopFlag': True}
+                'x': pos.x(), 'y': pos.y(), 'StopFlag': True,'light_index': 1}
             # print(parsed_data)
             self.queue.put([parsed_data])
 
@@ -353,6 +353,7 @@ class CarCanvas(QGraphicsView):
             angle_deg += 360
 
         return angle_deg
+
     def calculate_angle_1(self, x2, y2):
         x1 = 90
         y1 = 210
@@ -406,6 +407,7 @@ class CarCanvas(QGraphicsView):
                 x = value['x']
                 y = value['y']
                 StopFlag = value['StopFlag']
+                light_index = value['light_index']
 
                 # coord_str = f"{int(x)} {int(y)}\n"
                 # self.lines[key]['process'].write(coord_str.encode())
@@ -441,20 +443,23 @@ class CarCanvas(QGraphicsView):
                     else:
                         self.floatList.updateItemByIndex(
                             temp_key_obj['list_text_item'], text)
-                    if key != 'UWB1':
+                    if key == 'UWB1':
                         # 由于pyqt坐标系y轴相反，特将y转为负值，但计算角度时还原成原始值
                         start, end = lightCalculator.calculate_start_end_input_xy(
                             x, -y)
-                        # angle = self.calculate_angle(x, -y)
-                        # self.set_angle(angle)
+                        angle = self.calculate_angle(x, -y)
+                        self.set_angle(angle)
                         angle = self.calculate_angle_1(x, -y)
                         distance = math.sqrt(x**2 + y**2)
-                        
+
                         self.data_queue.put(
-                            {"x": x, "y": y, "angle": 360-angle, "distance": distance})
+                            {"x": x, "y": y, "angle": angle, "distance": distance})
+                        print({"x": x, "y": y, "angle": angle, "distance": distance})
+                        
 
                         # num = self.lightCa.calculate_num_led(x, y)
-                        self.manager.send_data(f'{start},{end}+')
+                        self.manager1.send_data(
+                            f'{start},{end},1,1,{light_index}+')
 
                     if temp_key_obj['temp_line']:
                         self.scene().removeItem(temp_key_obj['temp_line'])
@@ -496,10 +501,13 @@ class CarCanvas(QGraphicsView):
                     self.lines[key] = temp_key_obj
 
                 else:
-                    # self.set_angle(0)
+                    self.set_angle(0)
                     self.total_angle = 0
                     self.previous_angle = 0
-                    # self.manager.send_data(f'#{int(self.total_angle)}!')
+                    self.manager.send_data(f'#{int(self.total_angle)}!')
+                    self.data_queue.put(
+                        {"0": x, "0": y, "angle": 0, "distance": 0})
+                    self.manager1.send_data('0,0,0,0,0+')
 
         except Exception as e:
             print(e)

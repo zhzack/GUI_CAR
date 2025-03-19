@@ -84,12 +84,21 @@ class CustomFloatList(QGraphicsView):
         # 设置字体
         item.setFont(font)
         
-        # 设置背景色（可以覆盖样式表的设置）
+        # 设置背景色
         item.setBackground(QColor(240, 240, 240))  # 你可以根据需要自定义背景色
+
+        # 为列表项绑定双击事件
+        self.data_list.itemDoubleClicked.connect(self.remove_item)
         
         self.auto_height()
         
         return row_count  # 返回当前添加的项的索引
+
+    def remove_item(self, item):
+        """移除指定的列表项"""
+        row = self.data_list.row(item)
+        self.data_list.takeItem(row)
+
 
     def addData(self, text, color=QColor(0, 0, 255), font=QFont(
             "Arial", 14, QFont.Bold)):

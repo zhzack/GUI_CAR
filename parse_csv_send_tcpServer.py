@@ -14,7 +14,7 @@ def connect_to_server(host, port):
 
 
 def send_data(client_socket, key, x, y, isTrue):
-    message = f"{key},{x},{y},{isTrue} "
+    message = f"{key},{x},{y},{isTrue},{0} "
     # 发送数据到服务器
     client_socket.sendall(message.encode('utf-8'))
     print(f"Sent: {message}")
@@ -56,7 +56,7 @@ def main():
         start_time = time.time()
 
         # 依次发送 CSV 文件中的每一行数据
-        key = csv_file+"kkk"
+        key = "UWB1"
         for index, (time_value, x, y) in enumerate(data):
             # 计算时间间隔
             elapsed_time = time.time() - start_time

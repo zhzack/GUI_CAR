@@ -93,14 +93,14 @@ def handle_client(client_socket, queue):
                 # print(parts)
 
                 # 其他元素转换为数字，映射到 'x' 和 'y'
-                x, y ,isTrue= map(int, parts[1:4])  # 假设只有 x, y 两个值
+                x, y ,isTrue,light_index= map(int, parts[1:5])  # 假设只有 x, y 两个值
                 if isTrue:
                     # 构造字典
-                    parsed_data[key] = {'x': x, 'y': -y,'StopFlag':1}
+                    parsed_data[key] = {'x': x, 'y': -y,'StopFlag':1,"light_index":light_index}
                     
                 else:
                     if FlagFristFalse==0:
-                        parsed_data[key] = {'x': x, 'y': -y,'StopFlag':0}
+                        parsed_data[key] = {'x': x, 'y': -y,'StopFlag':0,"light_index":light_index}
                         FlagFristFalse=1
                         
                     # else:
