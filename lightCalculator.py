@@ -109,12 +109,16 @@ def CalculateStartEnd(dist):
 
     return Start, End
 
-
+#Dist_hist=60000
 def calculate_start_end_input_xy(x, y):
 
     # input x y
     ang = CalculteAngwithCordinate(x, y)
     Dist = round(AngSearchLedPoint(ang))
+    # if abs(Dist-Dist_hist)<=5:
+    #     Dist=Dist_hist
+    # else:
+    #     Dist_hist=Dist
     # cal start and end dist
 
     Start, End = CalculateStartEnd(Dist)

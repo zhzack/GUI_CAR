@@ -42,7 +42,7 @@ data_lock = Lock()
 
 # TCP 服务器配置
 TCP_HOST = '0.0.0.0'
-TCP_PORT = 5005
+TCP_PORT = 5007
 
 # WebSocket 服务器配置
 WS_HOST = '0.0.0.0'

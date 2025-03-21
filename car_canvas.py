@@ -29,6 +29,8 @@ import tkinter as tk
 from PyQt5.QtCore import QProcess
 import time
 
+import threading
+
 lineLen = 10000
 
 
@@ -62,6 +64,7 @@ class CarCanvas(QGraphicsView):
         self.last_fence = None  # 钥匙上一个所在的区域
         self.fence_cont = 0
         self.zoom_factor = 1  # 缩放系数
+        
 
         # 允许显示超出场景范围的内容
         self.setViewportUpdateMode(QGraphicsView.FullViewportUpdate)
@@ -114,7 +117,7 @@ class CarCanvas(QGraphicsView):
         # 创建串口管理实例
         self.manager1 = SerialManager(port_by_keyword='CH', baudrate=115200)
         # self.manager = TCPServer(host='172.20.10.2', port=80)
-        self.manager = TCPServer(host='0.0.0.0', port=8888)
+        self.manager = TCPServer(host='0.0.0.0', port=6666)
 
         self.ws2812 = Ws2812(self.manager)
         self.ws2812.num_strips = 15
@@ -130,13 +133,13 @@ class CarCanvas(QGraphicsView):
         #  self.half_reset(0)
 
     def set_angle(self, angle):
-        print(f"angle:{angle}")
+        # print(f"angle:{angle}")
         temp_angle = self.total_angle
         current_time = int(time.time() * 1000)
-        if current_time-self.last_time < 500:
-            # print("输出过快了")
-            # return
-            pass
+        # if current_time-self.last_time < 500:
+        #     # print("输出过快了")
+        #     # return
+        #     pass
         self.last_time = current_time
 
         servo_id = 0
@@ -167,9 +170,11 @@ class CarCanvas(QGraphicsView):
         self.previous_angle = current_angle
 
         print(self.total_angle)
-        if abs(self.last_send_angle-self.total_angle) > 5:
-            self.manager.send_data(f'#{int(self.total_angle)}!')
-            self.last_send_angle = self.total_angle
+        # if abs(self.last_send_angle-self.total_angle) > 5:
+        self.manager.send_data(',1,')
+        self.manager.send_data(f'#{int(self.total_angle)}!')
+        
+        self.last_send_angle = self.total_angle
 
         # self.ws2812.set_led_angle(angle)
         # time.sleep(0.01)
@@ -367,7 +372,9 @@ class CarCanvas(QGraphicsView):
             angle_deg += 360
 
         return angle_deg
-
+    
+        
+        
     def set_key_position(self, object):
         x = 0
         y = 0
@@ -450,7 +457,7 @@ class CarCanvas(QGraphicsView):
                         angle = self.calculate_angle(x, -y)
                         self.set_angle(angle)
                         angle = self.calculate_angle_1(x, -y)
-                        distance = math.sqrt(x**2 + y**2)
+                        distance = math.sqrt((x-90)**2 + (-y-210)**2)
 
                         self.data_queue.put(
                             {"x": x, "y": y, "angle": angle, "distance": distance})
@@ -458,6 +465,7 @@ class CarCanvas(QGraphicsView):
                         
 
                         # num = self.lightCa.calculate_num_led(x, y)
+                        
                         self.manager1.send_data(
                             f'{start},{end},1,1,{light_index}+')
 
@@ -504,7 +512,18 @@ class CarCanvas(QGraphicsView):
                     self.set_angle(0)
                     self.total_angle = 0
                     self.previous_angle = 0
-                    self.manager.send_data(f'#{int(self.total_angle)}!')
+                    self.manager.send_data(',0,')
+                    # self.manager.send_data(f'#0!')
+                    
+                    def reset_serve(manager):    
+                        print("sadfsadasdads")
+                        manager.send_data(f'#0!')
+                        print("sadfsadasdads")
+                    # 创建一个计时器，在2秒后启动 reset_serve
+                    timer = threading.Timer(3, reset_serve,args=(self.manager,))
+
+                    # 启动计时器
+                    timer.start()
                     self.data_queue.put(
                         {"0": x, "0": y, "angle": 0, "distance": 0})
                     self.manager1.send_data('0,0,0,0,0+')
@@ -513,6 +532,9 @@ class CarCanvas(QGraphicsView):
             print(e)
             return
             # pass
+            
+
+        
 
     def wheelEvent(self, event):
         """鼠标滚轮缩放"""

@@ -99,9 +99,9 @@ def handle_client(client_socket, queue):
                     parsed_data[key] = {'x': x, 'y': -y,'StopFlag':1,"light_index":light_index}
                     
                 else:
-                    if FlagFristFalse==0:
-                        parsed_data[key] = {'x': x, 'y': -y,'StopFlag':0,"light_index":light_index}
-                        FlagFristFalse=1
+                    
+                    parsed_data[key] = {'x': x, 'y': -y,'StopFlag':0,"light_index":light_index}
+                    FlagFristFalse=1
                         
                     # else:
                 if parsed_data!=None:

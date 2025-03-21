@@ -24,7 +24,8 @@ class SerialManager():
         if port_name:
             self.set_port(port_name)
         else:
-            raise SystemExit("未找到匹配的串口")
+            # raise SystemExit("未找到匹配的串口")
+            print("未找到匹配的串口")
 
         # 连接到串口
         self.connect()
@@ -74,9 +75,11 @@ class SerialManager():
         连接到串口
         """
         if not self.port:
-            raise ValueError("未设置串口端口")
-        self.serial_conn = serial.Serial(self.port, self.baudrate, timeout=1)
-        print(f"已连接到串口 {self.port}，波特率 {self.baudrate}")
+            # raise ValueError("未设置串口端口")
+            print("未设置串口端口")
+        else:    
+            self.serial_conn = serial.Serial(self.port, self.baudrate, timeout=1)
+            print(f"已连接到串口 {self.port}，波特率 {self.baudrate}")
 
     def disconnect(self):
         """

@@ -79,7 +79,7 @@ def calculate_angle(x2, y2):
     return angle_deg
 
 
-def tcp_client(data_queue, server_ip="127.0.0.1", server_port=5005, reconnect_delay=5):
+def tcp_client(data_queue, server_ip="127.0.0.1", server_port=5007, reconnect_delay=5):
     """TCP 客户端，支持自动重连"""
     while True:
         try:
