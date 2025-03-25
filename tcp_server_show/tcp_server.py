@@ -106,7 +106,7 @@ def handle_client(client_socket, queue):
                     # else:
                 if parsed_data!=None:
                     queue.put([parsed_data]) 
-                    # print(parsed_data)
+                    print(parsed_data)
                     
                 
             # 解析数据

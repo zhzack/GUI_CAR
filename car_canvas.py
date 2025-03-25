@@ -9,6 +9,8 @@ from PyQt5.QtGui import QPen, QBrush, QColor
 from PyQt5.QtCore import Qt, QRect
 from PyQt5.QtCore import QTimer, Qt
 
+import traceback
+
 import math
 import requests
 
@@ -31,7 +33,7 @@ import time
 
 import threading
 
-lineLen = 10000
+lineLen = 1
 
 
 class CarCanvas(QGraphicsView):
@@ -60,11 +62,11 @@ class CarCanvas(QGraphicsView):
         self.last_send_angle = 0
         self.last_time = 0
         self.init_servo_ws2812()
+        self.Dist_his = 65535
 
         self.last_fence = None  # 钥匙上一个所在的区域
         self.fence_cont = 0
         self.zoom_factor = 1  # 缩放系数
-        
 
         # 允许显示超出场景范围的内容
         self.setViewportUpdateMode(QGraphicsView.FullViewportUpdate)
@@ -173,7 +175,7 @@ class CarCanvas(QGraphicsView):
         # if abs(self.last_send_angle-self.total_angle) > 5:
         self.manager.send_data(',1,')
         self.manager.send_data(f'#{int(self.total_angle)}!')
-        
+
         self.last_send_angle = self.total_angle
 
         # self.ws2812.set_led_angle(angle)
@@ -222,7 +224,7 @@ class CarCanvas(QGraphicsView):
             pos = self.mapToScene(event.pos())
             parsed_data = {}
             parsed_data['鼠标'] = {
-                'x': pos.x(), 'y': pos.y(), 'StopFlag': True,'light_index': 1}
+                'x': pos.x(), 'y': pos.y(), 'StopFlag': True, 'light_index': 1}
             # print(parsed_data)
             self.queue.put([parsed_data])
 
@@ -372,16 +374,85 @@ class CarCanvas(QGraphicsView):
             angle_deg += 360
 
         return angle_deg
-    
-        
-        
+
+    def set_key_position_new(self, object):
+        x = 0
+        y = 0
+
+        try:
+            for key, value in object.items():
+
+                x = value['x']
+                y = value['y']
+                StopFlag = value['StopFlag']
+                light_index = value['light_index']
+
+                if StopFlag == 1:
+
+                    x1 = x
+                    y1 = y
+
+                    if key == 'UWB1':
+                        # 由于pyqt坐标系y轴相反，特将y转为负值，但计算角度时还原成原始值
+                        Dist = lightCalculator.calculate_start_end_input_xy(
+                            x, -y)
+
+                        if abs(Dist-self.Dist_his) < 5:
+                            Dist = self.Dist_his
+                        else:
+                            self.Dist_his = Dist
+                        Start, End = lightCalculator.CalculateStartEnd(Dist)
+                        start = lightCalculator.Arr_all[Start]
+                        end = lightCalculator.Arr_all[End]
+
+                        angle = self.calculate_angle(x, -y)
+                        self.set_angle(angle)
+                        angle = self.calculate_angle_1(x, -y)
+                        distance = math.sqrt((x-90)**2 + (-y-210)**2)
+
+                        self.data_queue.put(
+                            {"x": x, "y": y, "angle": angle, "distance": distance})
+                        print({"x": x, "y": y, "angle": angle,
+                              "distance": distance})
+
+                        # num = self.lightCa.calculate_num_led(x, y)
+
+                        self.manager1.send_data(
+                            f'{start},{end},1,1,{light_index}+')
+
+                else:
+                    self.set_angle(0)
+                    self.total_angle = 0
+                    self.previous_angle = 0
+                    self.manager.send_data(',0,')
+                    # self.manager.send_data(f'#0!')
+
+                    def reset_serve(manager):
+
+                        manager.send_data(f'#0!')
+
+                    # 创建一个计时器，在2秒后启动 reset_serve
+                    timer = threading.Timer(
+                        3, reset_serve, args=(self.manager,))
+
+                    # 启动计时器
+                    timer.start()
+                    self.data_queue.put(
+                        {"0": x, "0": y, "angle": 0, "distance": 0})
+                    self.manager1.send_data('0,0,0,0,0+')
+
+        except Exception as e:
+            print(e)
+            return
+            # pass
+
     def set_key_position(self, object):
         x = 0
         y = 0
 
         try:
             for key, value in object.items():
-                # print(f"Key: {key}, Value: {value}")
+                print(f"Key: {key}, Value: {value}")
                 temp_key_obj = {}
                 if key not in self.lines:
                     temp_key_obj['points'] = []
@@ -452,8 +523,8 @@ class CarCanvas(QGraphicsView):
                             temp_key_obj['list_text_item'], text)
                     if key == 'UWB1':
                         # 由于pyqt坐标系y轴相反，特将y转为负值，但计算角度时还原成原始值
-                        start, end = lightCalculator.calculate_start_end_input_xy(
-                            x, -y)
+                        # start, end = lightCalculator.calculate_start_end_input_xy(
+                        #     x, -y)
                         angle = self.calculate_angle(x, -y)
                         self.set_angle(angle)
                         angle = self.calculate_angle_1(x, -y)
@@ -461,13 +532,13 @@ class CarCanvas(QGraphicsView):
 
                         self.data_queue.put(
                             {"x": x, "y": y, "angle": angle, "distance": distance})
-                        print({"x": x, "y": y, "angle": angle, "distance": distance})
-                        
+                        print({"x": x, "y": y, "angle": angle,
+                              "distance": distance})
 
                         # num = self.lightCa.calculate_num_led(x, y)
-                        
-                        self.manager1.send_data(
-                            f'{start},{end},1,1,{light_index}+')
+
+                        # self.manager1.send_data(
+                        #     f'{start},{end},1,1,{light_index}+')
 
                     if temp_key_obj['temp_line']:
                         self.scene().removeItem(temp_key_obj['temp_line'])
@@ -514,13 +585,14 @@ class CarCanvas(QGraphicsView):
                     self.previous_angle = 0
                     self.manager.send_data(',0,')
                     # self.manager.send_data(f'#0!')
-                    
-                    def reset_serve(manager):    
-                        print("sadfsadasdads")
+
+                    def reset_serve(manager):
+
                         manager.send_data(f'#0!')
-                        print("sadfsadasdads")
+
                     # 创建一个计时器，在2秒后启动 reset_serve
-                    timer = threading.Timer(3, reset_serve,args=(self.manager,))
+                    timer = threading.Timer(
+                        3, reset_serve, args=(self.manager,))
 
                     # 启动计时器
                     timer.start()
@@ -529,12 +601,10 @@ class CarCanvas(QGraphicsView):
                     self.manager1.send_data('0,0,0,0,0+')
 
         except Exception as e:
+            print(traceback.format_exc())
             print(e)
             return
             # pass
-            
-
-        
 
     def wheelEvent(self, event):
         """鼠标滚轮缩放"""

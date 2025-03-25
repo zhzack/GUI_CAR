@@ -87,7 +87,7 @@ def CalculteAngwithCordinate(x, y):
 
 def CalculateStartEnd(dist):
 
-    delta = 55  # led num
+    delta = 72  # led num
 
     if dist-delta < 0:
 
@@ -121,17 +121,17 @@ def calculate_start_end_input_xy(x, y):
     #     Dist_hist=Dist
     # cal start and end dist
 
-    Start, End = CalculateStartEnd(Dist)
+    #Start, End = CalculateStartEnd(Dist)
 
     # StartNumh_closest_value = min(Arr_all, key=lambda x: abs(x - Start))
     # EndNumh_closest_value = min(Arr_all, key=lambda x: abs(x - End))
     # StartNumh = Arr_all.index(StartNumh_closest_value)
     # EndNumh = Arr_all.index(EndNumh_closest_value)
 
-    StartNumh = Arr_all[Start]
-    EndNumh = Arr_all[End]
+    ##StartNumh = Arr_all[Start]
+    #EndNumh = Arr_all[End]
 
-    return StartNumh, EndNumh
+    return Dist#,StartNumh, EndNumh
 
 
 # print(calculate_start_end_input_xy(300, 0))
