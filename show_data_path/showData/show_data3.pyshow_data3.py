@@ -7,17 +7,17 @@ import os
 
 # 假设数据已加载到 DataFrame 中
 current_path = os.path.dirname(os.path.realpath(__file__))
-path = '2025年1月3日'
-file_name = '1126SroundVehicle_+X276_+Y0.csv'
-# str_uwb_distance='NDLB_VKM_PrivateCAN_V1.0.7_0x78_V1::CAR_UWB::uwb_fob_location_distance'
-# str_Carsts_X='NDLB_VKM_PrivateCAN_V1.0.7_0x78_V1::CarSts::Carsts_X'
-# str_Carsts_Y='NDLB_VKM_PrivateCAN_V1.0.7_0x78_V1::CarSts::Carsts_Y'
-
-str_uwb_distance = 'UWB_Simple::Anchor5UwbTx::Dis_5'
-str_Carsts_X = 'UWB_Simple::CarSts::Carsts_X'
-str_Carsts_Y = 'UWB_Simple::CarSts::Carsts_Y'
 path = ''
-file_name = '第一次大采集车外.csv'
+file_name = '绕圈不停顿-前146后145-i高度77-距离69.csv'
+str_uwb_distance='NDLB_VKM_PrivateCAN_V1.0.7_0x78_V1::CAR_UWB::uwb_fob_location_distance'
+str_Carsts_X='NDLB_VKM_PrivateCAN_V1.0.7_0x78_V1::CarSts::Carsts_X'
+str_Carsts_Y='NDLB_VKM_PrivateCAN_V1.0.7_0x78_V1::CarSts::Carsts_Y'
+
+# str_uwb_distance = 'UWB_Simple::Anchor5UwbTx::Dis_5'
+# str_Carsts_X = 'UWB_Simple::CarSts::Carsts_X'
+# str_Carsts_Y = 'UWB_Simple::CarSts::Carsts_Y'
+# path = ''
+# file_name = '第一次大采集车外.csv'
 if path != '':
     current_path = os.path.join(current_path, path, file_name)
 else:

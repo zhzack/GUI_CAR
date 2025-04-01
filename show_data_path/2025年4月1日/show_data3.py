@@ -10,6 +10,7 @@ current_path = os.path.dirname(os.path.realpath(__file__))
 path = ''
 file_name = '绕圈不停顿-前146后145-i高度77-距离69.csv'
 file_name = '绕圈-前146后145-i高度77-距离69-前期145掉落看稳定后数据.csv'
+
 str_uwb_distance='NDLB_VKM_PrivateCAN_V1.0.7_0x78_V1::CAR_UWB_Copy_1::uwb_fob_location_distance'
 str_Carsts_X='NDLB_VKM_PrivateCAN_V1.0.7_0x78_V1::CarSts::Carsts_X'
 str_Carsts_Y='NDLB_VKM_PrivateCAN_V1.0.7_0x78_V1::CarSts::Carsts_Y'
