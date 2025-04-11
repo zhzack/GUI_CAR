@@ -263,7 +263,7 @@ class MQTTClient:
         y = float(msg_object["local_y"])*100
         cc = [{'car': {'x': x, 'y': -y,'StopFlag':1,'light_index':1}}]
         # print(cc)
-        # self.queue.put(cc)
+        self.queue.put(cc)
 
         # self.plot_mqtt.update_plot(msg_object["local_x"], msg_object["local_y"])
         # self.mqtt_res_obj = self.merge_data(msg)

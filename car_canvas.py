@@ -33,7 +33,7 @@ import time
 
 import threading
 
-lineLen = 1
+lineLen = 100
 
 
 class CarCanvas(QGraphicsView):

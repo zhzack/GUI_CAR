@@ -425,6 +425,6 @@ class MainWindow(QMainWindow):
 
                 # elif 'UWB1' in value or 'car' in value:
                 else:
-                    # self.canvas.set_key_position(value)
-                    self.canvas.set_key_position_new(value)
+                    self.canvas.set_key_position(value)
+                    # self.canvas.set_key_position_new(value)
                     
