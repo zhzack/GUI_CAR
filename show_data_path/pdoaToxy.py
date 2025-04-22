@@ -9,7 +9,8 @@ def plot_multiple_curves(data_list, title, xlabel, ylabel):
     """
     绘制多个曲线
     :param data_list: 包含字典的数组，每个字典包含 'name' 和 'values' 键
-                      例如 [{'name': 'Curve1', 'values': [1, 2, 3]}, {'name': 'Curve2', 'values': [4, 5, 6]}]
+                      例如 [{'name': 'Curve1', 'values': [1, 2, 3]},
+                          {'name': 'Curve2', 'values': [4, 5, 6]}]
     :param title: 图像标题
     :param xlabel: X轴标签
     :param ylabel: Y轴标签
@@ -44,9 +45,51 @@ def plot_path_comparison(x_coords, y_coords, carsts_x, carsts_y):
     plt.show()
 
 
+def get_col_name(short_name: str) -> str:
+    """
+    将 '模块名.字段名' 转换为完整列名字符串。
+
+    例：
+        输入: 'CAR_UWB_Copy_1.uwb_fob_location_distance'
+        输出: 'NDLB_VKM_PrivateCAN_V1.0.7_0x78_V1::CAR_UWB_Copy_1::uwb_fob_location_distance'
+    """
+    common_prefix = 'NDLB_VKM_PrivateCAN_V1.0.7_0x78_V1::'
+
+    if '.' not in short_name:
+        raise ValueError("输入格式应为 '模块名.字段名'")
+
+    module, field = short_name.split('.', 1)
+    return f'{common_prefix}{module}::{field}'
+
+
+def get_cols_name(module_name: str, fields: list) -> dict:
+    """
+    批量生成完整列名，返回一个字段名到完整列名的映射字典。
+
+    参数:
+        module_name: 模块名，如 'CAR_UWB_Copy_1'
+        fields: 字段名列表，如 ['uwb_fob_location_distance', 'uwb_fob_location_x']
+
+    返回:
+        {
+            'uwb_fob_location_distance': 'NDLB_VKM...::CAR_UWB_Copy_1::uwb_fob_location_distance',
+            ...
+        }
+    """
+    common_prefix = 'NDLB_VKM_PrivateCAN_V1.0.7_0x78_V1::'
+    return {
+        field: f"{common_prefix}{module_name}::{field}" for field in fields
+    }
+
+
 def process_csv(file_path):
     # 读取 CSV 文件
     data = pd.read_csv(file_path)
+
+    uwb1 = {get_col_name('CAR_UWB.pdoa20_col')}
+    col_dict = get_cols_name('CAR_UWB_Copy_1', fields)
+
+    print(col_dict)
 
     # 提取所需列
     pdoa20_col = 'NDLB_VKM_PrivateCAN_V1.0.7_0x78_V1::CAR_UWB::uwb_fob_location_pdoa20'
@@ -58,16 +101,16 @@ def process_csv(file_path):
     uwb_fob_location_y_col = 'NDLB_VKM_PrivateCAN_V1.0.7_0x78_V1::CAR_UWB::uwb_fob_location_y'
 
     # # 提取所需列
-    # pdoa20_col = 'NDLB_VKM_PrivateCAN_V1.0.7_0x78_V1::CAR_UWB_Copy_1::uwb_fob_location_pdoa20'
-    # pdoa12_col = 'NDLB_VKM_PrivateCAN_V1.0.7_0x78_V1::CAR_UWB_Copy_1::uwb_fob_location_pdoa12'
-    # pdoa01_col = 'NDLB_VKM_PrivateCAN_V1.0.7_0x78_V1::CAR_UWB_Copy_1::uwb_fob_location_pdoa01'
-    # uwb_fob_location_distance_col = 'NDLB_VKM_PrivateCAN_V1.0.7_0x78_V1::CAR_UWB_Copy_1::uwb_fob_location_distance'
-    # uwb_fob_location_index_col = 'NDLB_VKM_PrivateCAN_V1.0.7_0x78_V1::CAR_UWB_Copy_1::uwb_fob_location_index'
-    # uwb_fob_location_x_col = 'NDLB_VKM_PrivateCAN_V1.0.7_0x78_V1::CAR_UWB_Copy_1::uwb_fob_location_x'
-    # uwb_fob_location_y_col = 'NDLB_VKM_PrivateCAN_V1.0.7_0x78_V1::CAR_UWB_Copy_1::uwb_fob_location_y'
+    pdoa20_col = 'NDLB_VKM_PrivateCAN_V1.0.7_0x78_V1::CAR_UWB_Copy_1::uwb_fob_location_pdoa20'
+    pdoa12_col = 'NDLB_VKM_PrivateCAN_V1.0.7_0x78_V1::CAR_UWB_Copy_1::uwb_fob_location_pdoa12'
+    pdoa01_col = 'NDLB_VKM_PrivateCAN_V1.0.7_0x78_V1::CAR_UWB_Copy_1::uwb_fob_location_pdoa01'
+    uwb_fob_location_distance_col = 'NDLB_VKM_PrivateCAN_V1.0.7_0x78_V1::CAR_UWB_Copy_1::uwb_fob_location_distance'
+    uwb_fob_location_index_col = 'NDLB_VKM_PrivateCAN_V1.0.7_0x78_V1::CAR_UWB_Copy_1::uwb_fob_location_index'
+    uwb_fob_location_x_col = 'NDLB_VKM_PrivateCAN_V1.0.7_0x78_V1::CAR_UWB_Copy_1::uwb_fob_location_x'
+    uwb_fob_location_y_col = 'NDLB_VKM_PrivateCAN_V1.0.7_0x78_V1::CAR_UWB_Copy_1::uwb_fob_location_y'
 
-    carsts_x_col = 'NDLB_VKM_PrivateCAN_V1.0.7_0x78_V1::CarSts::Carsts_X'
-    carsts_y_col = 'NDLB_VKM_PrivateCAN_V1.0.7_0x78_V1::CarSts::Carsts_Y'
+    carsts_x_col = get_col_name('CarSts.Carsts_X')
+    carsts_y_col = get_col_name('CarSts.Carsts_Y')
 
     if all(col in data.columns for col in [pdoa20_col, pdoa12_col, pdoa01_col, uwb_fob_location_distance_col, carsts_x_col, carsts_y_col]):
         x_coords = []
@@ -172,19 +215,33 @@ def process_csv(file_path):
 
 
 if __name__ == "__main__":
+    fields = [
+        'uwb_fob_location_pdoa20',
+        'uwb_fob_location_pdoa12',
+        'uwb_fob_location_pdoa01',
+        'uwb_fob_location_distance',
+        'uwb_fob_location_index',
+        'uwb_fob_location_x',
+        'uwb_fob_location_y'
+    ]
     # 假设数据已加载到 DataFrame 中
     current_path = os.path.dirname(os.path.realpath(__file__))
     path = '2025年4月11日'
     file_name = '绕圈不停顿-前146后145-i高度77-距离69.csv'
     file_name = '绕圈-前146后145-i高度77-距离69-前期145掉落看稳定后数据.csv'
     file_name = '145新移远146上一次移远tag高度143两锚点高度163-距离65.csv'
-    
+
     path = '2025年4月11日'
     file_name = '绕圈不停顿-前145后146-i高度77-距离85.csv'
     file_name = '绕圈不停顿-前145后146-i高度77-距离93.csv'
     file_name = '绕圈不停顿-前145后146-i高度77-距离93-2.csv'
     file_name = '绕圈不停顿-前145后146-i高度77-距离105.csv'
     file_name = '绕圈停顿-前145后146-i高度77-距离104.csv'
+
+    path = '2025年4月21日'
+    file_name = 'data_142709_01_94.csv'
+    file_name = 'data_143758_12_96.csv'
+    file_name = 'data_135959_02_99.csv'
 
     if path != '':
         current_path = os.path.join(current_path, path, file_name)

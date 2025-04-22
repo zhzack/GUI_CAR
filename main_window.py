@@ -55,9 +55,9 @@ class MainWindow(QMainWindow):
         # print(self.robot_topics, self.res_topics)
         self.mqtt_res_obj = {}
 
-        self.is_matt_connect = True
+        self.is_mqtt_connect = True
 
-        if self.is_matt_connect:
+        if self.is_mqtt_connect:
             self.mqtt_client = MQTTClient(self.queue)
             self.mqtt_client.connect()
             self.mqtt_client.subscribe(

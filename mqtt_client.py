@@ -216,7 +216,7 @@ class MQTTClient:
         return self.client.is_connected()
 
     def on_message_received(self, msg):
-        print(msg.topic)
+        # print(msg.topic)
         if msg.topic in self.robot_topics:
             if msg.topic == self.robot_topics[0]:
                 self.handle_robot_heart_beat(msg)
@@ -259,8 +259,8 @@ class MQTTClient:
 
     def handle_robot_heart_beat(self, msg):
         msg_object = self.merge_data(msg)
-        x = float(msg_object["local_x"])*100-350
-        y = float(msg_object["local_y"])*100
+        x = -(float(msg_object["local_x"])*100)+350
+        y = -float(msg_object["local_y"])*100
         cc = [{'car': {'x': x, 'y': -y,'StopFlag':1,'light_index':1}}]
         # print(cc)
         self.queue.put(cc)
