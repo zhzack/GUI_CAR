@@ -1,0 +1,36 @@
+{
+  "AoAAzimuth,AoAElevation,Distance,DstPdoaFirst,DstPdoaSecond,DstPdoaThird,PdoaFirst,PdoaSecond,PdoaThird,RSSI,car_time,car_x,car_y,drop_count,sessionNumber,timestamp,x,y,z": [
+    {
+      "x_axis": "sessionNumber",
+      "y_axis": [
+        "PdoaFirst"
+      ]
+    },
+    {
+      "x_axis": "sessionNumber",
+      "y_axis": [
+        "x",
+        "y"
+      ]
+    },
+    {
+      "x_axis": "sessionNumber",
+      "y_axis": [
+        "AoAAzimuth",
+        "AoAElevation",
+        "PdoaSecond",
+        "x",
+        "y"
+      ]
+    },
+    {
+      "x_axis": "sessionNumber",
+      "y_axis": [
+        "AoAAzimuth",
+        "AoAElevation",
+        "x",
+        "y"
+      ]
+    }
+  ]
+}

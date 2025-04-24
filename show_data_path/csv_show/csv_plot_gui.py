@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import filedialog, messagebox
 import pandas as pd
 import matplotlib.pyplot as plt
-import os
+from configManager import ConfigManager
 
 
 def plot_multiple_curves(curve_list, title='', xlabel='', ylabel=''):
@@ -40,8 +40,9 @@ def plot_path_comparison(carsts_x, carsts_y):
 class CSVPlotterApp:
     def __init__(self, master):
         self.master = master
+        self.configManager = ConfigManager()
+
         self.master.title("CSV列曲线可视化工具")
-        self.file_path = ''
         self.df = None
         self.column_vars = []
         self.x_column_var = tk.StringVar()
@@ -91,12 +92,12 @@ class CSVPlotterApp:
         self.plot_button.pack(pady=10)
 
     def load_csv(self):
-        self.file_path = filedialog.askopenfilename(
+        file_path = filedialog.askopenfilename(
             filetypes=[("CSV files", "*.csv")])
-        if not self.file_path:
+        if not file_path:
             return
         try:
-            self.df = pd.read_csv(self.file_path)
+            self.df = pd.read_csv(file_path)
             self.df.dropna(how='all', inplace=True)
         except Exception as e:
             messagebox.showerror("读取错误", f"无法读取CSV文件：{e}")
@@ -146,91 +147,14 @@ class CSVPlotterApp:
 
         x_col = self.x_column_var.get()
         selected_cols = [col for col, var in self.column_vars if var.get()]
-        # if not selected_cols:
-        #     messagebox.showwarning("提示", "请选择至少一个Y轴列")
-        #     return
-
-        # if x_col not in self.df.columns:
-        #     messagebox.showerror("错误", f"X轴列 {x_col} 不存在")
-        #     return
-
-        keyword = 'CAR_UWB::'
-        # 找出所有包含关键字的列
-        matched_cols = [col for col in self.df.columns if keyword in col]
-        if not matched_cols:
-            print(f"未找到包含关键字“{keyword}”的列。")
+        if not selected_cols:
+            messagebox.showwarning("提示", "请选择至少一个Y轴列")
             return
 
-        # 复制包含的列
-        df_selected = self.df[matched_cols].copy()
+        if x_col not in self.df.columns:
+            messagebox.showerror("错误", f"X轴列 {x_col} 不存在")
+            return
 
-        # 构建新的列名：从 keyword 后截取
-        new_column_names = {
-            col: col.split(keyword, 1)[-1] for col in matched_cols
-        }
-
-        df_selected.rename(columns=new_column_names, inplace=True)
-
-        # 提取指定列
-        # df_selected = self.df[selected_cols].copy()
-
-        df_selected.dropna(how='all', inplace=True)
-        specific_order = [
-            "uwb_fob_location_index",
-            "uwb_fob_location_pdoa01",
-            "uwb_fob_location_pdoa20",
-            "uwb_fob_location_pdoa12",
-            "uwb_fob_location_phi",
-            "uwb_fob_location_theta",
-            "uwb_fob_location_distance",
-            "uwb_fob_location_x",
-            "uwb_fob_location_y",
-            "uwb_fob_location_z",
-            "uwb_fob_location_rssi"
-        ]
-        # 用户自定义顺序
-        if specific_order:
-            # 确保指定的列顺序是 DataFrame 中存在的列
-            valid_order = [
-                col for col in specific_order if col in df_selected.columns]
-            df_selected = df_selected[valid_order]
-
-         # 倒序排列列
-            # df_selected = df_selected[df_selected.columns[::-1]]
-            
-        # 插入三列全为0的列
-        insert_columns = ["DstPdoaFirst", "DstPdoaSecond", "DstPdoaThird"]
-        for col in insert_columns:
-            # 在指定位置插入列（"uwb_fob_location_z" 和 "uwb_fob_location_rssi" 之间）
-            df_selected.insert(df_selected.columns.get_loc("uwb_fob_location_z") + 1, col, 0)
-            
-        # 强制将所有列的值转换为整型
-        for col in df_selected.columns:
-            df_selected[col] = pd.to_numeric(df_selected[col], errors='coerce').fillna(0).astype(int)
-
-        # 对特定列进行值的修改：大于0的值前加 "+" 符号
-        columns_to_modify = [
-            "uwb_fob_location_pdoa01",
-            "uwb_fob_location_pdoa20",
-            "uwb_fob_location_pdoa12"
-        ]
-
-        for col in columns_to_modify:
-            if col in df_selected.columns:
-                # df_selected[col] = df_selected[col].apply(lambda x: f"+{x}" if x > 0 else str(x))
-                # 强制将列转换为整数类型，然后应用 + 符号
-                df_selected[col] = df_selected[col].astype(int).apply(lambda x: f"+{x}" if x > 0 else str(x))
-
-
-        # 构建输出文件路径：原始文件名 + 后缀
-        suffix = "_order.txt"
-        base, ext = os.path.splitext(self.file_path)
-        output_path = base + suffix
-
-        # 保存为新的CSV文件
-        df_selected.to_csv(output_path, index=False, header=False)
-
-        return
         sub_df = self.df.iloc[start_idx:end_idx]
         curves = []
 
@@ -253,8 +177,12 @@ class CSVPlotterApp:
             for c in curves:
                 c['values'] = c['values'][:len(x_values)]  # 对齐长度
             # plot_multiple_curves(curves, title="多列曲线图", xlabel="Index" if x_col == '' else x_col, ylabel="值")
-            plot_path_comparison(
-                sub_df[selected_cols[0]].tolist(), sub_df[selected_cols[1]].tolist())
+            # plot_path_comparison(sub_df[selected_cols[0]].tolist(), sub_df[selected_cols[1]].tolist())
+            self.configManager.update_header_config(
+                column_list=list(self.df.columns),
+                x_axis=x_col,
+                y_axis_list=selected_cols
+            )
         except Exception as e:
             messagebox.showerror("绘图错误", f"绘图失败：{e}")
 
