@@ -163,9 +163,23 @@ class CSVPlotterApp:
                 values = []
                 for _, row in sub_df.iterrows():
                     if pd.isna(row[col]):
+
                         continue
-                    values.append(float(row[col]))
-                curves.append({'name': col, 'values': values})
+                    if col == 'car_x':
+                        car_x = -float(row[col])+180+99
+                        # values.append(car_x)
+                    elif col == 'car_y':
+                        car_y = -float(row[col])
+                        # values.append(car_y)
+                    elif col == 'PdoaFirst' or col == 'PdoaSecond' or col == 'PdoaThird':
+                        pdoa = float(row[col])
+                        if (pdoa > 0 and car_x > 180) or (pdoa < 0 and car_x < 180):
+                            values.append(1)
+                        else:
+                            values.append(0)
+
+                    else:
+                        values.append(float(row[col]))
 
             except Exception as e:
                 messagebox.showwarning("警告", f"列 {col} 存在非数值数据或空值，跳过绘图。")

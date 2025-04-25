@@ -155,82 +155,86 @@ class CSVPlotterApp:
         #     return
 
         keyword = 'CAR_UWB::'
+        # keyword = 'CAR_UWB_Copy_1::'
         # 找出所有包含关键字的列
         matched_cols = [col for col in self.df.columns if keyword in col]
-        if not matched_cols:
-            print(f"未找到包含关键字“{keyword}”的列。")
-            return
+        # if not matched_cols:
+        #     print(f"未找到包含关键字“{keyword}”的列。")
+        #     return
 
-        # 复制包含的列
-        df_selected = self.df[matched_cols].copy()
+        # # 复制包含的列
+        # df_selected = self.df[matched_cols].copy()
 
-        # 构建新的列名：从 keyword 后截取
-        new_column_names = {
-            col: col.split(keyword, 1)[-1] for col in matched_cols
-        }
+        # # 构建新的列名：从 keyword 后截取
+        # new_column_names = {
+        #     col: col.split(keyword, 1)[-1] for col in matched_cols
+        # }
 
-        df_selected.rename(columns=new_column_names, inplace=True)
+        # df_selected.rename(columns=new_column_names, inplace=True)
 
-        # 提取指定列
-        # df_selected = self.df[selected_cols].copy()
+        # # 提取指定列
+        # # df_selected = self.df[selected_cols].copy()
 
-        df_selected.dropna(how='all', inplace=True)
-        specific_order = [
-            "uwb_fob_location_index",
-            "uwb_fob_location_pdoa01",
-            "uwb_fob_location_pdoa20",
-            "uwb_fob_location_pdoa12",
-            "uwb_fob_location_phi",
-            "uwb_fob_location_theta",
-            "uwb_fob_location_distance",
-            "uwb_fob_location_x",
-            "uwb_fob_location_y",
-            "uwb_fob_location_z",
-            "uwb_fob_location_rssi"
-        ]
-        # 用户自定义顺序
-        if specific_order:
-            # 确保指定的列顺序是 DataFrame 中存在的列
-            valid_order = [
-                col for col in specific_order if col in df_selected.columns]
-            df_selected = df_selected[valid_order]
+        # df_selected.dropna(how='all', inplace=True)
+        # specific_order = [
+        #     "uwb_fob_location_index",
+        #     "uwb_fob_location_pdoa01",
+        #     "uwb_fob_location_pdoa20",
+        #     "uwb_fob_location_pdoa12",
+        #     "uwb_fob_location_phi",
+        #     "uwb_fob_location_theta",
+        #     "uwb_fob_location_distance",
+        #     "uwb_fob_location_x",
+        #     "uwb_fob_location_y",
+        #     "uwb_fob_location_z",
+        #     "uwb_fob_location_rssi"
+        # ]
+        # # 用户自定义顺序
+        # if specific_order:
+        #     # 确保指定的列顺序是 DataFrame 中存在的列
+        #     valid_order = [
+        #         col for col in specific_order if col in df_selected.columns]
+        #     df_selected = df_selected[valid_order]
 
-         # 倒序排列列
-            # df_selected = df_selected[df_selected.columns[::-1]]
-            
-        # 插入三列全为0的列
-        insert_columns = ["DstPdoaFirst", "DstPdoaSecond", "DstPdoaThird"]
-        for col in insert_columns:
-            # 在指定位置插入列（"uwb_fob_location_z" 和 "uwb_fob_location_rssi" 之间）
-            df_selected.insert(df_selected.columns.get_loc("uwb_fob_location_z") + 1, col, 0)
-            
-        # 强制将所有列的值转换为整型
-        for col in df_selected.columns:
-            df_selected[col] = pd.to_numeric(df_selected[col], errors='coerce').fillna(0).astype(int)
+        #  # 倒序排列列
+        #     # df_selected = df_selected[df_selected.columns[::-1]]
 
-        # 对特定列进行值的修改：大于0的值前加 "+" 符号
-        columns_to_modify = [
-            "uwb_fob_location_pdoa01",
-            "uwb_fob_location_pdoa20",
-            "uwb_fob_location_pdoa12"
-        ]
+        # # 插入三列全为0的列
+        # insert_columns = ["DstPdoaFirst", "DstPdoaSecond", "DstPdoaThird"]
+        # for col in insert_columns:
+        #     # 在指定位置插入列（"uwb_fob_location_z" 和 "uwb_fob_location_rssi" 之间）
+        #     df_selected.insert(df_selected.columns.get_loc(
+        #         "uwb_fob_location_z") + 1, col, 0)
 
-        for col in columns_to_modify:
-            if col in df_selected.columns:
-                # df_selected[col] = df_selected[col].apply(lambda x: f"+{x}" if x > 0 else str(x))
-                # 强制将列转换为整数类型，然后应用 + 符号
-                df_selected[col] = df_selected[col].astype(int).apply(lambda x: f"+{x}" if x > 0 else str(x))
+        # # 强制将所有列的值转换为整型
+        # for col in df_selected.columns:
+        #     df_selected[col] = pd.to_numeric(
+        #         df_selected[col], errors='coerce').fillna(0).astype(int)
 
+        # # 对特定列进行值的修改：大于0的值前加 "+" 符号
+        # columns_to_modify = [
+        #     "uwb_fob_location_pdoa01",
+        #     "uwb_fob_location_pdoa20",
+        #     "uwb_fob_location_pdoa12"
+        # ]
 
-        # 构建输出文件路径：原始文件名 + 后缀
-        suffix = "_order.txt"
-        base, ext = os.path.splitext(self.file_path)
-        output_path = base + suffix
+        # for col in columns_to_modify:
+        #     if col in df_selected.columns:
+        #         # df_selected[col] = df_selected[col].apply(lambda x: f"+{x}" if x > 0 else str(x))
+        #         # 强制将列转换为整数类型，然后应用 + 符号
+        #         df_selected[col] = df_selected[col].astype(
+        #             int).apply(lambda x: f"+{x}" if x > 0 else str(x))
 
-        # 保存为新的CSV文件
-        df_selected.to_csv(output_path, index=False, header=False)
+        # # 构建输出文件路径：原始文件名 + 后缀
 
-        return
+        # suffix = keyword[:-2]+".txt"
+        # base, ext = os.path.splitext(self.file_path)
+        # output_path = base + suffix
+
+        # # 保存为新的CSV文件
+        # df_selected.to_csv(output_path, index=False, header=False)
+
+        # # return
         sub_df = self.df.iloc[start_idx:end_idx]
         curves = []
 
@@ -239,9 +243,23 @@ class CSVPlotterApp:
                 values = []
                 for _, row in sub_df.iterrows():
                     if pd.isna(row[col]):
+
                         continue
-                    values.append(float(row[col]))
-                curves.append({'name': col, 'values': values})
+                    if col == 'car_x':
+                        car_x = -float(row[col])+180+99
+                        # values.append(car_x)
+                    elif col == 'car_y':
+                        car_y = -float(row[col])
+                        # values.append(car_y)
+                    elif col == 'PdoaFirst' or col == 'PdoaSecond' or col == 'PdoaThird':
+                        pdoa = float(row[col])
+                        if (pdoa > 0 and car_x > 180) or (pdoa < 0 and car_x < 180):
+                            values.append(1)
+                        else:
+                            values.append(0)
+
+                    else:
+                        values.append(float(row[col]))
 
             except Exception as e:
                 messagebox.showwarning("警告", f"列 {col} 存在非数值数据或空值，跳过绘图。")
@@ -252,9 +270,9 @@ class CSVPlotterApp:
                             ) if x_col == '' else sub_df[x_col].tolist()
             for c in curves:
                 c['values'] = c['values'][:len(x_values)]  # 对齐长度
-            # plot_multiple_curves(curves, title="多列曲线图", xlabel="Index" if x_col == '' else x_col, ylabel="值")
-            plot_path_comparison(
-                sub_df[selected_cols[0]].tolist(), sub_df[selected_cols[1]].tolist())
+            plot_multiple_curves(curves, title="多列曲线图", xlabel="Index" if x_col == '' else x_col, ylabel="值")
+            # plot_path_comparison(
+            #     sub_df[selected_cols[0]].tolist(), sub_df[selected_cols[1]].tolist())
         except Exception as e:
             messagebox.showerror("绘图错误", f"绘图失败：{e}")
 
