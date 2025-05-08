@@ -39,6 +39,56 @@
         "car_x",
         "car_y"
       ]
+    },
+    {
+      "x_axis": "sessionNumber",
+      "y_axis": [
+        "PdoaFirst",
+        "PdoaSecond",
+        "PdoaThird",
+        "car_x",
+        "car_y"
+      ]
+    },
+    {
+      "x_axis": "sessionNumber",
+      "y_axis": [
+        "car_x",
+        "car_y"
+      ]
+    },
+    {
+      "x_axis": "PdoaFirst",
+      "y_axis": [
+        "PdoaFirst",
+        "car_x",
+        "car_y"
+      ]
+    },
+    {
+      "x_axis": "sessionNumber",
+      "y_axis": [
+        "PdoaSecond",
+        "car_x",
+        "car_y"
+      ]
+    },
+    {
+      "x_axis": "sessionNumber",
+      "y_axis": [
+        "PdoaThird",
+        "car_x",
+        "car_y"
+      ]
+    },
+    {
+      "x_axis": "sessionNumber",
+      "y_axis": [
+        "PdoaFirst",
+        "PdoaThird",
+        "car_x",
+        "car_y"
+      ]
     }
   ]
 }

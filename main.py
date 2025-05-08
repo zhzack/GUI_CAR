@@ -130,8 +130,8 @@ if __name__ == '__main__':
     # trajectory_process = Process(target=key_trajectory.read_csv_and_put_in_queue, args=(queue,pdoa_queue))
     trajectory_process.start()
 
-    http_send_data_process = Process(target=tcp_client, args=(data_queue,))
-    http_send_data_process.start()
+    # http_send_data_process = Process(target=tcp_client, args=(data_queue,))
+    # http_send_data_process.start()
 
     # 启动异步任务（需要事件循环）
     #
@@ -156,8 +156,8 @@ if __name__ == '__main__':
         trajectory_process.join()
         # plot_process.terminate()
         # plot_process.join()
-        http_send_data_process.terminate()
-        http_send_data_process.join()
+        # http_send_data_process.terminate()
+        # http_send_data_process.join()
 
         tcp_process.terminate()
         tcp_process.join()

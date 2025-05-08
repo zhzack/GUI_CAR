@@ -26,7 +26,6 @@ from serve.SerialManager import SerialManager
 from serve.TCPServerManager import TCPServer
 from serve.ServoController import ServoController
 from serve.ws2812 import Ws2812
-from VectorDisplay import VectorDisplay
 import tkinter as tk
 from PyQt5.QtCore import QProcess
 import time
@@ -61,7 +60,7 @@ class CarCanvas(QGraphicsView):
         self.previous_angle = 0
         self.last_send_angle = 0
         self.last_time = 0
-        self.init_servo_ws2812()
+        # self.init_servo_ws2812()
         self.Dist_his = 65535
 
         self.last_fence = None  # 钥匙上一个所在的区域
@@ -224,7 +223,7 @@ class CarCanvas(QGraphicsView):
             pos = self.mapToScene(event.pos())
             parsed_data = {}
             parsed_data['鼠标'] = {
-                'x': pos.x(), 'y': pos.y(), 'StopFlag': True, 'light_index': 1}
+                'x': pos.x(), 'y': pos.y()}
             # print(parsed_data)
             self.queue.put([parsed_data])
 
@@ -452,7 +451,7 @@ class CarCanvas(QGraphicsView):
 
         try:
             for key, value in object.items():
-                print(f"Key: {key}, Value: {value}")
+                # print(f"Key: {key}, Value: {value}")
                 temp_key_obj = {}
                 if key not in self.lines:
                     temp_key_obj['points'] = []
@@ -473,10 +472,7 @@ class CarCanvas(QGraphicsView):
 
                     temp_key_obj['list_text_item'] = None
 
-                    # temp_key_obj['app']=VectorDisplay()
 
-                    # temp_key_obj['process'] = QProcess(self)  # 创建 QProcess 实例
-                    # temp_key_obj['process'].start("python", ["VectorDisplay.py"])  # 启动 Tkinter 窗口
 
                     self.lines[key] = temp_key_obj
                 else:
@@ -484,8 +480,10 @@ class CarCanvas(QGraphicsView):
 
                 x = value['x']
                 y = value['y']
-                StopFlag = value['StopFlag']
-                light_index = value['light_index']
+                if value.get('StopFlag') != None:
+                    StopFlag = value['StopFlag']
+                else:
+                    StopFlag = 1
 
                 # coord_str = f"{int(x)} {int(y)}\n"
                 # self.lines[key]['process'].write(coord_str.encode())

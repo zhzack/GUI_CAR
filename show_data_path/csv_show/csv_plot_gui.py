@@ -157,13 +157,15 @@ class CSVPlotterApp:
 
         sub_df = self.df.iloc[start_idx:end_idx]
         curves = []
+        car_x = 0
+        car_y = 0
 
         for col in selected_cols:
             try:
                 values = []
                 for _, row in sub_df.iterrows():
                     if pd.isna(row[col]):
-
+                        # print(f"跳过空值：{col} = {row[col]}")
                         continue
                     if col == 'car_x':
                         car_x = -float(row[col])+180+99
@@ -181,6 +183,8 @@ class CSVPlotterApp:
                     else:
                         values.append(float(row[col]))
 
+                curves.append({'name': col, 'values': values})
+
             except Exception as e:
                 messagebox.showwarning("警告", f"列 {col} 存在非数值数据或空值，跳过绘图。")
                 continue
@@ -190,7 +194,8 @@ class CSVPlotterApp:
                             ) if x_col == '' else sub_df[x_col].tolist()
             for c in curves:
                 c['values'] = c['values'][:len(x_values)]  # 对齐长度
-            # plot_multiple_curves(curves, title="多列曲线图", xlabel="Index" if x_col == '' else x_col, ylabel="值")
+            plot_multiple_curves(
+                curves, title="多列曲线图", xlabel="Index" if x_col == '' else x_col, ylabel="值")
             # plot_path_comparison(sub_df[selected_cols[0]].tolist(), sub_df[selected_cols[1]].tolist())
             self.configManager.update_header_config(
                 column_list=list(self.df.columns),

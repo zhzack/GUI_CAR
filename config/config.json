@@ -13,7 +13,7 @@
                 "offset_latitude": "31.28553092",
                 "offset_longitude": "121.62919742600002",
                 "allowed_car_offset": "3.0",
-                "task_file": "cir.json"
+                "task_file": "path_with_arcs.json"
             }
         },
         "control": {
@@ -45,6 +45,20 @@
                 "robot_arm_speed_rate": 0.25
             }
         },
+        "record": {
+            "topic": "/sy/user/record",
+            "record": {
+                "command": 1,
+                "reset_axis_origin": true,
+                "reset_axis_direction": {
+                    "latitude0": "34",
+                    "longitude0": "75",
+                    "latitude1": "34.1",
+                    "longitude1": "75.1"
+                },
+                "step_size": 0.1
+            }
+        },
         "send_task_file": {
             "topic": "/sy/user/send_task_file",
             "send_task_file": {
@@ -66,7 +80,8 @@
         "control": "/sy/res/user/control",
         "setting": "/sy/res/user/setting",
         "send_task_file": "/sy/res/user/send_task_file",
-        "request_task_file": "/sy/res/user/request_task_file"
+        "request_task_file": "/sy/res/user/request_task_file",
+        "record": "/sy/res/user/record"
     },
     "robot_topics": [
         "/sy/robot/heart_beat",

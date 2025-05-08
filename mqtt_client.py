@@ -131,7 +131,7 @@ class MQTTClient:
         self.client.on_message = self.on_message
 
     def on_message(self, client, userdata, msg):
-        print(msg)
+        # print(msg)
         self.on_message_received(msg)
         if self.on_message_callback:
             self.on_message_callback(msg)
@@ -261,7 +261,7 @@ class MQTTClient:
         msg_object = self.merge_data(msg)
         x = -(float(msg_object["local_x"])*100)+350
         y = -float(msg_object["local_y"])*100
-        cc = [{'car': {'x': x, 'y': -y,'StopFlag':1,'light_index':1}}]
+        cc = [{'car': {'x': x, 'y': -y}}]
         # print(cc)
         self.queue.put(cc)
 
